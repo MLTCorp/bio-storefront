@@ -1,34 +1,46 @@
+import { useConfig } from "@/lib/store";
 import { SplitButton } from "./split-button";
-import supplementImage from "@assets/generated_images/minimalist_green_supplement_bottle_product_shot.png";
-import creamImage from "@assets/generated_images/minimalist_white_skincare_cream_jar_product_shot.png";
 import type { ReactNode } from "react";
 
 export function ProductList() {
+  const { config } = useConfig();
+
+  // Group products if we had categories, for now just list them
+  // Assuming first item is a "Best Seller"
+  const bestSellers = config.products.slice(0, 1);
+  const newArrivals = config.products.slice(1);
+
   return (
     <div className="space-y-6">
-      <Section title="Best Sellers">
-        <SplitButton 
-          title="Daily Greens Complex" 
-          description="Boost energy & immunity with organic greens."
-          image={supplementImage}
-          priceStart="$45"
-        />
-        <SplitButton 
-          title="Hydration Glow Cream" 
-          description="Deep moisture for radiant, healthy skin."
-          image={creamImage}
-          priceStart="$32"
-        />
-      </Section>
+      {bestSellers.length > 0 && (
+        <Section title="Destaques">
+          {bestSellers.map(product => (
+            <SplitButton 
+              key={product.id}
+              title={product.title} 
+              description={product.description}
+              image={product.image}
+              basePrice={product.basePrice}
+              discountPercent={config.discountPercent}
+            />
+          ))}
+        </Section>
+      )}
 
-      <Section title="New Arrivals">
-        <SplitButton 
-          title="Night Recovery Oil" 
-          description="Repair while you sleep."
-          image={supplementImage} // Reusing for now
-          priceStart="$55"
-        />
-      </Section>
+      {newArrivals.length > 0 && (
+        <Section title="Outros Produtos">
+          {newArrivals.map(product => (
+            <SplitButton 
+              key={product.id}
+              title={product.title} 
+              description={product.description}
+              image={product.image}
+              basePrice={product.basePrice}
+              discountPercent={config.discountPercent}
+            />
+          ))}
+        </Section>
+      )}
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { ShoppingBag, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -7,11 +6,12 @@ interface SplitButtonProps {
   title: string;
   description?: string;
   image: string;
-  priceStart?: string;
+  basePrice: number;
+  discountPercent?: number;
   onSelect?: (quantity: number) => void;
 }
 
-export function SplitButton({ title, description, image, priceStart = "$39", onSelect }: SplitButtonProps) {
+export function SplitButton({ title, description, image, basePrice, discountPercent = 0, onSelect }: SplitButtonProps) {
   const { toast } = useToast();
 
   const handleSelect = (qty: number) => {
@@ -24,6 +24,11 @@ export function SplitButton({ title, description, image, priceStart = "$39", onS
     if (onSelect) onSelect(qty);
   };
 
+  // Calculate "From" price for display (usually the 1 unit price)
+  const displayPrice = discountPercent > 0 
+    ? basePrice * (1 - discountPercent / 100) 
+    : basePrice;
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -33,40 +38,89 @@ export function SplitButton({ title, description, image, priceStart = "$39", onS
     >
       {/* Left Side: Product Info */}
       <div className="flex-1 flex items-center p-3 gap-3">
-        <div className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-secondary/30">
-          <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-100 p-1">
+          <img src={image} alt={title} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110" />
         </div>
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 py-1">
           <h3 className="font-semibold text-foreground text-sm truncate leading-tight mb-1">{title}</h3>
-          {description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{description}</p>}
-          <div className="flex items-center gap-1.5 mt-auto">
-            <span className="text-xs font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">{priceStart}</span>
+          {description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2 leading-relaxed">{description}</p>}
+          <div className="flex items-center gap-2 mt-auto">
+             {discountPercent > 0 ? (
+               <>
+                 <span className="text-xs text-muted-foreground line-through decoration-red-400">R$ {basePrice.toFixed(2)}</span>
+                 <span className="text-sm font-bold text-primary">R$ {displayPrice.toFixed(2)}</span>
+               </>
+             ) : (
+               <span className="text-sm font-bold text-primary">R$ {basePrice.toFixed(2)}</span>
+             )}
           </div>
         </div>
       </div>
 
       {/* Right Side: Split Actions */}
-      <div className="flex flex-col w-[88px] border-l border-border bg-gray-50/50 divide-y divide-border/60">
-        <ActionButton quantity={1} label="1x" onClick={() => handleSelect(1)} />
-        <ActionButton quantity={3} label="3x" highlight onClick={() => handleSelect(3)} />
-        <ActionButton quantity={5} label="5x" onClick={() => handleSelect(5)} />
+      <div className="flex flex-col w-[100px] border-l border-border bg-gray-50/80 divide-y divide-border/60">
+        <ActionButton 
+          quantity={1} 
+          label="1 unidade" 
+          basePrice={basePrice} 
+          discountPercent={discountPercent} 
+          onClick={() => handleSelect(1)} 
+        />
+        <ActionButton 
+          quantity={3} 
+          label="3 unidades" 
+          highlight 
+          basePrice={basePrice} 
+          discountPercent={discountPercent} 
+          onClick={() => handleSelect(3)} 
+        />
+        <ActionButton 
+          quantity={5} 
+          label="5 unidades" 
+          basePrice={basePrice} 
+          discountPercent={discountPercent} 
+          onClick={() => handleSelect(5)} 
+        />
       </div>
     </motion.div>
   );
 }
 
-function ActionButton({ quantity, label, highlight, onClick }: { quantity: number; label: string; highlight?: boolean; onClick: () => void }) {
+interface ActionButtonProps { 
+  quantity: number; 
+  label: string; 
+  highlight?: boolean; 
+  basePrice: number;
+  discountPercent: number;
+  onClick: () => void; 
+}
+
+function ActionButton({ quantity, label, highlight, basePrice, discountPercent, onClick }: ActionButtonProps) {
+  // Simple multiplier logic for price - in a real app this might be different
+  const originalTotal = basePrice * quantity;
+  const discountedTotal = originalTotal * (1 - discountPercent / 100);
+
   return (
     <button 
       className={cn(
-        "flex-1 flex items-center justify-center gap-1 text-xs font-medium transition-colors hover:bg-primary hover:text-white relative overflow-hidden active:scale-95 duration-200 cursor-pointer",
-        highlight ? "bg-primary/5 text-primary font-semibold" : "text-muted-foreground"
+        "flex-1 flex flex-col items-center justify-center py-2 px-1 transition-colors hover:bg-primary hover:text-white relative overflow-hidden active:scale-95 duration-200 cursor-pointer text-center",
+        highlight ? "bg-primary/5 text-primary" : "text-muted-foreground"
       )}
       onClick={onClick}
     >
-      <span>{label}</span>
+      <span className="text-[10px] font-medium leading-tight mb-0.5 opacity-80">{quantity}x</span>
+      
+      {discountPercent > 0 ? (
+        <div className="flex flex-col items-center leading-none">
+           <span className="text-[9px] line-through opacity-60 decoration-current">R$ {originalTotal.toFixed(0)}</span>
+           <span className="text-xs font-bold">R$ {discountedTotal.toFixed(0)}</span>
+        </div>
+      ) : (
+        <span className="text-xs font-bold leading-none">R$ {originalTotal.toFixed(0)}</span>
+      )}
+
       {highlight && (
-        <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-primary rounded-bl-full group-hover:bg-white" />
+        <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-bl-full group-hover:bg-white" />
       )}
     </button>
   );
