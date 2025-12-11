@@ -1,8 +1,23 @@
 import { Play } from "lucide-react";
 import { useState } from "react";
+import { useConfig } from "@/lib/store";
 
 export function VideoPlayer() {
+  const { config } = useConfig();
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Simple check to see if we have a valid video URL to show
+  if (!config.videoUrl) return null;
+
+  // Helper to extract embed ID if user pastes full link (basic support)
+  const getEmbedUrl = (url: string) => {
+    if (url.includes("embed")) return url;
+    if (url.includes("watch?v=")) return url.replace("watch?v=", "embed/");
+    if (url.includes("youtu.be/")) return url.replace("youtu.be/", "www.youtube.com/embed/");
+    return url;
+  };
+
+  const embedUrl = getEmbedUrl(config.videoUrl);
 
   return (
     <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/50 bg-black relative group mb-8">
@@ -24,7 +39,7 @@ export function VideoPlayer() {
         <iframe
           width="100%"
           height="100%"
-          src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+          src={`${embedUrl}?autoplay=1`}
           title="YouTube video player"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

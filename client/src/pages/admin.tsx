@@ -4,14 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Upload } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import type { ChangeEvent } from "react";
 
 export default function AdminPage() {
-  const { config, updateConfig, updateProduct } = useConfig();
+  const { config, updateConfig, updateProduct, updateProductKit } = useConfig();
   const { toast } = useToast();
 
   const handleSave = () => {
@@ -20,6 +20,18 @@ export default function AdminPage() {
       description: "Suas alterações foram aplicadas com sucesso.",
       className: "bg-green-600 text-white border-none",
     });
+  };
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, field: 'profile' | 'product', productId?: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      if (field === 'profile') {
+        updateConfig({ profileImage: objectUrl });
+      } else if (field === 'product' && productId) {
+        updateProduct(productId, { image: objectUrl });
+      }
+    }
   };
 
   return (
@@ -46,34 +58,35 @@ export default function AdminPage() {
         {/* Profile Section */}
         <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle>Perfil</CardTitle>
-            <CardDescription>Informações principais da bio</CardDescription>
+            <CardTitle>Perfil & Video</CardTitle>
+            <CardDescription>Informações principais</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
-              <img 
-                src={config.profileImage} 
-                alt="Profile Preview" 
-                className="w-16 h-16 rounded-full object-cover border border-border"
-              />
-              <div className="flex-1">
-                <Label htmlFor="profile-image-url">URL da Foto de Perfil</Label>
+              <div className="relative group cursor-pointer">
+                <img 
+                  src={config.profileImage} 
+                  alt="Profile Preview" 
+                  className="w-20 h-20 rounded-full object-cover border border-border group-hover:opacity-75 transition-opacity"
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Upload className="w-6 h-6 text-white drop-shadow-md" />
+                </div>
                 <Input 
-                  id="profile-image-url" 
-                  value={config.profileImage} 
-                  onChange={(e) => updateConfig({ profileImage: e.target.value })}
-                  className="mt-1"
+                  type="file" 
+                  accept="image/*"
+                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                  onChange={(e) => handleImageUpload(e, 'profile')}
                 />
               </div>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nome de Exibição</Label>
-              <Input 
-                id="name" 
-                value={config.profileName} 
-                onChange={(e) => updateConfig({ profileName: e.target.value })} 
-              />
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="name">Nome de Exibição</Label>
+                <Input 
+                  id="name" 
+                  value={config.profileName} 
+                  onChange={(e) => updateConfig({ profileName: e.target.value })} 
+                />
+              </div>
             </div>
 
             <div className="grid gap-2">
@@ -85,6 +98,16 @@ export default function AdminPage() {
                 rows={3} 
               />
             </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="video">YouTube Video URL</Label>
+              <Input 
+                id="video" 
+                placeholder="https://youtube.com/..."
+                value={config.videoUrl} 
+                onChange={(e) => updateConfig({ videoUrl: e.target.value })}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -92,12 +115,12 @@ export default function AdminPage() {
         <Card className="border-primary/20 shadow-sm bg-primary/5">
           <CardHeader>
             <CardTitle className="text-primary">Cupom & Ofertas</CardTitle>
-            <CardDescription>Ative descontos globais para todos os produtos</CardDescription>
+            <CardDescription>Desconto global aplicado sobre o preço dos kits</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4">
               <div className="flex items-center justify-between">
-                <Label>Desconto Aplicado ({config.discountPercent}%)</Label>
+                <Label>Porcentagem de Desconto ({config.discountPercent}%)</Label>
                 <span className="text-sm font-bold text-primary">{config.discountPercent}% OFF</span>
               </div>
               <Slider 
@@ -107,70 +130,80 @@ export default function AdminPage() {
                 onValueChange={(vals) => updateConfig({ discountPercent: vals[0] })}
                 className="py-2"
               />
-              <p className="text-xs text-muted-foreground">
-                Ao aumentar a porcentagem, os preços antigos serão riscados e os novos valores com desconto serão destacados automaticamente.
-              </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Products Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-semibold">Produtos</h2>
-            {/* Add product functionality could be here */}
-          </div>
+        <div className="space-y-6">
+          <h2 className="text-lg font-semibold px-1">Produtos & Kits</h2>
           
-          {config.products.map((product, index) => (
+          {config.products.map((product) => (
             <Card key={product.id} className="overflow-hidden border-none shadow-sm">
-              <div className="flex flex-col md:flex-row">
-                <div className="w-full md:w-32 h-32 bg-white p-4 flex items-center justify-center border-b md:border-b-0 md:border-r border-border">
-                  <img src={product.image} alt={product.title} className="max-w-full max-h-full object-contain" />
-                </div>
-                <CardContent className="flex-1 p-4 space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor={`p-${product.id}-name`}>Nome do Produto</Label>
+              <CardHeader className="bg-gray-50/50 pb-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 bg-white rounded-lg border border-border flex items-center justify-center group overflow-hidden">
+                    <img src={product.image} alt="Product" className="w-full h-full object-contain p-1" />
                     <Input 
-                      id={`p-${product.id}-name`} 
+                      type="file" 
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                      onChange={(e) => handleImageUpload(e, 'product', product.id)}
+                    />
+                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <Upload className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 grid gap-2">
+                    <Input 
                       value={product.title} 
                       onChange={(e) => updateProduct(product.id, { title: e.target.value })}
+                      className="font-semibold"
+                      placeholder="Nome do Produto"
                     />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor={`p-${product.id}-desc`}>Descrição Curta</Label>
                     <Input 
-                      id={`p-${product.id}-desc`} 
                       value={product.description} 
                       onChange={(e) => updateProduct(product.id, { description: e.target.value })}
+                      className="text-xs text-muted-foreground h-8"
+                      placeholder="Descrição curta"
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor={`p-${product.id}-price`}>Preço Base (1 un)</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-muted-foreground">R$</span>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
+                  {product.kits.map((kit) => (
+                    <div key={kit.id} className="p-4 grid grid-cols-12 gap-3 items-center hover:bg-gray-50/30 transition-colors">
+                      <div className="col-span-6 md:col-span-5">
+                        <Label className="text-xs text-muted-foreground mb-1 block">Nome do Kit</Label>
                         <Input 
-                          id={`p-${product.id}-price`} 
-                          type="number" 
-                          value={product.basePrice} 
-                          onChange={(e) => updateProduct(product.id, { basePrice: Number(e.target.value) })}
-                          className="pl-9"
+                          value={kit.label} 
+                          onChange={(e) => updateProductKit(product.id, kit.id, { label: e.target.value })}
+                          className="h-8 text-sm"
                         />
                       </div>
-                    </div>
-                    {config.discountPercent > 0 && (
-                      <div className="grid gap-2">
-                        <Label>Com Desconto</Label>
-                        <div className="h-10 px-3 py-2 bg-primary/10 rounded-md text-primary font-bold flex items-center">
-                          R$ {(product.basePrice * (1 - config.discountPercent / 100)).toFixed(2)}
-                        </div>
+                      <div className="col-span-6 md:col-span-4">
+                         <Label className="text-xs text-muted-foreground mb-1 block">Preço (R$)</Label>
+                         <Input 
+                          type="number"
+                          value={kit.price} 
+                          onChange={(e) => updateProductKit(product.id, kit.id, { price: Number(e.target.value) })}
+                          className="h-8 text-sm"
+                        />
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </div>
+                      {config.discountPercent > 0 && (
+                         <div className="col-span-12 md:col-span-3 flex md:flex-col items-center md:items-end justify-between md:justify-center gap-1 md:gap-0 mt-1 md:mt-0">
+                           <span className="text-[10px] text-muted-foreground">Com {config.discountPercent}% OFF:</span>
+                           <span className="text-sm font-bold text-green-600">
+                             R$ {(kit.price * (1 - config.discountPercent / 100)).toFixed(2)}
+                           </span>
+                         </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
