@@ -1,0 +1,37 @@
+import { Play } from "lucide-react";
+import { useState } from "react";
+
+export function VideoPlayer() {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  return (
+    <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/50 bg-black relative group mb-8">
+      {!isPlaying ? (
+        <div 
+          className="absolute inset-0 flex items-center justify-center bg-zinc-900 cursor-pointer"
+          onClick={() => setIsPlaying(true)}
+        >
+          {/* Placeholder Thumbnail Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-black/60 z-10" />
+          <div className="relative z-20 flex flex-col items-center gap-2 transition-transform duration-300 group-hover:scale-105">
+            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl group-hover:bg-white/20 transition-all">
+              <Play className="w-6 h-6 text-white ml-1 fill-white" />
+            </div>
+            <span className="text-white font-medium text-sm tracking-wide">Watch My Story</span>
+          </div>
+        </div>
+      ) : (
+        <iframe
+          width="100%"
+          height="100%"
+          src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0"
+        />
+      )}
+    </div>
+  );
+}
