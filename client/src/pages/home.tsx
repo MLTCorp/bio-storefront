@@ -3,8 +3,22 @@ import { VideoPlayer } from "@/components/video-player";
 import { ProductList } from "@/components/product-list";
 import { Settings } from "lucide-react";
 import { Link } from "wouter";
+import { useConfig } from "@/lib/store";
 
 export default function Home() {
+  const { isLoading } = useConfig();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-12">
       {/* Mobile container constraint */}
@@ -25,11 +39,9 @@ export default function Home() {
             <span>•</span>
             <a href="#" className="hover:text-primary transition-colors">Terms</a>
             <span>•</span>
-            <Link href="/config">
-              <a className="hover:text-primary transition-colors flex items-center gap-1">
-                <Settings className="w-3 h-3" />
-                Config
-              </a>
+            <Link href="/config" className="hover:text-primary transition-colors flex items-center gap-1">
+              <Settings className="w-3 h-3" />
+              Config
             </Link>
           </div>
         </footer>

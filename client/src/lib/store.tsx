@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Default Images
 import defaultProfile from "@assets/Imagem_do_WhatsApp_de_2025-03-28_à(s)_14.01.21_f254eb2f_1765496582626.jpg";
@@ -7,9 +7,9 @@ import product2Image from "@assets/SECAPS_CHÁ___1_POTE_1765496582614.png";
 
 export interface ProductKit {
   id: string;
-  label: string; // e.g. "1 Pote", "3 Frascos"
-  price: number; // The base price for this specific kit
-  link: string; // Checkout URL for this specific kit
+  label: string;
+  price: number;
+  link: string;
 }
 
 export interface Product {
@@ -17,7 +17,7 @@ export interface Product {
   title: string;
   description: string;
   image: string;
-  imageScale: number; // Scale percentage (e.g., 100, 110, 120)
+  imageScale: number;
   kits: ProductKit[];
 }
 
@@ -25,12 +25,12 @@ export interface AppConfig {
   profileName: string;
   profileBio: string;
   profileImage: string;
-  profileImageScale: number; // Scale percentage
+  profileImageScale: number;
   videoUrl: string; 
-  whatsappNumber: string; // e.g. "5511999999999"
-  whatsappMessage: string; // Default message
+  whatsappNumber: string;
+  whatsappMessage: string;
   couponCode: string;
-  discountPercent: number; // 0 to 100
+  discountPercent: number;
   products: Product[];
 }
 
@@ -76,15 +76,62 @@ const defaultConfig: AppConfig = {
 
 interface ConfigContextType {
   config: AppConfig;
+  isLoading: boolean;
   updateConfig: (newConfig: Partial<AppConfig>) => void;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   updateProductKit: (productId: string, kitId: string, updates: Partial<ProductKit>) => void;
+  saveConfig: () => Promise<void>;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig>(defaultConfig);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch config from API on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const data = await response.json();
+          setConfig(data);
+        } else {
+          // If no config exists (404), use default and save it
+          if (response.status === 404) {
+            await saveConfigToAPI(defaultConfig);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch config:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
+  const saveConfigToAPI = async (configToSave: AppConfig) => {
+    try {
+      const response = await fetch('/api/config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configToSave),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save configuration');
+      }
+      
+      const updated = await response.json();
+      setConfig(updated);
+    } catch (error) {
+      console.error('Error saving config:', error);
+      throw error;
+    }
+  };
 
   const updateConfig = (newConfig: Partial<AppConfig>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
@@ -110,8 +157,12 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const saveConfig = async () => {
+    await saveConfigToAPI(config);
+  };
+
   return (
-    <ConfigContext.Provider value={{ config, updateConfig, updateProduct, updateProductKit }}>
+    <ConfigContext.Provider value={{ config, isLoading, updateConfig, updateProduct, updateProductKit, saveConfig }}>
       {children}
     </ConfigContext.Provider>
   );

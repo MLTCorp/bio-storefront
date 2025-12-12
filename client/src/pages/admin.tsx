@@ -11,16 +11,26 @@ import { useToast } from "@/hooks/use-toast";
 import type { ChangeEvent } from "react";
 
 export default function AdminPage() {
-  const { config, updateConfig, updateProduct, updateProductKit } = useConfig();
+  const { config, updateConfig, updateProduct, updateProductKit, saveConfig } = useConfig();
   const { toast } = useToast();
 
-  const handleSave = () => {
-    toast({
-      title: "Configurações salvas!",
-      description: "Suas alterações foram aplicadas com sucesso.",
-      className: "bg-green-600 text-white border-none",
-      duration: 1500, // Reduced duration to 1.5s
-    });
+  const handleSave = async () => {
+    try {
+      await saveConfig();
+      toast({
+        title: "Configurações salvas!",
+        description: "Suas alterações foram aplicadas com sucesso.",
+        className: "bg-green-600 text-white border-none",
+        duration: 1500,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as configurações.",
+        className: "bg-red-600 text-white border-none",
+        duration: 3000,
+      });
+    }
   };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, field: 'profile' | 'product', productId?: string) => {
