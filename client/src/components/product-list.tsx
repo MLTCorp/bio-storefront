@@ -1,38 +1,57 @@
 import { useConfig } from "@/lib/store";
-import { SplitButton } from "./split-button";
+import { ShirtParallaxCard } from "@/components/ui/shirt-parallax-card";
 import type { ReactNode } from "react";
+import { motion } from "framer-motion";
 
 export function ProductList() {
   const { config } = useConfig();
 
-  // Calculate total number of action buttons across all products to coordinate the animation loop
-  const totalButtons = config.products.reduce((acc, product) => acc + product.kits.length, 0);
+  const container = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-  let currentGlobalIndex = 0;
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 50,
+        damping: 15
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
       <Section title="Ofertas Especiais">
-        {config.products.map(product => {
-          // Capture the start index for this product's kits
-          const startIndex = currentGlobalIndex;
-          // Increment the global counter for the next product
-          currentGlobalIndex += product.kits.length;
-
-          return (
-            <SplitButton 
-              key={product.id}
-              title={product.title} 
-              description={product.description}
-              image={product.image}
-              imageScale={product.imageScale}
-              kits={product.kits}
-              discountPercent={config.discountPercent}
-              startIndex={startIndex}
-              totalButtons={totalButtons}
-            />
-          );
-        })}
+        <motion.div
+          className="space-y-4"
+          variants={container}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          {config.products.map(product => (
+            <motion.div key={product.id} variants={item}>
+              <ShirtParallaxCard
+                title={product.title}
+                description={product.description}
+                imageUrl={product.image}
+                imageScale={product.imageScale}
+                kits={product.kits}
+                discountPercent={product.discountPercent ?? config.discountPercent}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
       </Section>
     </div>
   );
@@ -45,7 +64,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
         <h2 className="text-sm font-bold text-foreground/80 uppercase tracking-wider">{title}</h2>
         <div className="h-px bg-border flex-1" />
       </div>
-      <div className="space-y-2 px-2">
+      <div className="px-2">
         {children}
       </div>
     </div>

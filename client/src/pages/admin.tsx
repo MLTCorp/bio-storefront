@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useConfig } from "@/lib/store";
+import { uploadImage } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Save, Upload, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, Save, Upload, Link as LinkIcon, Percent, Flame, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { ChangeEvent } from "react";
@@ -13,6 +16,7 @@ import type { ChangeEvent } from "react";
 export default function AdminPage() {
   const { config, updateConfig, updateProduct, updateProductKit, saveConfig } = useConfig();
   const { toast } = useToast();
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
 
   const handleSave = async () => {
     try {
@@ -33,14 +37,46 @@ export default function AdminPage() {
     }
   };
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>, field: 'profile' | 'product', productId?: string) => {
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, field: 'profile' | 'product', productId?: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      if (field === 'profile') {
-        updateConfig({ profileImage: objectUrl });
-      } else if (field === 'product' && productId) {
-        updateProduct(productId, { image: objectUrl });
+      const uploadKey = field === 'profile' ? 'profile' : `product-${productId}`;
+      setUploadingImage(uploadKey);
+
+      try {
+        const folder = field === 'profile' ? 'profile' : 'products';
+        const publicUrl = await uploadImage(file, folder);
+
+        if (publicUrl) {
+          if (field === 'profile') {
+            updateConfig({ profileImage: publicUrl });
+          } else if (field === 'product' && productId) {
+            updateProduct(productId, { image: publicUrl });
+          }
+          toast({
+            title: "Imagem enviada!",
+            description: "A imagem foi salva com sucesso.",
+            className: "bg-green-600 text-white border-none",
+            duration: 1500,
+          });
+        } else {
+          toast({
+            title: "Erro no upload",
+            description: "Não foi possível enviar a imagem.",
+            className: "bg-red-600 text-white border-none",
+            duration: 3000,
+          });
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast({
+          title: "Erro no upload",
+          description: "Ocorreu um erro ao enviar a imagem.",
+          className: "bg-red-600 text-white border-none",
+          duration: 3000,
+        });
+      } finally {
+        setUploadingImage(null);
       }
     }
   };
@@ -82,14 +118,19 @@ export default function AdminPage() {
                     className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
                     style={{ transform: `scale(${config.profileImageScale / 100})` }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Upload className="w-6 h-6 text-white drop-shadow-md" />
+                  <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${uploadingImage === 'profile' ? 'opacity-100 bg-black/50' : 'opacity-0 group-hover:opacity-100'}`}>
+                    {uploadingImage === 'profile' ? (
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                      <Upload className="w-6 h-6 text-white drop-shadow-md" />
+                    )}
                   </div>
-                  <Input 
-                    type="file" 
+                  <Input
+                    type="file"
                     accept="image/*"
-                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                    className="absolute inset-0 opacity-0 cursor-pointer"
                     onChange={(e) => handleImageUpload(e, 'profile')}
+                    disabled={uploadingImage === 'profile'}
                   />
                 </div>
                 <div className="w-full space-y-1">
@@ -158,48 +199,83 @@ export default function AdminPage() {
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-center gap-2">
                     <div className="relative w-20 h-20 bg-white rounded-lg border border-border flex items-center justify-center group overflow-hidden">
-                      <img 
-                        src={product.image} 
-                        alt="Product" 
-                        className="max-w-full max-h-full object-contain p-1 transition-transform" 
+                      <img
+                        src={product.image}
+                        alt="Product"
+                        className="max-w-full max-h-full object-contain p-1 transition-transform"
                         style={{ transform: `scale(${product.imageScale / 100})` }}
                       />
-                      <Input 
-                        type="file" 
+                      <Input
+                        type="file"
                         accept="image/*"
-                        className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         onChange={(e) => handleImageUpload(e, 'product', product.id)}
+                        disabled={uploadingImage === `product-${product.id}`}
                       />
-                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <Upload className="w-4 h-4 text-white" />
+                      <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity pointer-events-none ${uploadingImage === `product-${product.id}` ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        {uploadingImage === `product-${product.id}` ? (
+                          <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 text-white" />
+                        )}
                       </div>
                     </div>
                     <div className="w-full space-y-1">
                       <Label className="text-[10px] text-muted-foreground text-center block">Zoom</Label>
-                      <Slider 
-                         defaultValue={[product.imageScale]} 
-                         min={50} 
-                         max={200} 
-                         step={5}
+                      <Slider
+                         defaultValue={[product.imageScale]}
+                         min={50}
+                         max={400}
+                         step={10}
                          onValueChange={(vals) => updateProduct(product.id, { imageScale: vals[0] })}
                          className="w-20"
                       />
                     </div>
                   </div>
-                  
-                  <div className="flex-1 grid gap-2">
-                    <Input 
-                      value={product.title} 
+
+                  <div className="flex-1 grid gap-3">
+                    <Input
+                      value={product.title}
                       onChange={(e) => updateProduct(product.id, { title: e.target.value })}
                       className="font-semibold"
                       placeholder="Nome do Produto"
                     />
-                    <Input 
-                      value={product.description} 
+                    <Input
+                      value={product.description}
                       onChange={(e) => updateProduct(product.id, { description: e.target.value })}
                       className="text-xs text-muted-foreground h-8"
                       placeholder="Descrição curta"
                     />
+
+                    {/* Discount Toggle */}
+                    <div className="flex items-center gap-3 p-2 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-100">
+                      <div className="flex items-center gap-2 flex-1">
+                        <Flame className={`w-4 h-4 ${product.discountPercent > 0 ? 'text-orange-500' : 'text-gray-300'}`} />
+                        <div className="flex flex-col">
+                          <Label className="text-xs font-medium">Desconto Ativo</Label>
+                          <span className="text-[10px] text-muted-foreground">Oferta do dia</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={product.discountPercent > 0}
+                          onCheckedChange={(checked) => updateProduct(product.id, { discountPercent: checked ? 10 : 0 })}
+                        />
+                        {product.discountPercent > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Input
+                              type="number"
+                              value={product.discountPercent}
+                              onChange={(e) => updateProduct(product.id, { discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) })}
+                              className="w-14 h-7 text-xs text-center font-bold"
+                              min={0}
+                              max={100}
+                            />
+                            <Percent className="w-3 h-3 text-orange-500" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
@@ -239,11 +315,11 @@ export default function AdminPage() {
                          </div>
                       </div>
                       
-                      {config.discountPercent > 0 && (
+                      {product.discountPercent > 0 && (
                          <div className="col-span-12 md:col-span-3 flex md:flex-col items-center md:items-end justify-between md:justify-center gap-1 md:gap-0 mt-1 md:mt-0">
-                           <span className="text-[10px] text-muted-foreground">Com {config.discountPercent}% OFF:</span>
+                           <span className="text-[10px] text-muted-foreground">Com {product.discountPercent}% OFF:</span>
                            <span className="text-sm font-bold text-green-600">
-                             R$ {(kit.price * (1 - config.discountPercent / 100)).toFixed(2)}
+                             R$ {(kit.price * (1 - product.discountPercent / 100)).toFixed(2)}
                            </span>
                          </div>
                       )}

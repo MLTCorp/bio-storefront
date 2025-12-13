@@ -25,6 +25,9 @@ export async function registerRoutes(
   // Update bio configuration
   app.patch("/api/config", async (req, res) => {
     try {
+      // Log the received products to debug discountPercent
+      console.log("Received products:", JSON.stringify(req.body.products?.map((p: any) => ({ id: p.id, discountPercent: p.discountPercent }))));
+
       const validated = insertBioConfigSchema.parse(req.body);
       const updated = await storage.updateBioConfig(validated);
       res.json(updated);

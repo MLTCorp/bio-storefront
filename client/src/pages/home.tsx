@@ -4,13 +4,16 @@ import { ProductList } from "@/components/product-list";
 import { Settings } from "lucide-react";
 import { Link } from "wouter";
 import { useConfig } from "@/lib/store";
+import { motion } from "framer-motion";
+
+import { BackgroundEffect } from "@/components/background-effect";
 
 export default function Home() {
   const { isLoading } = useConfig();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-pink-50">
         <div className="text-center space-y-2">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="text-sm text-muted-foreground">Carregando...</p>
@@ -19,20 +22,52 @@ export default function Home() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background pb-12">
-      {/* Mobile container constraint */}
-      <main className="max-w-[480px] mx-auto min-h-screen bg-white/50 shadow-2xl shadow-black/5 px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] md:border border-white/50 backdrop-blur-3xl relative">
-        
-        <ProfileHeader />
-        
-        <VideoPlayer />
-        
-        <div className="mb-6">
-          <ProductList />
-        </div>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.1
+      }
+    }
+  };
 
-        <footer className="mt-12 text-center space-y-4 opacity-60">
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  // Fallback to ensure visibility if something goes wrong with Framer Motion
+  const isReducedMotion = false; // Could hook into useReducedMotion() if added later
+
+  return (
+    <div className="min-h-screen pb-12 transition-colors duration-500 relative">
+      <BackgroundEffect />
+
+      {/* Mobile container constraint */}
+      <motion.main
+        className="max-w-[480px] mx-auto min-h-screen bg-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] md:border border-white/50 backdrop-blur-2xl relative overflow-hidden ring-1 ring-white/60"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        style={{ opacity: 1 }} // Force opacity 1 via style as fallback
+      >
+        {/* Decorative background blurs inside the card are removed as we have global background now */}
+
+        <motion.div variants={itemVariants}>
+          <ProfileHeader />
+        </motion.div>
+
+        <motion.div variants={itemVariants}>
+          <VideoPlayer />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <ProductList />
+        </motion.div>
+
+        <motion.footer variants={itemVariants} className="mt-12 text-center space-y-4 opacity-60">
           <p className="text-xs text-muted-foreground">© 2025 Tania Vi. All rights reserved.</p>
           <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground font-medium tracking-wide uppercase">
             <a href="#" className="hover:text-primary transition-colors">Privacy</a>
@@ -44,8 +79,8 @@ export default function Home() {
               Config
             </Link>
           </div>
-        </footer>
-      </main>
+        </motion.footer>
+      </motion.main>
     </div>
   );
 }

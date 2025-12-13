@@ -32,6 +32,7 @@ export const productSchema = z.object({
   description: z.string(),
   image: z.string(),
   imageScale: z.number(),
+  discountPercent: z.number().optional().default(0),
   kits: z.array(productKitSchema),
 });
 

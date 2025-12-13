@@ -18,6 +18,7 @@ export interface Product {
   description: string;
   image: string;
   imageScale: number;
+  discountPercent: number;
   kits: ProductKit[];
 }
 
@@ -26,7 +27,7 @@ export interface AppConfig {
   profileBio: string;
   profileImage: string;
   profileImageScale: number;
-  videoUrl: string; 
+  videoUrl: string;
   whatsappNumber: string;
   whatsappMessage: string;
   couponCode: string;
@@ -41,6 +42,7 @@ const defaultProducts: Product[] = [
     description: 'Energia, Foco e Força.',
     image: product1Image,
     imageScale: 110,
+    discountPercent: 0,
     kits: [
       { id: 'k1-1', label: '1 Pote', price: 97.00, link: '#' },
       { id: 'k1-2', label: '3 Potes', price: 197.00, link: '#' },
@@ -53,6 +55,7 @@ const defaultProducts: Product[] = [
     description: 'Chá misto solúvel.',
     image: product2Image,
     imageScale: 100,
+    discountPercent: 0,
     kits: [
       { id: 'k2-1', label: '1 Pote', price: 87.00, link: '#' },
       { id: 'k2-2', label: '3 Potes', price: 177.00, link: '#' },
@@ -66,7 +69,7 @@ const defaultConfig: AppConfig = {
   profileBio: "Wellness & Lifestyle Creator ✨\nHelping you live your best healthy life.",
   profileImage: defaultProfile,
   profileImageScale: 100,
-  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", 
+  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
   whatsappNumber: "5511999999999",
   whatsappMessage: "Olá, gostaria de saber mais sobre os produtos!",
   couponCode: "BEMVINDO",
@@ -89,44 +92,42 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig>(defaultConfig);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Ensure all products have discountPercent field
+  const normalizeProducts = (products: Product[]): Product[] => {
+    return products.map(p => ({
+      ...p,
+      discountPercent: p.discountPercent ?? 0,
+    }));
+  };
+
   // Fetch config from API on mount
   useEffect(() => {
-    const fetchConfig = async () => {
-      try {
-        const response = await fetch('/api/config');
-        if (response.ok) {
-          const data = await response.json();
-          setConfig(data);
-        } else {
-          // If no config exists (404), use default and save it
-          if (response.status === 404) {
-            await saveConfigToAPI(defaultConfig);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch config:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchConfig();
+    // For this static demo, we skip fetching from the API to avoid errors.
+    // In a real full-stack deployment, we would fetch from '/api/config'.
+    setIsLoading(false);
   }, []);
 
   const saveConfigToAPI = async (configToSave: AppConfig) => {
     try {
+      // Debug: log products being saved
+      console.log('Saving products:', JSON.stringify(configToSave.products.map(p => ({ id: p.id, discountPercent: p.discountPercent }))));
+
       const response = await fetch('/api/config', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(configToSave),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to save configuration');
       }
-      
+
       const updated = await response.json();
-      setConfig(updated);
+      // Normalize products to ensure discountPercent field exists
+      setConfig({
+        ...updated,
+        products: normalizeProducts(updated.products),
+      });
     } catch (error) {
       console.error('Error saving config:', error);
       throw error;

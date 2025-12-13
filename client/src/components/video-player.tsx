@@ -22,17 +22,22 @@ export function VideoPlayer() {
   return (
     <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/50 bg-black relative group mb-8">
       {!isPlaying ? (
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center bg-zinc-900 cursor-pointer"
           onClick={() => setIsPlaying(true)}
         >
-          {/* Placeholder Thumbnail Effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-black/60 z-10" />
-          <div className="relative z-20 flex flex-col items-center gap-2 transition-transform duration-300 group-hover:scale-105">
-            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl group-hover:bg-white/20 transition-all">
-              <Play className="w-6 h-6 text-white ml-1 fill-white" />
+          {/* Enhanced Thumbnail Background with shimmer */}
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-black/80 to-purple-900/40 z-10" />
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-10 brightness-100 contrast-150 mix-blend-overlay" />
+
+          <div className="relative z-20 flex flex-col items-center gap-4 transition-transform duration-500 group-hover:scale-105">
+            <div className="relative">
+              <div className="absolute -inset-4 bg-white/20 rounded-full blur-xl animate-pulse" />
+              <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-2xl group-hover:bg-white/25 transition-all duration-300 ring-1 ring-white/10">
+                <Play className="w-8 h-8 text-white ml-1 fill-white shadow-sm" />
+              </div>
             </div>
-            <span className="text-white font-medium text-sm tracking-wide">Watch My Story</span>
+            <span className="text-white font-medium text-sm tracking-widest uppercase opacity-90 group-hover:opacity-100 transition-opacity">Watch My Story</span>
           </div>
         </div>
       ) : (

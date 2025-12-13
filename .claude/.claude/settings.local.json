@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run dev:*)",
+      "Skill(uazapi-whatsapp-skill)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "Bash(npx tsc:*)",
+      "Bash(npx shadcn@latest add switch:*)",
+      "Bash(timeout /T 2 /NOBREAK)",
+      "Bash(npx shadcn@latest add checkbox:*)",
+      "mcp__supabase__execute_sql",
+      "Bash(ls:*)",
+      "mcp__supabase__generate_typescript_types",
+      "Bash(npx shadcn@latest add:*)",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__directory_tree",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout /T 5 /NOBREAK)",
+      "WebFetch(domain:mltcorp.uazapi.com)",
+      "Bash(curl:*)",
+      "mcp__filesystem__read_text_file",
+      "mcp__supabase__list_projects",
+      "Bash(python -m json.tool:*)",
+      "Bash(del typesdatabase.types.ts)",
+      "Bash(move typesdatabase.types.ts typessupabase.ts)",
+      "Bash(del temp_message.json)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase",
+    "@21st-dev/magic",
+    "@jpisnice/shadcn-ui-mcp-server",
+    "notionApi",
+    "filesystem"
+  ]
+}
