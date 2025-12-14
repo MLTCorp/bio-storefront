@@ -19,11 +19,13 @@ export type Database = {
           coupon_code: string
           discount_percent: number
           id: number
+          links: Json
           products: Json
           profile_bio: string
           profile_image: string
           profile_image_scale: number
           profile_name: string
+          show_video: boolean
           updated_at: string
           video_url: string
           whatsapp_message: string
@@ -33,11 +35,13 @@ export type Database = {
           coupon_code?: string
           discount_percent?: number
           id?: number
+          links?: Json
           products?: Json
           profile_bio: string
           profile_image: string
           profile_image_scale?: number
           profile_name: string
+          show_video?: boolean
           updated_at?: string
           video_url?: string
           whatsapp_message: string
@@ -47,11 +51,13 @@ export type Database = {
           coupon_code?: string
           discount_percent?: number
           id?: number
+          links?: Json
           products?: Json
           profile_bio?: string
           profile_image?: string
           profile_image_scale?: number
           profile_name?: string
+          show_video?: boolean
           updated_at?: string
           video_url?: string
           whatsapp_message?: string
@@ -59,22 +65,138 @@ export type Database = {
         }
         Relationships: []
       }
+      stores: {
+        Row: {
+          coupon_code: string | null
+          created_at: string | null
+          discount_percent: number | null
+          id: number
+          is_active: boolean | null
+          links: Json | null
+          products: Json | null
+          profile_bio: string | null
+          profile_image: string | null
+          profile_image_scale: number | null
+          profile_name: string
+          show_video: boolean | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string
+          video_url: string | null
+          whatsapp_message: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          coupon_code?: string | null
+          created_at?: string | null
+          discount_percent?: number | null
+          id?: number
+          is_active?: boolean | null
+          links?: Json | null
+          products?: Json | null
+          profile_bio?: string | null
+          profile_image?: string | null
+          profile_image_scale?: number | null
+          profile_name?: string
+          show_video?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username: string
+          video_url?: string | null
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          coupon_code?: string | null
+          created_at?: string | null
+          discount_percent?: number | null
+          id?: number
+          is_active?: boolean | null
+          links?: Json | null
+          products?: Json | null
+          profile_bio?: string | null
+          profile_image?: string | null
+          profile_image_scale?: number | null
+          profile_name?: string
+          show_video?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string
+          video_url?: string | null
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          config: Json
+          created_at: string | null
+          description: string | null
+          id: number
+          is_active: boolean | null
+          name: string
+          thumbnail: string | null
+        }
+        Insert: {
+          config: Json
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          is_active?: boolean | null
+          name: string
+          thumbnail?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          is_active?: boolean | null
+          name?: string
+          thumbnail?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
+          avatar_url: string | null
+          clerk_id: string | null
           created_at: string | null
+          email: string | null
           id: string
+          name: string | null
           password: string
           username: string
         }
         Insert: {
+          avatar_url?: string | null
+          clerk_id?: string | null
           created_at?: string | null
+          email?: string | null
           id?: string
+          name?: string | null
           password: string
           username: string
         }
         Update: {
+          avatar_url?: string | null
+          clerk_id?: string | null
           created_at?: string | null
+          email?: string | null
           id?: string
+          name?: string | null
           password?: string
           username?: string
         }
@@ -231,7 +353,16 @@ export interface Product {
   kits: ProductKit[]
 }
 
+// Helper type for Social Links
+export interface SocialLink {
+  id: string
+  label: string
+  url: string
+  icon?: string
+}
+
 // Typed BioConfig with proper products typing
-export interface BioConfig extends Omit<Tables<'bio_config'>, 'products'> {
+export interface BioConfig extends Omit<Tables<'bio_config'>, 'products' | 'links'> {
   products: Product[]
+  links: SocialLink[]
 }

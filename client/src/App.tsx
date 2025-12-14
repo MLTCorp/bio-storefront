@@ -7,12 +7,28 @@ import { ConfigProvider } from "@/lib/store";
 import Home from "@/pages/home";
 import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
+import SignInPage from "@/pages/sign-in";
+import SignUpPage from "@/pages/sign-up";
+import CheckoutSuccessPage from "@/pages/checkout-success";
+import CheckoutCancelPage from "@/pages/checkout-cancel";
+import ProdutoPage from "@/pages/produto";
+import OnboardingPage from "@/pages/onboarding";
+import DashboardPage from "@/pages/dashboard";
+import StorePage from "@/pages/store";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/config" component={AdminPage} />
+      <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/produto/:id" component={ProdutoPage} />
+      <Route path="/sign-in" component={SignInPage} />
+      <Route path="/sign-up" component={SignUpPage} />
+      <Route path="/checkout/success" component={CheckoutSuccessPage} />
+      <Route path="/checkout/cancel" component={CheckoutCancelPage} />
+      <Route path="/:username" component={StorePage} />
       <Route component={NotFound} />
     </Switch>
   );

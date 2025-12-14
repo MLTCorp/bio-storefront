@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database, BioConfig, Product } from '@shared/supabase.types';
+import type { Database, BioConfig, Product, SocialLink } from '@shared/supabase.types';
 
 // These will be injected at build time or fetched from an endpoint
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://yybxbkzssbzlqossagpv.supabase.co';
@@ -23,7 +23,8 @@ export async function getBioConfig(): Promise<BioConfig | null> {
 
   return {
     ...data,
-    products: data.products as unknown as Product[],
+    products: (data.products || []) as unknown as Product[],
+    links: (data.links || []) as unknown as SocialLink[],
   };
 }
 
@@ -81,7 +82,8 @@ export async function updateBioConfig(config: Partial<BioConfig>): Promise<BioCo
 
     return {
       ...data,
-      products: data.products as unknown as Product[],
+      products: (data.products || []) as unknown as Product[],
+      links: (data.links || []) as unknown as SocialLink[],
     };
   } else {
     // Insert new config
@@ -98,7 +100,8 @@ export async function updateBioConfig(config: Partial<BioConfig>): Promise<BioCo
 
     return {
       ...data,
-      products: data.products as unknown as Product[],
+      products: (data.products || []) as unknown as Product[],
+      links: (data.links || []) as unknown as SocialLink[],
     };
   }
 }

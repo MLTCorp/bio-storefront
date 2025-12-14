@@ -42,6 +42,7 @@ export function ProductList() {
           {config.products.map(product => (
             <motion.div key={product.id} variants={item}>
               <ShirtParallaxCard
+                productId={product.id}
                 title={product.title}
                 description={product.description}
                 imageUrl={product.image}
