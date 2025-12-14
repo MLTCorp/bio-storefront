@@ -38,6 +38,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/lib/supabase";
 import { KitLinksModal } from "@/components/kit-links-modal";
+import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import type { ChangeEvent } from "react";
 import type { ProductKit } from "@/lib/store";
 
@@ -75,6 +76,26 @@ export default function DashboardPage() {
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [linksModalProduct, setLinksModalProduct] = useState<any | null>(null);
+  const [generatingAI, setGeneratingAI] = useState<string | null>(null);
+
+  // Placeholder for AI image generation - will be implemented with actual AI service
+  const handleAIGenerate = async (type: "profile" | "video-thumbnail" | "product", productId?: string) => {
+    const key = type === "product" ? `product-${productId}` : type;
+    setGeneratingAI(key);
+
+    // TODO: Implement actual AI image generation
+    // For now, show a toast message
+    toast({
+      title: "Em breve!",
+      description: "Geração de imagens com IA estará disponível em breve.",
+      className: "bg-purple-600 text-white border-none",
+      duration: 3000,
+    });
+
+    setTimeout(() => {
+      setGeneratingAI(null);
+    }, 1500);
+  };
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -357,41 +378,43 @@ export default function DashboardPage() {
                   <CardDescription>Informações principais e WhatsApp</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex items-center gap-6">
-                    <div className="relative group cursor-pointer flex flex-col items-center gap-2">
-                      <div className="relative w-20 h-20 rounded-full border border-border overflow-hidden">
-                        {store.profile_image ? (
-                          <img
-                            src={store.profile_image}
-                            alt="Profile"
-                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
-                            style={{ transform: `scale(${store.profile_image_scale / 100})` }}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-xl font-bold text-primary">
-                            {store.profile_name.charAt(0)}
-                          </div>
-                        )}
-                        <div
-                          className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-                            uploadingImage === "profile"
-                              ? "opacity-100 bg-black/50"
-                              : "opacity-0 group-hover:opacity-100"
-                          }`}
-                        >
-                          {uploadingImage === "profile" ? (
-                            <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  <div className="flex items-start gap-6">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="relative group cursor-pointer">
+                        <div className="relative w-20 h-20 rounded-full border border-border overflow-hidden">
+                          {store.profile_image ? (
+                            <img
+                              src={store.profile_image}
+                              alt="Profile"
+                              className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                              style={{ transform: `scale(${store.profile_image_scale / 100})` }}
+                            />
                           ) : (
-                            <Upload className="w-6 h-6 text-white drop-shadow-md" />
+                            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-xl font-bold text-primary">
+                              {store.profile_name.charAt(0)}
+                            </div>
                           )}
+                          <div
+                            className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                              uploadingImage === "profile"
+                                ? "opacity-100 bg-black/50"
+                                : "opacity-0 group-hover:opacity-100"
+                            }`}
+                          >
+                            {uploadingImage === "profile" ? (
+                              <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            ) : (
+                              <Upload className="w-6 h-6 text-white drop-shadow-md" />
+                            )}
+                          </div>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            onChange={(e) => handleImageUpload(e, "profile")}
+                            disabled={uploadingImage === "profile"}
+                          />
                         </div>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => handleImageUpload(e, "profile")}
-                          disabled={uploadingImage === "profile"}
-                        />
                       </div>
                       <div className="w-full space-y-1">
                         <Label className="text-[10px] text-muted-foreground text-center block">
@@ -408,6 +431,13 @@ export default function DashboardPage() {
                           className="w-20"
                         />
                       </div>
+                      <AnimatedGenerateButton
+                        labelIdle="Gerar com IA"
+                        labelActive="Gerando..."
+                        generating={generatingAI === "profile"}
+                        onClick={() => handleAIGenerate("profile")}
+                        highlightHueDeg={280}
+                      />
                     </div>
 
                     <div className="flex-1 space-y-4">
@@ -440,7 +470,16 @@ export default function DashboardPage() {
                       rows={3}
                     />
                   </div>
+                </CardContent>
+              </Card>
 
+              {/* Video Section */}
+              <Card className="border-none shadow-sm">
+                <CardHeader>
+                  <CardTitle>Vídeo</CardTitle>
+                  <CardDescription>Vídeo de apresentação da sua página</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
                   <div className="grid gap-2">
                     <Label htmlFor="video">YouTube Video URL</Label>
                     <Input
@@ -454,60 +493,69 @@ export default function DashboardPage() {
                   {/* Video Thumbnail Upload */}
                   <div className="grid gap-2">
                     <Label>Capa do Vídeo</Label>
-                    <div className="flex items-center gap-4">
-                      <div className="relative w-32 h-20 bg-gray-100 rounded-lg border border-border overflow-hidden group cursor-pointer">
-                        {store.video_thumbnail ? (
-                          <img
-                            src={store.video_thumbnail}
-                            alt="Video thumbnail"
-                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                            <Video className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
-                        <div
-                          className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-                            uploadingImage === "video-thumbnail"
-                              ? "opacity-100 bg-black/50"
-                              : "opacity-0 group-hover:opacity-100 bg-black/30"
-                          }`}
-                        >
-                          {uploadingImage === "video-thumbnail" ? (
-                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    <div className="flex items-start gap-4">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="relative w-32 h-20 bg-gray-100 rounded-lg border border-border overflow-hidden group cursor-pointer">
+                          {store.video_thumbnail ? (
+                            <img
+                              src={store.video_thumbnail}
+                              alt="Video thumbnail"
+                              className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                            />
                           ) : (
-                            <Upload className="w-5 h-5 text-white drop-shadow-md" />
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                              <Video className="w-6 h-6 text-gray-400" />
+                            </div>
                           )}
-                        </div>
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setUploadingImage("video-thumbnail");
-                            try {
-                              const publicUrl = await uploadImage(file, "profile");
-                              if (publicUrl) {
-                                updateStore({ video_thumbnail: publicUrl });
+                          <div
+                            className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                              uploadingImage === "video-thumbnail"
+                                ? "opacity-100 bg-black/50"
+                                : "opacity-0 group-hover:opacity-100 bg-black/30"
+                            }`}
+                          >
+                            {uploadingImage === "video-thumbnail" ? (
+                              <Loader2 className="w-5 h-5 text-white animate-spin" />
+                            ) : (
+                              <Upload className="w-5 h-5 text-white drop-shadow-md" />
+                            )}
+                          </div>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setUploadingImage("video-thumbnail");
+                              try {
+                                const publicUrl = await uploadImage(file, "profile");
+                                if (publicUrl) {
+                                  updateStore({ video_thumbnail: publicUrl });
+                                  toast({
+                                    title: "Capa enviada!",
+                                    className: "bg-green-600 text-white border-none",
+                                    duration: 1500,
+                                  });
+                                }
+                              } catch (error) {
                                 toast({
-                                  title: "Capa enviada!",
-                                  className: "bg-green-600 text-white border-none",
-                                  duration: 1500,
+                                  title: "Erro no upload",
+                                  className: "bg-red-600 text-white border-none",
                                 });
+                              } finally {
+                                setUploadingImage(null);
                               }
-                            } catch (error) {
-                              toast({
-                                title: "Erro no upload",
-                                className: "bg-red-600 text-white border-none",
-                              });
-                            } finally {
-                              setUploadingImage(null);
-                            }
-                          }}
-                          disabled={uploadingImage === "video-thumbnail"}
+                            }}
+                            disabled={uploadingImage === "video-thumbnail"}
+                          />
+                        </div>
+                        <AnimatedGenerateButton
+                          labelIdle="Gerar Capa"
+                          labelActive="Gerando..."
+                          generating={generatingAI === "video-thumbnail"}
+                          onClick={() => handleAIGenerate("video-thumbnail")}
+                          highlightHueDeg={200}
                         />
                       </div>
                       <div className="flex-1">
@@ -720,6 +768,13 @@ export default function DashboardPage() {
                               className="w-20"
                             />
                           </div>
+                          <AnimatedGenerateButton
+                            labelIdle="Gerar com IA"
+                            labelActive="Gerando..."
+                            generating={generatingAI === `product-${product.id}`}
+                            onClick={() => handleAIGenerate("product", product.id)}
+                            highlightHueDeg={160}
+                          />
                         </div>
 
                         <div className="flex-1 grid gap-3">
