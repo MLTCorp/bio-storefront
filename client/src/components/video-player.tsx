@@ -1,13 +1,16 @@
 import { Play } from "lucide-react";
 import { useState } from "react";
-import { useConfig } from "@/lib/store";
 
-export function VideoPlayer() {
-  const { config } = useConfig();
+interface VideoPlayerProps {
+  videoUrl: string;
+  thumbnail?: string;
+}
+
+export function VideoPlayer({ videoUrl, thumbnail }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Simple check to see if we have a valid video URL to show
-  if (!config.videoUrl) return null;
+  if (!videoUrl) return null;
 
   // Helper to extract embed ID if user pastes full link (basic support)
   const getEmbedUrl = (url: string) => {
@@ -17,18 +20,32 @@ export function VideoPlayer() {
     return url;
   };
 
-  const embedUrl = getEmbedUrl(config.videoUrl);
+  const embedUrl = getEmbedUrl(videoUrl);
 
   return (
     <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg border border-white/50 bg-black relative group mb-8">
       {!isPlaying ? (
         <div
-          className="absolute inset-0 flex items-center justify-center bg-zinc-900 cursor-pointer"
+          className="absolute inset-0 flex items-center justify-center cursor-pointer"
           onClick={() => setIsPlaying(true)}
         >
-          {/* Enhanced Thumbnail Background with shimmer */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-black/80 to-purple-900/40 z-10" />
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-10 brightness-100 contrast-150 mix-blend-overlay" />
+          {/* Thumbnail Background */}
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt="Video thumbnail"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-zinc-900" />
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-black/80 to-purple-900/40" />
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
+            </>
+          )}
+
+          {/* Dark overlay for better play button visibility */}
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
 
           <div className="relative z-20 flex flex-col items-center gap-4 transition-transform duration-500 group-hover:scale-105">
             <div className="relative">
@@ -37,7 +54,7 @@ export function VideoPlayer() {
                 <Play className="w-8 h-8 text-white ml-1 fill-white shadow-sm" />
               </div>
             </div>
-            <span className="text-white font-medium text-sm tracking-widest uppercase opacity-90 group-hover:opacity-100 transition-opacity">Watch My Story</span>
+            <span className="text-white font-medium text-sm tracking-widest uppercase opacity-90 group-hover:opacity-100 transition-opacity drop-shadow-lg">Watch My Story</span>
           </div>
         </div>
       ) : (

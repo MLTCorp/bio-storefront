@@ -54,6 +54,7 @@ interface StoreData {
   profile_image: string;
   profile_image_scale: number;
   video_url: string;
+  video_thumbnail: string;
   show_video: boolean;
   whatsapp_number: string;
   whatsapp_message: string;
@@ -431,6 +432,84 @@ export default function DashboardPage() {
                       value={store.video_url}
                       onChange={(e) => updateStore({ video_url: e.target.value })}
                     />
+                  </div>
+
+                  {/* Video Thumbnail Upload */}
+                  <div className="grid gap-2">
+                    <Label>Capa do Vídeo</Label>
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-32 h-20 bg-gray-100 rounded-lg border border-border overflow-hidden group cursor-pointer">
+                        {store.video_thumbnail ? (
+                          <img
+                            src={store.video_thumbnail}
+                            alt="Video thumbnail"
+                            className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                            <Video className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                        <div
+                          className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                            uploadingImage === "video-thumbnail"
+                              ? "opacity-100 bg-black/50"
+                              : "opacity-0 group-hover:opacity-100 bg-black/30"
+                          }`}
+                        >
+                          {uploadingImage === "video-thumbnail" ? (
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                          ) : (
+                            <Upload className="w-5 h-5 text-white drop-shadow-md" />
+                          )}
+                        </div>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingImage("video-thumbnail");
+                            try {
+                              const publicUrl = await uploadImage(file, "profile");
+                              if (publicUrl) {
+                                updateStore({ video_thumbnail: publicUrl });
+                                toast({
+                                  title: "Capa enviada!",
+                                  className: "bg-green-600 text-white border-none",
+                                  duration: 1500,
+                                });
+                              }
+                            } catch (error) {
+                              toast({
+                                title: "Erro no upload",
+                                className: "bg-red-600 text-white border-none",
+                              });
+                            } finally {
+                              setUploadingImage(null);
+                            }
+                          }}
+                          disabled={uploadingImage === "video-thumbnail"}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">
+                          Imagem que aparece antes do vídeo começar. Recomendado: 16:9 (1280x720).
+                        </p>
+                        {store.video_thumbnail && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 mt-1 h-7 px-2"
+                            onClick={() => updateStore({ video_thumbnail: "" })}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Remover
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Video Visibility Toggle */}

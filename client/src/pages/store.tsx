@@ -23,6 +23,7 @@ interface StoreData {
   profile_image: string;
   profile_image_scale: number;
   video_url: string;
+  video_thumbnail: string;
   show_video: boolean;
   whatsapp_number: string;
   whatsapp_message: string;
@@ -99,6 +100,7 @@ export default function StorePage() {
     profileImage: store.profile_image,
     profileImageScale: store.profile_image_scale,
     videoUrl: store.video_url,
+    videoThumbnail: store.video_thumbnail,
     showVideo: store.show_video !== false, // Default to true
     whatsappNumber: store.whatsapp_number,
     whatsappMessage: store.whatsapp_message,
@@ -162,7 +164,7 @@ export default function StorePage() {
         {/* Video */}
         {config.videoUrl && config.showVideo && (
           <motion.div variants={itemVariants} className="mb-6">
-            <VideoPlayer />
+            <VideoPlayer videoUrl={config.videoUrl} thumbnail={config.videoThumbnail} />
           </motion.div>
         )}
 
