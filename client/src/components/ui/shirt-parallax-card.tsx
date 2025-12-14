@@ -5,8 +5,7 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Flame, Sparkles, ExternalLink } from "lucide-react";
-import { Link } from "wouter";
+import { Flame, Sparkles } from "lucide-react";
 import type { ProductKit } from "@/lib/store";
 
 interface ShirtParallaxCardProps {
@@ -166,17 +165,6 @@ export function ShirtParallaxCard({
               })}
             </div>
 
-            {/* Ver Mais Link */}
-            <Link href={`/produto/${productId}`} className="mt-2 block">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full text-xs text-gray-500 hover:text-primary hover:bg-primary/5"
-              >
-                <ExternalLink className="w-3 h-3 mr-1" />
-                Ver detalhes e comprar
-              </Button>
-            </Link>
           </div>
         </div>
       </div>
