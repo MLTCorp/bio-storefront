@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database, BioConfig, Product, SocialLink } from '@shared/supabase.types';
 
-// These will be injected at build time or fetched from an endpoint
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://yybxbkzssbzlqossagpv.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5Ynhia3pzc2J6bHFvc3NhZ3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1Njg2OTEsImV4cCI6MjA4MTE0NDY5MX0.bHxWtaQBNwKd15cz7wgaJAelA-ORRZdTtv_-GSssHKM';
+// Hardcoded values - these are public anon keys, safe to expose
+const supabaseUrl = 'https://yybxbkzssbzlqossagpv.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5Ynhia3pzc2J6bHFvc3NhZ3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1Njg2OTEsImV4cCI6MjA4MTE0NDY5MX0.bHxWtaQBNwKd15cz7wgaJAelA-ORRZdTtv_-GSssHKM';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
