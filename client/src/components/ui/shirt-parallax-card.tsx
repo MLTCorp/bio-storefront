@@ -52,8 +52,14 @@ export function ShirtParallaxCard({
   };
 
   const handleKitClick = (kit: ProductKit) => {
-    if (kit.link && kit.link !== '#') {
-      window.open(kit.link, '_blank');
+    // Use discount-specific link if discount is active and link exists
+    let link = kit.link;
+    if (discountPercent > 0 && kit.discountLinks?.[discountPercent]) {
+      link = kit.discountLinks[discountPercent];
+    }
+
+    if (link && link !== '#') {
+      window.open(link, '_blank');
     }
   };
 

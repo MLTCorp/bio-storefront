@@ -9,7 +9,10 @@ export interface ProductKit {
   id: string;
   label: string;
   price: number;
-  link: string;
+  link: string; // Link padrão (sem desconto)
+  discountLinks?: {
+    [percent: number]: string; // Links por percentual: { 10: "url", 20: "url", 30: "url" }
+  };
 }
 
 export interface Product {

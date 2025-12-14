@@ -37,7 +37,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { uploadImage } from "@/lib/supabase";
+import { KitLinksModal } from "@/components/kit-links-modal";
 import type { ChangeEvent } from "react";
+import type { ProductKit } from "@/lib/store";
 
 interface SocialLink {
   id: string;
@@ -72,6 +74,7 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [linksModalProduct, setLinksModalProduct] = useState<any | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -240,6 +243,20 @@ export default function DashboardPage() {
       return p;
     });
     updateStore({ products });
+  };
+
+  const saveKitLinks = (productId: string, kits: ProductKit[]) => {
+    if (!store) return;
+    const products = store.products.map((p) =>
+      p.id === productId ? { ...p, kits } : p
+    );
+    updateStore({ products });
+    toast({
+      title: "Links salvos!",
+      description: "Os links foram atualizados. Clique em Salvar para persistir.",
+      className: "bg-blue-600 text-white border-none",
+      duration: 2000,
+    });
   };
 
   const handleImageUpload = async (
@@ -780,83 +797,75 @@ export default function DashboardPage() {
                         {product.kits.map((kit: any) => (
                           <div
                             key={kit.id}
-                            className="p-4 grid grid-cols-12 gap-3 items-center hover:bg-gray-50/30 transition-colors"
+                            className="p-3 flex items-center gap-3 hover:bg-gray-50/30 transition-colors"
                           >
-                            <div className="col-span-12 md:col-span-5 flex flex-col gap-2">
-                              <div className="flex gap-2">
-                                <div className="flex-1">
-                                  <Label className="text-xs text-muted-foreground mb-1 block">
-                                    Nome do Kit
-                                  </Label>
-                                  <Input
-                                    value={kit.label}
-                                    onChange={(e) =>
-                                      updateProductKit(product.id, kit.id, {
-                                        label: e.target.value,
-                                      })
-                                    }
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                                <div className="w-24">
-                                  <Label className="text-xs text-muted-foreground mb-1 block">
-                                    Preço (R$)
-                                  </Label>
-                                  <Input
-                                    type="number"
-                                    value={kit.price}
-                                    onChange={(e) =>
-                                      updateProductKit(product.id, kit.id, {
-                                        price: Number(e.target.value),
-                                      })
-                                    }
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                              </div>
-                              <div className="relative">
-                                <LinkIcon className="w-3 h-3 absolute left-2.5 top-2.5 text-muted-foreground" />
+                            {/* Kit Name & Price */}
+                            <div className="flex-1 flex items-center gap-2">
+                              <Input
+                                value={kit.label}
+                                onChange={(e) =>
+                                  updateProductKit(product.id, kit.id, {
+                                    label: e.target.value,
+                                  })
+                                }
+                                className="h-8 text-sm flex-1 max-w-[120px]"
+                                placeholder="Nome do kit"
+                              />
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-muted-foreground">R$</span>
                                 <Input
-                                  value={kit.link || ""}
+                                  type="number"
+                                  value={kit.price}
                                   onChange={(e) =>
                                     updateProductKit(product.id, kit.id, {
-                                      link: e.target.value,
+                                      price: Number(e.target.value),
                                     })
                                   }
-                                  className="h-8 text-xs pl-8 text-muted-foreground"
-                                  placeholder="Link de checkout (https://...)"
+                                  className="h-8 text-sm w-20"
                                 />
                               </div>
                             </div>
 
+                            {/* Discount Price Preview */}
                             {product.discountPercent > 0 && (
-                              <div className="col-span-10 md:col-span-3 flex md:flex-col items-center md:items-end justify-between md:justify-center gap-1 md:gap-0 mt-1 md:mt-0">
-                                <span className="text-[10px] text-muted-foreground">
-                                  Com {product.discountPercent}% OFF:
+                              <div className="text-right">
+                                <span className="text-[10px] text-muted-foreground block">
+                                  -{product.discountPercent}%
                                 </span>
                                 <span className="text-sm font-bold text-green-600">
-                                  R$ {(kit.price * (1 - product.discountPercent / 100)).toFixed(2)}
+                                  R$ {(kit.price * (1 - product.discountPercent / 100)).toFixed(0)}
                                 </span>
                               </div>
                             )}
 
-                            {/* Remove Kit Button */}
-                            <div className="col-span-2 md:col-span-1 flex justify-end">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
-                                onClick={() => removeKit(product.id, kit.id)}
-                                disabled={product.kits.length <= 1}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
+                            {/* Link Status Indicator */}
+                            <div className="flex items-center gap-1">
+                              {kit.link ? (
+                                <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                                  Link ✓
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                                  Sem link
+                                </span>
+                              )}
                             </div>
+
+                            {/* Remove Kit Button */}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-red-400 hover:text-red-600 hover:bg-red-50 h-7 w-7"
+                              onClick={() => removeKit(product.id, kit.id)}
+                              disabled={product.kits.length <= 1}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
                           </div>
                         ))}
 
-                        {/* Add Kit Button */}
-                        <div className="p-3 flex justify-center border-t border-dashed border-gray-200">
+                        {/* Action Buttons */}
+                        <div className="p-3 flex justify-between border-t border-dashed border-gray-200">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -866,6 +875,15 @@ export default function DashboardPage() {
                             <Plus className="w-4 h-4 mr-1" />
                             Adicionar Kit
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-primary hover:bg-primary/5"
+                            onClick={() => setLinksModalProduct(product)}
+                          >
+                            <LinkIcon className="w-4 h-4 mr-1" />
+                            Configurar Links
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -874,6 +892,16 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Kit Links Modal */}
+        {linksModalProduct && (
+          <KitLinksModal
+            open={!!linksModalProduct}
+            onOpenChange={(open) => !open && setLinksModalProduct(null)}
+            product={linksModalProduct}
+            onSave={saveKitLinks}
+          />
         )}
       </SignedIn>
     </>
