@@ -36,8 +36,8 @@ interface KitLinksModalProps {
   onSave: (productId: string, kits: ProductKit[]) => void;
 }
 
-// Percentuais de desconto disponíveis
-const DISCOUNT_PERCENTAGES = [10, 15, 20, 25, 30, 35, 40, 45, 50];
+// Percentuais de desconto disponíveis (apenas dezenas)
+const DISCOUNT_PERCENTAGES = [10, 20, 30, 40, 50];
 
 export function KitLinksModal({ open, onOpenChange, product, onSave }: KitLinksModalProps) {
   const [kits, setKits] = useState<ProductKit[]>([]);
