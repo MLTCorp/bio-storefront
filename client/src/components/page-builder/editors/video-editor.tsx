@@ -8,6 +8,7 @@ import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
 import { ImagePositioner } from "@/components/ui/image-positioner";
+import { useDebouncedConfig } from "@/hooks/use-debounced-update";
 import {
   Dialog,
   DialogContent,
@@ -36,9 +37,10 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [positionModalOpen, setPositionModalOpen] = useState(false);
+  const [localConfig, updateField] = useDebouncedConfig(config, onUpdate, 500);
 
   const thumbnail =
-    config.thumbnail || getYouTubeThumbnail(config.url || "") || "";
+    localConfig.thumbnail || getYouTubeThumbnail(localConfig.url || "") || "";
 
   const handleThumbnailUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -71,10 +73,10 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
               alt="Thumbnail"
               className="absolute object-cover"
               style={{
-                width: `${config.thumbnailScale || 100}%`,
-                height: `${config.thumbnailScale || 100}%`,
-                left: `${-((config.thumbnailScale || 100) - 100) * ((config.thumbnailPositionX ?? 50) / 100)}%`,
-                top: `${-((config.thumbnailScale || 100) - 100) * ((config.thumbnailPositionY ?? 50) / 100)}%`,
+                width: `${localConfig.thumbnailScale || 100}%`,
+                height: `${localConfig.thumbnailScale || 100}%`,
+                left: `${-((localConfig.thumbnailScale || 100) - 100) * ((localConfig.thumbnailPositionX ?? 50) / 100)}%`,
+                top: `${-((localConfig.thumbnailScale || 100) - 100) * ((localConfig.thumbnailPositionY ?? 50) / 100)}%`,
               }}
             />
             {/* Edit Overlay - appears on hover when there's a thumbnail */}
@@ -95,8 +97,8 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
         )}
       </div>
 
-      {config.showTitle && config.title && (
-        <p className="text-sm text-center text-gray-600">{config.title}</p>
+      {localConfig.showTitle && localConfig.title && (
+        <p className="text-sm text-center text-gray-600">{localConfig.title}</p>
       )}
 
       {/* Expanded Editor */}
@@ -105,8 +107,8 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">URL do YouTube</Label>
             <Input
-              value={config.url || ""}
-              onChange={(e) => onUpdate({ ...config, url: e.target.value })}
+              value={localConfig.url || ""}
+              onChange={(e) => updateField("url", e.target.value)}
               placeholder="https://youtube.com/watch?v=..."
             />
           </div>
@@ -141,7 +143,7 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
                 highlightHueDeg={200}
               />
             </div>
-            {config.thumbnail && (
+            {localConfig.thumbnail && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -157,8 +159,8 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">Titulo (opcional)</Label>
             <Input
-              value={config.title || ""}
-              onChange={(e) => onUpdate({ ...config, title: e.target.value })}
+              value={localConfig.title || ""}
+              onChange={(e) => updateField("title", e.target.value)}
               placeholder="Titulo do video"
             />
           </div>
@@ -166,9 +168,9 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
           <div className="flex items-center justify-between">
             <Label className="text-xs">Mostrar Titulo</Label>
             <Switch
-              checked={config.showTitle}
+              checked={localConfig.showTitle}
               onCheckedChange={(checked) =>
-                onUpdate({ ...config, showTitle: checked })
+                updateField("showTitle", checked)
               }
             />
           </div>
@@ -189,18 +191,18 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
           <DialogHeader>
             <DialogTitle>Ajustar thumbnail do video</DialogTitle>
           </DialogHeader>
-          {config.thumbnail && (
+          {localConfig.thumbnail && (
             <ImagePositioner
-              src={config.thumbnail}
-              positionX={config.thumbnailPositionX ?? 50}
-              positionY={config.thumbnailPositionY ?? 50}
-              scale={config.thumbnailScale || 100}
+              src={localConfig.thumbnail}
+              positionX={localConfig.thumbnailPositionX ?? 50}
+              positionY={localConfig.thumbnailPositionY ?? 50}
+              scale={localConfig.thumbnailScale || 100}
               aspectRatio="landscape"
               minScale={100}
               maxScale={200}
               onChange={({ positionX, positionY, scale }) => {
                 onUpdate({
-                  ...config,
+                  ...localConfig,
                   thumbnailPositionX: positionX,
                   thumbnailPositionY: positionY,
                   thumbnailScale: scale,

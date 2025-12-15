@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
 import { ImagePositioner } from "@/components/ui/image-positioner";
+import { useDebouncedConfig } from "@/hooks/use-debounced-update";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,9 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [imageEditMode, setImageEditMode] = useState(false);
   const [discountLinksExpandedKitId, setDiscountLinksExpandedKitId] = useState<string | null>(null);
+
+  // Debounced config - local state for instant UI, saves after 500ms of no typing
+  const [localConfig, updateField, updateFields] = useDebouncedConfig(config, onUpdate, 500);
 
   // Reset image edit mode when card is collapsed
   useEffect(() => {
@@ -67,24 +70,20 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
   };
 
   const updateKit = (kitId: string, updates: Partial<ProductKit>) => {
-    onUpdate({
-      ...config,
-      kits: config.kits.map((kit) =>
-        kit.id === kitId ? { ...kit, ...updates } : kit
-      ),
-    });
+    const newKits = localConfig.kits.map((kit) =>
+      kit.id === kitId ? { ...kit, ...updates } : kit
+    );
+    updateField("kits", newKits);
   };
 
   const removeKit = (kitId: string) => {
-    onUpdate({
-      ...config,
-      kits: config.kits.filter((kit) => kit.id !== kitId),
-    });
+    const newKits = localConfig.kits.filter((kit) => kit.id !== kitId);
+    updateField("kits", newKits);
   };
 
   const calculateDiscountedPrice = (price: number) => {
-    if (!config.discountPercent) return price;
-    return price - (price * config.discountPercent) / 100;
+    if (!localConfig.discountPercent) return price;
+    return price - (price * localConfig.discountPercent) / 100;
   };
 
   return (
@@ -134,18 +133,18 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
           onClick={() => setExpanded(!expanded)}
           className="flex-1 min-w-0 cursor-pointer"
         >
-          <h3 className="font-medium truncate">{config.title || "Produto"}</h3>
+          <h3 className="font-medium truncate">{localConfig.title || "Produto"}</h3>
           <p className="text-sm text-gray-500 truncate">
-            {config.description || "Descricao"}
+            {localConfig.description || "Descricao"}
           </p>
-          {config.kits.length > 0 && (
+          {localConfig.kits.length > 0 && (
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm font-medium">
-                R$ {config.kits[0].price.toFixed(2)}
+                R$ {localConfig.kits[0].price.toFixed(2)}
               </span>
-              {config.discountPercent > 0 && (
+              {localConfig.discountPercent > 0 && (
                 <span className="text-xs text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
-                  -{config.discountPercent}%
+                  -{localConfig.discountPercent}%
                 </span>
               )}
             </div>
@@ -205,8 +204,8 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">Titulo</Label>
             <Input
-              value={config.title}
-              onChange={(e) => onUpdate({ ...config, title: e.target.value })}
+              value={localConfig.title}
+              onChange={(e) => updateField("title", e.target.value)}
               placeholder="Nome do produto"
             />
           </div>
@@ -214,17 +213,15 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">Descricao</Label>
             <Textarea
-              value={config.description}
-              onChange={(e) =>
-                onUpdate({ ...config, description: e.target.value })
-              }
+              value={localConfig.description}
+              onChange={(e) => updateField("description", e.target.value)}
               placeholder="Descricao do produto"
               rows={2}
             />
           </div>
 
           {/* Discount */}
-          {config.discountPercent > 0 ? (
+          {localConfig.discountPercent > 0 ? (
             <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
               <div className="flex items-center gap-2">
                 <Percent className="h-4 w-4 text-orange-600" />
@@ -233,12 +230,9 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                 </span>
               </div>
               <select
-                value={config.discountPercent}
+                value={localConfig.discountPercent}
                 onChange={(e) =>
-                  onUpdate({
-                    ...config,
-                    discountPercent: parseInt(e.target.value),
-                  })
+                  updateField("discountPercent", parseInt(e.target.value))
                 }
                 className="h-8 text-sm bg-white border rounded px-2"
               >
@@ -255,10 +249,7 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
               <select
                 value={0}
                 onChange={(e) =>
-                  onUpdate({
-                    ...config,
-                    discountPercent: parseInt(e.target.value),
-                  })
+                  updateField("discountPercent", parseInt(e.target.value))
                 }
                 className="text-sm text-orange-600 font-medium bg-transparent border-none cursor-pointer hover:text-orange-700 focus:outline-none focus:ring-0"
               >
@@ -282,7 +273,7 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
               </Button>
             </div>
 
-            {config.kits.map((kit) => {
+            {localConfig.kits.map((kit) => {
               const isExpanded = expandedKitId === kit.id;
               return (
                 <div key={kit.id} className="bg-white rounded-lg overflow-hidden">
@@ -299,7 +290,7 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                         <span className="text-sm text-gray-500">
                           R$ {kit.price.toFixed(2)}
                         </span>
-                        {config.discountPercent > 0 && (
+                        {localConfig.discountPercent > 0 && (
                           <span className="text-xs text-green-600">
                             → R$ {calculateDiscountedPrice(kit.price).toFixed(2)}
                           </span>
@@ -321,7 +312,7 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                           removeKit(kit.id);
                         }}
                         className="text-red-500 hover:text-red-600 h-8 w-8 p-0"
-                        disabled={config.kits.length <= 1}
+                        disabled={localConfig.kits.length <= 1}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

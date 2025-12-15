@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MessageCircle, ExternalLink } from "lucide-react";
+import { useDebouncedConfig } from "@/hooks/use-debounced-update";
 import type { ButtonConfig } from "@/types/database";
 
 interface ButtonEditorProps {
@@ -11,8 +12,9 @@ interface ButtonEditorProps {
 
 export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
   const [expanded, setExpanded] = useState(false);
+  const [localConfig, updateField] = useDebouncedConfig(config, onUpdate, 500);
 
-  const isWhatsApp = config.type === "whatsapp";
+  const isWhatsApp = localConfig.type === "whatsapp";
 
   return (
     <div className="space-y-3">
@@ -30,7 +32,7 @@ export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
         ) : (
           <ExternalLink className="h-4 w-4" />
         )}
-        {config.text || "Novo Botao"}
+        {localConfig.text || "Novo Botao"}
       </button>
 
       {/* Expanded Editor */}
@@ -38,7 +40,7 @@ export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
         <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => onUpdate({ ...config, type: "whatsapp" })}
+              onClick={() => updateField("type", "whatsapp")}
               className={`p-2 rounded-lg text-sm font-medium ${
                 isWhatsApp
                   ? "bg-green-100 text-green-700 border-2 border-green-500"
@@ -48,7 +50,7 @@ export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
               WhatsApp
             </button>
             <button
-              onClick={() => onUpdate({ ...config, type: "link" })}
+              onClick={() => updateField("type", "link")}
               className={`p-2 rounded-lg text-sm font-medium ${
                 !isWhatsApp
                   ? "bg-primary/10 text-primary border-2 border-primary"
@@ -62,8 +64,8 @@ export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">Texto do Botao</Label>
             <Input
-              value={config.text}
-              onChange={(e) => onUpdate({ ...config, text: e.target.value })}
+              value={localConfig.text}
+              onChange={(e) => updateField("text", e.target.value)}
               placeholder="Ex: Fale Comigo"
             />
           </div>
@@ -73,20 +75,16 @@ export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
               <div className="space-y-2">
                 <Label className="text-xs">Numero WhatsApp</Label>
                 <Input
-                  value={config.whatsappNumber || ""}
-                  onChange={(e) =>
-                    onUpdate({ ...config, whatsappNumber: e.target.value })
-                  }
+                  value={localConfig.whatsappNumber || ""}
+                  onChange={(e) => updateField("whatsappNumber", e.target.value)}
                   placeholder="5511999999999"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Mensagem</Label>
                 <Input
-                  value={config.whatsappMessage || ""}
-                  onChange={(e) =>
-                    onUpdate({ ...config, whatsappMessage: e.target.value })
-                  }
+                  value={localConfig.whatsappMessage || ""}
+                  onChange={(e) => updateField("whatsappMessage", e.target.value)}
                   placeholder="Ola! Vim pelo seu link..."
                 />
               </div>
@@ -95,8 +93,8 @@ export function ButtonEditor({ config, onUpdate }: ButtonEditorProps) {
             <div className="space-y-2">
               <Label className="text-xs">URL</Label>
               <Input
-                value={config.url || ""}
-                onChange={(e) => onUpdate({ ...config, url: e.target.value })}
+                value={localConfig.url || ""}
+                onChange={(e) => updateField("url", e.target.value)}
                 placeholder="https://..."
               />
             </div>

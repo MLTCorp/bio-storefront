@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ExternalLink, ChevronRight } from "lucide-react";
+import { useDebouncedConfig } from "@/hooks/use-debounced-update";
 import type { LinkConfig } from "@/types/database";
 
 interface LinkEditorProps {
@@ -11,6 +12,7 @@ interface LinkEditorProps {
 
 export function LinkEditor({ config, onUpdate }: LinkEditorProps) {
   const [expanded, setExpanded] = useState(false);
+  const [localConfig, updateField] = useDebouncedConfig(config, onUpdate, 500);
 
   return (
     <div className="space-y-3">
@@ -21,7 +23,7 @@ export function LinkEditor({ config, onUpdate }: LinkEditorProps) {
       >
         <div className="flex items-center gap-2">
           <ExternalLink className="h-4 w-4 text-gray-500" />
-          <span>{config.text || "Novo Link"}</span>
+          <span>{localConfig.text || "Novo Link"}</span>
         </div>
         <ChevronRight className="h-4 w-4 text-gray-400" />
       </button>
@@ -32,8 +34,8 @@ export function LinkEditor({ config, onUpdate }: LinkEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">Texto do Link</Label>
             <Input
-              value={config.text}
-              onChange={(e) => onUpdate({ ...config, text: e.target.value })}
+              value={localConfig.text}
+              onChange={(e) => updateField("text", e.target.value)}
               placeholder="Ex: Meu Portfolio"
             />
           </div>
@@ -41,8 +43,8 @@ export function LinkEditor({ config, onUpdate }: LinkEditorProps) {
           <div className="space-y-2">
             <Label className="text-xs">URL</Label>
             <Input
-              value={config.url || ""}
-              onChange={(e) => onUpdate({ ...config, url: e.target.value })}
+              value={localConfig.url || ""}
+              onChange={(e) => updateField("url", e.target.value)}
               placeholder="https://..."
             />
           </div>
@@ -51,9 +53,9 @@ export function LinkEditor({ config, onUpdate }: LinkEditorProps) {
             <Label className="text-xs">Estilo</Label>
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => onUpdate({ ...config, style: "large" })}
+                onClick={() => updateField("style", "large")}
                 className={`p-2 rounded-lg text-sm ${
-                  config.style === "large"
+                  localConfig.style === "large"
                     ? "bg-primary/10 text-primary border-2 border-primary"
                     : "bg-white border hover:bg-gray-50"
                 }`}
@@ -61,9 +63,9 @@ export function LinkEditor({ config, onUpdate }: LinkEditorProps) {
                 Grande
               </button>
               <button
-                onClick={() => onUpdate({ ...config, style: "small" })}
+                onClick={() => updateField("style", "small")}
                 className={`p-2 rounded-lg text-sm ${
-                  config.style === "small"
+                  localConfig.style === "small"
                     ? "bg-primary/10 text-primary border-2 border-primary"
                     : "bg-white border hover:bg-gray-50"
                 }`}

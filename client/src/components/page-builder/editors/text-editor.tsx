@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Bold, Italic, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { useDebouncedConfig } from "@/hooks/use-debounced-update";
 import type { TextConfig } from "@/types/database";
 
 interface TextEditorProps {
@@ -11,6 +12,7 @@ interface TextEditorProps {
 
 export function TextEditor({ config, onUpdate }: TextEditorProps) {
   const [editing, setEditing] = useState(false);
+  const [localConfig, updateField] = useDebouncedConfig(config, onUpdate, 500);
 
   const sizeClasses = {
     small: "text-sm",
@@ -85,14 +87,14 @@ export function TextEditor({ config, onUpdate }: TextEditorProps) {
         </div>
 
         <Textarea
-          value={config.content}
-          onChange={(e) => onUpdate({ ...config, content: e.target.value })}
+          value={localConfig.content}
+          onChange={(e) => updateField("content", e.target.value)}
           onBlur={() => setEditing(false)}
           autoFocus
           rows={3}
-          className={`${alignClasses[config.alignment]} ${sizeClasses[config.size]} ${
-            config.bold ? "font-bold" : ""
-          } ${config.italic ? "italic" : ""}`}
+          className={`${alignClasses[localConfig.alignment]} ${sizeClasses[localConfig.size]} ${
+            localConfig.bold ? "font-bold" : ""
+          } ${localConfig.italic ? "italic" : ""}`}
         />
       </div>
     );
@@ -102,12 +104,12 @@ export function TextEditor({ config, onUpdate }: TextEditorProps) {
     <div
       onClick={() => setEditing(true)}
       className={`p-2 cursor-text hover:bg-gray-50 rounded transition-colors ${
-        alignClasses[config.alignment]
-      } ${sizeClasses[config.size]} ${config.bold ? "font-bold" : ""} ${
-        config.italic ? "italic" : ""
+        alignClasses[localConfig.alignment]
+      } ${sizeClasses[localConfig.size]} ${localConfig.bold ? "font-bold" : ""} ${
+        localConfig.italic ? "italic" : ""
       }`}
     >
-      {config.content || "Clique para editar o texto..."}
+      {localConfig.content || "Clique para editar o texto..."}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Loader2, Upload, Crop, Download } from "lucide-react";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
 import { ImagePositioner } from "@/components/ui/image-positioner";
+import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,18 @@ export function ProfileEditor({
   const [editingBio, setEditingBio] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [positionModalOpen, setPositionModalOpen] = useState(false);
+
+  // Debounced values for smooth typing
+  const [localName, setLocalName] = useDebouncedUpdate(
+    page.profile_name,
+    (value) => onUpdate({ profile_name: value }),
+    500
+  );
+  const [localBio, setLocalBio] = useDebouncedUpdate(
+    page.profile_bio || "",
+    (value) => onUpdate({ profile_bio: value }),
+    500
+  );
 
   const handleDownloadImage = async () => {
     if (!page.profile_image) return;
@@ -139,8 +152,8 @@ export function ProfileEditor({
       {/* Profile Name */}
       {editingName ? (
         <Input
-          value={page.profile_name}
-          onChange={(e) => onUpdate({ profile_name: e.target.value })}
+          value={localName}
+          onChange={(e) => setLocalName(e.target.value)}
           onBlur={() => setEditingName(false)}
           onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
           autoFocus
@@ -151,15 +164,15 @@ export function ProfileEditor({
           onClick={() => setEditingName(true)}
           className="text-xl font-bold cursor-text hover:bg-gray-100 rounded px-2 py-1 inline-block transition-colors"
         >
-          {page.profile_name || "Seu Nome"}
+          {localName || "Seu Nome"}
         </h1>
       )}
 
       {/* Profile Bio */}
       {editingBio ? (
         <Textarea
-          value={page.profile_bio || ""}
-          onChange={(e) => onUpdate({ profile_bio: e.target.value })}
+          value={localBio}
+          onChange={(e) => setLocalBio(e.target.value)}
           onBlur={() => setEditingBio(false)}
           autoFocus
           rows={3}
@@ -171,7 +184,7 @@ export function ProfileEditor({
           onClick={() => setEditingBio(true)}
           className="text-sm text-gray-600 cursor-text hover:bg-gray-100 rounded px-2 py-1 mt-1 inline-block transition-colors whitespace-pre-line"
         >
-          {page.profile_bio ? renderBioWithBreaks(page.profile_bio) : "Clique para adicionar uma bio"}
+          {localBio ? renderBioWithBreaks(localBio) : "Clique para adicionar uma bio"}
         </p>
       )}
 

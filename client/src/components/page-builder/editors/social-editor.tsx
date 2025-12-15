@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, Instagram, Youtube, Facebook, Twitter } from "lucide-react";
+import { useDebouncedConfig } from "@/hooks/use-debounced-update";
 import type { SocialConfig } from "@/types/database";
 
 interface SocialEditorProps {
@@ -34,38 +35,30 @@ const platformColors: Record<string, string> = {
 
 export function SocialEditor({ config, onUpdate }: SocialEditorProps) {
   const [expanded, setExpanded] = useState(false);
+  const [localConfig, updateField, updateFields] = useDebouncedConfig(config, onUpdate, 500);
 
   const addLink = (platform: SocialConfig["links"][0]["platform"]) => {
-    onUpdate({
-      ...config,
-      links: [
-        ...config.links,
-        {
-          id: crypto.randomUUID(),
-          platform,
-          url: "",
-        },
-      ],
-    });
+    updateField("links", [
+      ...localConfig.links,
+      {
+        id: crypto.randomUUID(),
+        platform,
+        url: "",
+      },
+    ]);
   };
 
   const updateLink = (
     id: string,
     updates: Partial<SocialConfig["links"][0]>
   ) => {
-    onUpdate({
-      ...config,
-      links: config.links.map((link) =>
-        link.id === id ? { ...link, ...updates } : link
-      ),
-    });
+    updateField("links", localConfig.links.map((link) =>
+      link.id === id ? { ...link, ...updates } : link
+    ));
   };
 
   const removeLink = (id: string) => {
-    onUpdate({
-      ...config,
-      links: config.links.filter((link) => link.id !== id),
-    });
+    updateField("links", localConfig.links.filter((link) => link.id !== id));
   };
 
   return (
@@ -75,12 +68,12 @@ export function SocialEditor({ config, onUpdate }: SocialEditorProps) {
         onClick={() => setExpanded(!expanded)}
         className="flex flex-wrap gap-2 justify-center cursor-pointer"
       >
-        {config.links.length === 0 ? (
+        {localConfig.links.length === 0 ? (
           <div className="text-sm text-gray-400 py-2">
             Clique para adicionar redes sociais
           </div>
         ) : (
-          config.links.map((link) => (
+          localConfig.links.map((link) => (
             <div
               key={link.id}
               className={`w-12 h-12 rounded-xl flex items-center justify-center text-white ${
@@ -97,7 +90,7 @@ export function SocialEditor({ config, onUpdate }: SocialEditorProps) {
       {expanded && (
         <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
           {/* Existing Links */}
-          {config.links.map((link) => (
+          {localConfig.links.map((link) => (
             <div key={link.id} className="flex gap-2 items-center">
               <div
                 className={`w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0 ${
