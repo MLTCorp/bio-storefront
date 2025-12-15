@@ -394,21 +394,44 @@ export async function registerRoutes(
   // Admin: List all pages (without user filter)
   app.get("/api/admin/all-pages", async (req, res) => {
     try {
-      const { data: pages, error } = await supabase
+      console.log("[admin/all-pages] Fetching all pages...");
+
+      // First get all pages
+      const { data: pages, error: pagesError } = await supabase
         .from("pages")
-        .select(`
-          id,
-          user_id,
-          username,
-          profile_name,
-          is_active,
-          created_at,
-          users!pages_user_id_fkey (email)
-        `)
+        .select("id, user_id, username, profile_name, is_active, created_at")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      res.json(pages || []);
+      if (pagesError) {
+        console.error("[admin/all-pages] Pages error:", pagesError);
+        throw pagesError;
+      }
+
+      console.log(`[admin/all-pages] Found ${pages?.length || 0} pages`);
+
+      // Then get all users to match
+      const { data: users, error: usersError } = await supabase
+        .from("users")
+        .select("id, email");
+
+      if (usersError) {
+        console.error("[admin/all-pages] Users error:", usersError);
+      }
+
+      console.log(`[admin/all-pages] Found ${users?.length || 0} users`);
+
+      // Create a map of user_id to email
+      const userMap = new Map((users || []).map(u => [u.id, u.email]));
+
+      // Attach user emails to pages
+      const pagesWithUsers = (pages || []).map(page => ({
+        ...page,
+        users: {
+          email: userMap.get(page.user_id) || "Unknown"
+        }
+      }));
+
+      res.json(pagesWithUsers);
     } catch (error) {
       console.error("Admin error:", error);
       res.status(500).json({ error: "Failed to fetch pages" });
