@@ -75,9 +75,9 @@ export default function StorePage() {
 
   // Get current theme based on background_value
   const theme = useMemo(() => {
-    const themeId = getThemeIdFromBackground(page.background_value);
+    const themeId = getThemeIdFromBackground(page?.background_value);
     return getTheme(themeId);
-  }, [page.background_value]);
+  }, [page?.background_value]);
 
   // Get background style from theme
   const getBackgroundStyle = () => {
