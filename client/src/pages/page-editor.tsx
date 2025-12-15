@@ -507,24 +507,113 @@ export default function PageEditorPage() {
               </button>
               {showPersonalization && (
                 <CardContent className="pt-0 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Cor de Fundo</label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={page.background_value || "#ffffff"}
-                        onChange={(e) =>
-                          setPage({ ...page, background_value: e.target.value })
-                        }
-                        className="w-12 h-9 p-1 cursor-pointer"
-                      />
-                      <Input
-                        value={page.background_value || "#ffffff"}
-                        onChange={(e) =>
-                          setPage({ ...page, background_value: e.target.value })
-                        }
-                        className="flex-1"
-                      />
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Tema</label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {/* Light Theme */}
+                      <button
+                        onClick={() => setPage({ ...page, background_value: "#ffffff" })}
+                        className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
+                          page.background_value === "#ffffff" || !page.background_value
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="absolute inset-0 bg-white flex flex-col items-center justify-center p-1">
+                          <div className="w-4 h-4 rounded-full bg-gray-200 mb-1" />
+                          <div className="w-6 h-1 bg-gray-300 rounded mb-0.5" />
+                          <div className="w-5 h-1 bg-gray-200 rounded mb-1" />
+                          <div className="w-full px-1 space-y-0.5">
+                            <div className="h-1.5 bg-gray-100 rounded" />
+                            <div className="h-1.5 bg-gray-100 rounded" />
+                          </div>
+                        </div>
+                        <span className="absolute bottom-0.5 left-0 right-0 text-[8px] font-medium text-gray-600 text-center">Light</span>
+                      </button>
+
+                      {/* Dark Theme */}
+                      <button
+                        onClick={() => setPage({ ...page, background_value: "#1a1a2e" })}
+                        className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
+                          page.background_value === "#1a1a2e"
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="absolute inset-0 bg-[#1a1a2e] flex flex-col items-center justify-center p-1">
+                          <div className="w-4 h-4 rounded-full bg-gray-600 mb-1" />
+                          <div className="w-6 h-1 bg-gray-500 rounded mb-0.5" />
+                          <div className="w-5 h-1 bg-gray-600 rounded mb-1" />
+                          <div className="w-full px-1 space-y-0.5">
+                            <div className="h-1.5 bg-gray-700 rounded" />
+                            <div className="h-1.5 bg-gray-700 rounded" />
+                          </div>
+                        </div>
+                        <span className="absolute bottom-0.5 left-0 right-0 text-[8px] font-medium text-gray-400 text-center">Dark</span>
+                      </button>
+
+                      {/* Futurista Theme */}
+                      <button
+                        onClick={() => setPage({ ...page, background_value: "#0f0f23" })}
+                        className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
+                          page.background_value === "#0f0f23"
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="absolute inset-0 bg-[#0f0f23] flex flex-col items-center justify-center p-1">
+                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 mb-1" />
+                          <div className="w-6 h-1 bg-gradient-to-r from-cyan-400 to-purple-500 rounded mb-0.5" />
+                          <div className="w-5 h-1 bg-purple-500/50 rounded mb-1" />
+                          <div className="w-full px-1 space-y-0.5">
+                            <div className="h-1.5 bg-cyan-500/30 rounded" />
+                            <div className="h-1.5 bg-purple-500/30 rounded" />
+                          </div>
+                        </div>
+                        <span className="absolute bottom-0.5 left-0 right-0 text-[8px] font-medium text-cyan-400 text-center">Cyber</span>
+                      </button>
+
+                      {/* Girl Theme */}
+                      <button
+                        onClick={() => setPage({ ...page, background_value: "#fdf2f8" })}
+                        className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
+                          page.background_value === "#fdf2f8"
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="absolute inset-0 bg-[#fdf2f8] flex flex-col items-center justify-center p-1">
+                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-pink-300 to-rose-400 mb-1" />
+                          <div className="w-6 h-1 bg-pink-400 rounded mb-0.5" />
+                          <div className="w-5 h-1 bg-pink-300 rounded mb-1" />
+                          <div className="w-full px-1 space-y-0.5">
+                            <div className="h-1.5 bg-pink-200 rounded" />
+                            <div className="h-1.5 bg-rose-200 rounded" />
+                          </div>
+                        </div>
+                        <span className="absolute bottom-0.5 left-0 right-0 text-[8px] font-medium text-pink-500 text-center">Rosa</span>
+                      </button>
+
+                      {/* Saúde Theme */}
+                      <button
+                        onClick={() => setPage({ ...page, background_value: "#f0fdf4" })}
+                        className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
+                          page.background_value === "#f0fdf4"
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="absolute inset-0 bg-[#f0fdf4] flex flex-col items-center justify-center p-1">
+                          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 mb-1" />
+                          <div className="w-6 h-1 bg-green-500 rounded mb-0.5" />
+                          <div className="w-5 h-1 bg-green-400 rounded mb-1" />
+                          <div className="w-full px-1 space-y-0.5">
+                            <div className="h-1.5 bg-green-200 rounded" />
+                            <div className="h-1.5 bg-emerald-200 rounded" />
+                          </div>
+                        </div>
+                        <span className="absolute bottom-0.5 left-0 right-0 text-[8px] font-medium text-green-600 text-center">Saude</span>
+                      </button>
                     </div>
                   </div>
                   <div className="space-y-2">
