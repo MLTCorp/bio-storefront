@@ -334,6 +334,38 @@ export default function PageEditorPage() {
     }
   };
 
+  // Toggle component visibility
+  const handleToggleVisibility = async (componentId: number) => {
+    if (!user) return;
+
+    const component = components.find((c) => c.id === componentId);
+    if (!component) return;
+
+    const newVisibility = component.is_visible === false ? true : false;
+
+    try {
+      await fetch(`/api/components/${componentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-clerk-user-id": user.id,
+        },
+        body: JSON.stringify({ is_visible: newVisibility }),
+      });
+
+      setComponents(
+        components.map((c) =>
+          c.id === componentId ? { ...c, is_visible: newVisibility } : c
+        )
+      );
+    } catch (error) {
+      toast({
+        title: "Erro ao alterar visibilidade",
+        className: "bg-red-600 text-white",
+      });
+    }
+  };
+
   // Handle profile image upload
   const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -449,6 +481,7 @@ export default function PageEditorPage() {
                         component={component}
                         onUpdate={(config) => handleUpdateComponent(component.id, config)}
                         onDelete={() => handleDeleteComponent(component.id)}
+                        onToggleVisibility={() => handleToggleVisibility(component.id)}
                       />
                     ))}
                   </SortableContext>
