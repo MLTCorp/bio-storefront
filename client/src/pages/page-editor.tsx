@@ -693,7 +693,7 @@ export default function PageEditorPage() {
                 fontFamily: page.font_family || 'Inter'
               }}
             >
-              <BackgroundEffect />
+              <BackgroundEffect theme={currentTheme} />
 
               {/* Card Container with theme styling */}
               <div

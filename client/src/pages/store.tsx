@@ -101,7 +101,7 @@ export default function StorePage() {
       className="min-h-screen pb-12 transition-colors duration-500 relative"
       style={getBackgroundStyle()}
     >
-      <BackgroundEffect />
+      <BackgroundEffect theme={theme} />
 
       <motion.main
         className="max-w-[480px] mx-auto min-h-screen px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] relative overflow-hidden"
