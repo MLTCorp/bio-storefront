@@ -1,4 +1,5 @@
-import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2 } from "lucide-react";
+import { useState } from "react";
+import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, X } from "lucide-react";
 import type { ComponentType } from "@/types/database";
 
 interface AddComponentMenuProps {
@@ -50,24 +51,48 @@ const componentOptions: {
 ];
 
 export function AddComponentMenu({ onAdd }: AddComponentMenuProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleAdd = (type: ComponentType) => {
+    onAdd(type);
+    setExpanded(false);
+  };
+
   return (
-    <div className="mt-4 pt-4 border-t border-gray-200">
-      <div className="flex items-center gap-2 mb-3 text-gray-500">
-        <Plus className="h-4 w-4" />
-        <span className="text-sm font-medium">Adicionar</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {componentOptions.map((option) => (
-          <button
-            key={option.type}
-            onClick={() => onAdd(option.type)}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all active:scale-95"
-          >
-            <span className={option.iconColor}>{option.icon}</span>
-            <span className="text-xs font-medium text-gray-600">{option.label}</span>
-          </button>
-        ))}
-      </div>
+    <div className="mt-4">
+      {!expanded ? (
+        <button
+          onClick={() => setExpanded(true)}
+          className="w-full py-3 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-gray-500 hover:text-gray-600"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-sm font-medium">Adicionar elemento</span>
+        </button>
+      ) : (
+        <div className="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-gray-700">Adicionar elemento</span>
+            <button
+              onClick={() => setExpanded(false)}
+              className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {componentOptions.map((option) => (
+              <button
+                key={option.type}
+                onClick={() => handleAdd(option.type)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 hover:bg-white hover:shadow-sm transition-all active:scale-95"
+              >
+                <span className={option.iconColor}>{option.icon}</span>
+                <span className="text-xs font-medium text-gray-600">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
