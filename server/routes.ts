@@ -297,6 +297,124 @@ export async function registerRoutes(
     }
   });
 
+  // Debug: List all pages
+  app.get("/api/debug/pages", async (req, res) => {
+    try {
+      const { data: pages, error } = await supabase
+        .from("pages")
+        .select("id, user_id, username, profile_name, is_active, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      res.json(pages || []);
+    } catch (error) {
+      console.error("Debug error:", error);
+      res.status(500).json({ error: "Failed to fetch pages" });
+    }
+  });
+
+  // Debug: List all users
+  app.get("/api/debug/users", async (req, res) => {
+    try {
+      const { data: users, error } = await supabase
+        .from("users")
+        .select("id, clerk_id, email, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      res.json(users || []);
+    } catch (error) {
+      console.error("Debug error:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // Admin: Transfer page ownership to current user
+  app.post("/api/admin/transfer-page/:pageId", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const { email } = req.body || {};
+
+      if (!clerkId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const pageId = parseInt(req.params.pageId);
+
+      // Find current user
+      let { data: user } = await supabase
+        .from("users")
+        .select("id, email")
+        .eq("clerk_id", clerkId)
+        .single();
+
+      // If user doesn't exist, create them
+      if (!user) {
+        if (!email) {
+          return res.status(400).json({ error: "User not found and no email provided to create one" });
+        }
+
+        console.log(`Creating new user for clerk_id: ${clerkId}, email: ${email}`);
+        const { data: newUser, error: createError } = await supabase
+          .from("users")
+          .insert({
+            clerk_id: clerkId,
+            email,
+            username: email.split('@')[0] + '_' + Date.now(),
+            password: 'clerk_managed'
+          } as any)
+          .select("id, email")
+          .single();
+
+        if (createError) throw createError;
+        user = newUser;
+        console.log(`Created new user: ${email}`);
+      }
+
+      // Transfer page ownership
+      const { data: page, error } = await supabase
+        .from("pages")
+        .update({ user_id: user.id })
+        .eq("id", pageId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      console.log(`Page ${pageId} transferred to user ${user.email}`);
+      res.json({ success: true, page });
+    } catch (error) {
+      console.error("Transfer error:", error);
+      res.status(500).json({ error: "Failed to transfer page" });
+    }
+  });
+
+  // Admin: List all pages (without user filter)
+  app.get("/api/admin/all-pages", async (req, res) => {
+    try {
+      const { data: pages, error } = await supabase
+        .from("pages")
+        .select(`
+          id,
+          user_id,
+          username,
+          profile_name,
+          is_active,
+          created_at,
+          users!pages_user_id_fkey (email)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      res.json(pages || []);
+    } catch (error) {
+      console.error("Admin error:", error);
+      res.status(500).json({ error: "Failed to fetch pages" });
+    }
+  });
+
   // Check username availability
   app.get("/api/check-username/:username", async (req, res) => {
     try {
@@ -319,20 +437,26 @@ export async function registerRoutes(
   app.get("/api/pages", async (req, res) => {
     try {
       const clerkId = req.headers["x-clerk-user-id"] as string;
+      console.log(`[GET /api/pages] clerk_id: ${clerkId}`);
+
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
       // Find user by clerk_id
-      const { data: user } = await supabase
+      let { data: user } = await supabase
         .from("users")
-        .select("id")
+        .select("id, email")
         .eq("clerk_id", clerkId)
         .single();
 
+      // If user doesn't exist, return empty array (user just needs to create their first page)
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        console.log(`[GET /api/pages] User not found for clerk_id: ${clerkId} - returning empty array`);
+        return res.json([]);
       }
+
+      console.log(`[GET /api/pages] Found user: ${user.email} (${user.id})`);
 
       // Get user's pages
       const { data: pages, error } = await supabase
@@ -342,6 +466,8 @@ export async function registerRoutes(
         .order("created_at", { ascending: true });
 
       if (error) throw error;
+
+      console.log(`[GET /api/pages] Found ${pages?.length || 0} pages for user ${user.email}`);
       res.json(pages || []);
     } catch (error) {
       console.error("Error fetching pages:", error);

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ConfigProvider } from "@/lib/store";
 import Home from "@/pages/home";
 import AdminPage from "@/pages/admin";
+import PageAdminPage from "@/pages/page-admin";
 import NotFound from "@/pages/not-found";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
@@ -23,6 +24,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/config" component={AdminPage} />
+      <Route path="/page-admin" component={PageAdminPage} />
       <Route path="/dashboard" component={PagesListPage} />
       <Route path="/dashboard/:pageId" component={PageEditorPage} />
       <Route path="/dashboard-old" component={DashboardPage} />
