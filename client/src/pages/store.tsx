@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRoute, Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Loader2, Settings } from "lucide-react";
 import { BackgroundEffect } from "@/components/background-effect";
 import { ComponentRenderer } from "@/components/page-builder/component-renderer";
+import { getThemeIdFromBackground, getTheme, type Theme } from "@/lib/themes";
 import type { Page, PageComponent } from "@/types/database";
 
 interface PageData extends Page {
@@ -72,15 +73,27 @@ export default function StorePage() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Get background style
+  // Get current theme based on background_value
+  const theme = useMemo(() => {
+    const themeId = getThemeIdFromBackground(page.background_value);
+    return getTheme(themeId);
+  }, [page.background_value]);
+
+  // Get background style from theme
   const getBackgroundStyle = () => {
-    if (page.background_type === 'gradient') {
-      return { background: page.background_value || 'linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)' };
-    }
-    if (page.background_type === 'color') {
-      return { backgroundColor: page.background_value || '#fce7f3' };
-    }
-    return {};
+    return { background: theme.background.value };
+  };
+
+  // Get card/container style from theme
+  const getContainerStyle = () => {
+    return {
+      background: theme.card.bg,
+      backdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
+      WebkitBackdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
+      border: theme.card.border,
+      boxShadow: theme.card.shadow,
+      fontFamily: page.font_family || 'inherit',
+    };
   };
 
   return (
@@ -91,18 +104,18 @@ export default function StorePage() {
       <BackgroundEffect />
 
       <motion.main
-        className="max-w-[480px] mx-auto min-h-screen bg-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] md:border border-white/50 backdrop-blur-2xl relative overflow-hidden ring-1 ring-white/60"
+        className="max-w-[480px] mx-auto min-h-screen px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] relative overflow-hidden"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        style={{
-          opacity: 1,
-          fontFamily: page.font_family || 'inherit'
-        }}
+        style={getContainerStyle()}
       >
         {/* Profile Header */}
         <motion.div variants={itemVariants} className="text-center mb-6">
-          <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-white shadow-lg">
+          <div
+            className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden shadow-lg"
+            style={{ border: `4px solid ${theme.text.accent}40` }}
+          >
             {page.profile_image ? (
               <img
                 src={page.profile_image}
@@ -116,14 +129,17 @@ export default function StorePage() {
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-2xl font-bold text-primary">
+              <div
+                className="w-full h-full flex items-center justify-center text-2xl font-bold"
+                style={{ backgroundColor: `${theme.text.accent}20`, color: theme.text.accent }}
+              >
                 {page.profile_name?.charAt(0) || '?'}
               </div>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-foreground">{page.profile_name}</h1>
+          <h1 className="text-2xl font-bold" style={{ color: theme.text.primary }}>{page.profile_name}</h1>
           {page.profile_bio && (
-            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{page.profile_bio}</p>
+            <p className="text-sm mt-1 whitespace-pre-line" style={{ color: theme.text.secondary }}>{page.profile_bio}</p>
           )}
 
           {page.whatsapp_number && (
@@ -148,7 +164,7 @@ export default function StorePage() {
               .filter((c) => c.is_visible !== false)
               .map((component) => (
                 <motion.div key={component.id} variants={itemVariants}>
-                  <ComponentRenderer component={component} />
+                  <ComponentRenderer component={component} theme={theme} />
                 </motion.div>
               ))}
           </div>
@@ -156,17 +172,20 @@ export default function StorePage() {
 
         {/* Footer */}
         <motion.footer variants={itemVariants} className="mt-12 text-center space-y-4 opacity-60">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: theme.text.secondary }}>
             © 2025 {page.profile_name}. All rights reserved.
           </p>
-          <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground font-medium tracking-wide uppercase">
-            <a href="#" className="hover:text-primary transition-colors">Privacy</a>
+          <div
+            className="flex items-center justify-center gap-4 text-[10px] font-medium tracking-wide uppercase"
+            style={{ color: theme.text.secondary }}
+          >
+            <a href="#" className="hover:opacity-70 transition-opacity">Privacy</a>
             <span>•</span>
-            <a href="#" className="hover:text-primary transition-colors">Terms</a>
+            <a href="#" className="hover:opacity-70 transition-opacity">Terms</a>
             <span>•</span>
             <button
               onClick={() => navigate("/dashboard")}
-              className="hover:text-primary transition-colors inline-flex items-center gap-1"
+              className="hover:opacity-70 transition-opacity inline-flex items-center gap-1"
             >
               <Settings className="w-3 h-3" />
               Editar

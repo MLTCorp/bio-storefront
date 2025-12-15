@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Sparkles } from "lucide-react";
 import type { ProductKit } from "@/lib/store";
+import type { Theme } from "@/lib/themes";
 
 interface ShirtParallaxCardProps {
   productId: string;
@@ -19,6 +20,7 @@ interface ShirtParallaxCardProps {
   kits: ProductKit[];
   discountPercent?: number;
   className?: string;
+  theme?: Theme;
 }
 
 export function ShirtParallaxCard({
@@ -32,6 +34,7 @@ export function ShirtParallaxCard({
   kits,
   discountPercent = 0,
   className,
+  theme,
 }: ShirtParallaxCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -67,6 +70,15 @@ export function ShirtParallaxCard({
     }
   };
 
+  // Build card styles based on theme
+  const cardStyle: React.CSSProperties = theme ? {
+    background: theme.card.bg,
+    backdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
+    WebkitBackdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
+    border: theme.card.border,
+    boxShadow: theme.card.shadow,
+  } : {};
+
   return (
     <motion.div
       onMouseMove={handleMouseMove}
@@ -78,7 +90,13 @@ export function ShirtParallaxCard({
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
       className={cn("relative w-full cursor-pointer", className)}
     >
-      <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div
+        className={cn(
+          "relative rounded-2xl overflow-hidden",
+          !theme && "bg-white border border-gray-100 shadow-sm"
+        )}
+        style={cardStyle}
+      >
         {/* Discount Badge */}
         {discountPercent > 0 && (
           <div className="absolute top-3 right-3 z-20">
@@ -115,13 +133,23 @@ export function ShirtParallaxCard({
             {/* Header */}
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-base font-bold text-gray-900 leading-tight">{title}</h3>
+                <h3
+                  className="text-base font-bold leading-tight"
+                  style={{ color: theme?.text.primary || '#111827' }}
+                >
+                  {title}
+                </h3>
                 {discountPercent > 0 && (
                   <Sparkles className="w-4 h-4 text-amber-500" />
                 )}
               </div>
               {description && (
-                <p className="text-xs text-gray-500 line-clamp-2">{description}</p>
+                <p
+                  className="text-xs line-clamp-2"
+                  style={{ color: theme?.text.secondary || '#6b7280' }}
+                >
+                  {description}
+                </p>
               )}
             </div>
 

@@ -1,10 +1,12 @@
 import { MessageCircle, ExternalLink, Instagram, Youtube, Facebook, Twitter } from "lucide-react";
 import { ShirtParallaxCard } from "@/components/ui/shirt-parallax-card";
 import { VideoPlayer } from "@/components/video-player";
+import { type Theme, themes } from "@/lib/themes";
 import type { PageComponent, ButtonConfig, TextConfig, ProductConfig, VideoConfig, SocialConfig, LinkConfig } from "@/types/database";
 
 interface ComponentRendererProps {
   component: PageComponent;
+  theme?: Theme;
 }
 
 const platformIcons: Record<string, React.ReactNode> = {
@@ -28,26 +30,28 @@ const platformColors: Record<string, string> = {
   custom: "bg-gray-600",
 };
 
-export function ComponentRenderer({ component }: ComponentRendererProps) {
+export function ComponentRenderer({ component, theme }: ComponentRendererProps) {
+  const currentTheme = theme || themes.light;
+
   switch (component.type) {
     case "button":
-      return <ButtonRenderer config={component.config as ButtonConfig} />;
+      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} />;
     case "text":
-      return <TextRenderer config={component.config as TextConfig} />;
+      return <TextRenderer config={component.config as TextConfig} theme={currentTheme} />;
     case "product":
-      return <ProductRenderer config={component.config as ProductConfig} />;
+      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} />;
     case "video":
       return <VideoRenderer config={component.config as VideoConfig} />;
     case "social":
-      return <SocialRenderer config={component.config as SocialConfig} />;
+      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} />;
     case "link":
-      return <LinkRenderer config={component.config as LinkConfig} />;
+      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} />;
     default:
       return null;
   }
 }
 
-function ButtonRenderer({ config }: { config: ButtonConfig }) {
+function ButtonRenderer({ config, theme }: { config: ButtonConfig; theme: Theme }) {
   const isWhatsApp = config.type === "whatsapp";
 
   const handleClick = () => {
@@ -59,14 +63,20 @@ function ButtonRenderer({ config }: { config: ButtonConfig }) {
     }
   };
 
+  const buttonStyle = isWhatsApp
+    ? {}
+    : {
+        background: theme.button.primary,
+        color: theme.button.primaryText,
+      };
+
   return (
     <button
       onClick={handleClick}
-      className={`w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors ${
-        isWhatsApp
-          ? "bg-green-500 text-white hover:bg-green-600"
-          : "bg-primary text-primary-foreground hover:bg-primary/90"
+      className={`w-full py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all hover:opacity-90 ${
+        isWhatsApp ? "bg-green-500 text-white hover:bg-green-600" : ""
       }`}
+      style={buttonStyle}
     >
       {isWhatsApp ? (
         <MessageCircle className="h-5 w-5" />
@@ -78,7 +88,7 @@ function ButtonRenderer({ config }: { config: ButtonConfig }) {
   );
 }
 
-function TextRenderer({ config }: { config: TextConfig }) {
+function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
   const sizeClasses = {
     small: "text-sm",
     medium: "text-base",
@@ -96,13 +106,14 @@ function TextRenderer({ config }: { config: TextConfig }) {
       className={`${alignClasses[config.alignment]} ${sizeClasses[config.size]} ${
         config.bold ? "font-bold" : ""
       } ${config.italic ? "italic" : ""}`}
+      style={{ color: theme.text.primary }}
     >
       {config.content}
     </p>
   );
 }
 
-function ProductRenderer({ config }: { config: ProductConfig }) {
+function ProductRenderer({ config, theme }: { config: ProductConfig; theme: Theme }) {
   return (
     <ShirtParallaxCard
       productId={config.id || crypto.randomUUID()}
@@ -114,6 +125,7 @@ function ProductRenderer({ config }: { config: ProductConfig }) {
       imagePositionY={config.imagePositionY ?? 50}
       kits={config.kits}
       discountPercent={config.discountPercent || 0}
+      theme={theme}
     />
   );
 }
@@ -130,7 +142,7 @@ function VideoRenderer({ config }: { config: VideoConfig }) {
   );
 }
 
-function SocialRenderer({ config }: { config: SocialConfig }) {
+function SocialRenderer({ config, theme }: { config: SocialConfig; theme: Theme }) {
   return (
     <div className="flex flex-wrap gap-2 justify-center">
       {config.links.map((link) => (
@@ -150,13 +162,17 @@ function SocialRenderer({ config }: { config: SocialConfig }) {
   );
 }
 
-function LinkRenderer({ config }: { config: LinkConfig }) {
+function LinkRenderer({ config, theme }: { config: LinkConfig; theme: Theme }) {
   return (
     <a
       href={config.url || "#"}
       target="_blank"
       rel="noopener noreferrer"
-      className="block w-full py-3 px-4 rounded-xl font-medium text-center bg-gray-100 hover:bg-gray-200 transition-colors"
+      className="block w-full py-3 px-4 rounded-xl font-medium text-center transition-all hover:opacity-80"
+      style={{
+        background: theme.button.secondary,
+        color: theme.button.secondaryText,
+      }}
     >
       {config.text}
     </a>
