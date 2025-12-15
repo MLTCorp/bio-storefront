@@ -685,36 +685,61 @@ export default function PageEditorPage() {
               </div>
             </DialogHeader>
 
-            {/* Preview Content */}
+            {/* Preview Content - Full theme support */}
             <div
-              className="overflow-y-auto h-full"
+              className="overflow-y-auto h-full relative"
               style={{
-                backgroundColor: page.background_value || '#ffffff',
+                background: currentTheme.background.value,
                 fontFamily: page.font_family || 'Inter'
               }}
             >
-              <div className="relative min-h-full pb-8">
-                <BackgroundEffect />
+              <BackgroundEffect />
 
+              {/* Card Container with theme styling */}
+              <div
+                className="relative mx-auto max-w-[480px] min-h-full px-4 py-6 md:my-4 md:rounded-[24px]"
+                style={{
+                  background: currentTheme.card.bg,
+                  backdropFilter: currentTheme.card.blur > 0 ? `blur(${currentTheme.card.blur}px)` : 'none',
+                  WebkitBackdropFilter: currentTheme.card.blur > 0 ? `blur(${currentTheme.card.blur}px)` : 'none',
+                  border: currentTheme.card.border,
+                  boxShadow: currentTheme.card.shadow,
+                }}
+              >
                 {/* Profile Header */}
-                <div className="text-center py-6 px-4">
-                  <div className="relative w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <div className="text-center mb-4">
+                  <div
+                    className="relative w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden shadow-lg"
+                    style={{ border: `3px solid ${currentTheme.text.accent}40` }}
+                  >
                     {page.profile_image ? (
                       <img
                         src={page.profile_image}
                         alt={page.profile_name}
-                        className="w-full h-full object-cover"
-                        style={{ transform: `scale(${(page.profile_image_scale || 100) / 100})` }}
+                        className="absolute object-cover"
+                        style={{
+                          width: `${page.profile_image_scale || 100}%`,
+                          height: `${page.profile_image_scale || 100}%`,
+                          left: `${-((page.profile_image_scale || 100) - 100) * ((page.profile_image_position_x ?? 50) / 100)}%`,
+                          top: `${-((page.profile_image_scale || 100) - 100) * ((page.profile_image_position_y ?? 50) / 100)}%`,
+                        }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-xl font-bold text-primary">
+                      <div
+                        className="w-full h-full flex items-center justify-center text-xl font-bold"
+                        style={{ backgroundColor: `${currentTheme.text.accent}20`, color: currentTheme.text.accent }}
+                      >
                         {page.profile_name?.charAt(0) || '?'}
                       </div>
                     )}
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">{page.profile_name}</h2>
+                  <h2 className="text-xl font-bold" style={{ color: currentTheme.text.primary }}>
+                    {page.profile_name}
+                  </h2>
                   {page.profile_bio && (
-                    <p className="text-sm text-muted-foreground mt-1">{page.profile_bio}</p>
+                    <p className="text-sm mt-1 whitespace-pre-line" style={{ color: currentTheme.text.secondary }}>
+                      {page.profile_bio}
+                    </p>
                   )}
 
                   {page.whatsapp_number && (
@@ -734,7 +759,7 @@ export default function PageEditorPage() {
 
                 {/* Dynamic Components */}
                 {components && components.length > 0 && (
-                  <div className="space-y-3 px-4">
+                  <div className="space-y-3">
                     {components
                       .filter((c) => c.is_visible !== false)
                       .map((component) => (
