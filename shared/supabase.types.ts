@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_generations: {
+        Row: {
+          created_at: string | null
+          generated_image_url: string | null
+          id: number
+          prompt: string
+          reference_image_url: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          generated_image_url?: string | null
+          id?: number
+          prompt: string
+          reference_image_url?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          generated_image_url?: string | null
+          id?: number
+          prompt?: string
+          reference_image_url?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bio_config: {
         Row: {
           coupon_code: string
@@ -64,6 +94,112 @@ export type Database = {
           whatsapp_number?: string
         }
         Relationships: []
+      }
+      pages: {
+        Row: {
+          id: number
+          user_id: string | null
+          username: string
+          profile_name: string
+          profile_bio: string | null
+          profile_image: string | null
+          profile_image_scale: number | null
+          whatsapp_number: string | null
+          whatsapp_message: string | null
+          background_type: string | null
+          background_value: string | null
+          font_family: string | null
+          views: number | null
+          is_active: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          user_id?: string | null
+          username: string
+          profile_name?: string
+          profile_bio?: string | null
+          profile_image?: string | null
+          profile_image_scale?: number | null
+          whatsapp_number?: string | null
+          whatsapp_message?: string | null
+          background_type?: string | null
+          background_value?: string | null
+          font_family?: string | null
+          views?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          user_id?: string | null
+          username?: string
+          profile_name?: string
+          profile_bio?: string | null
+          profile_image?: string | null
+          profile_image_scale?: number | null
+          whatsapp_number?: string | null
+          whatsapp_message?: string | null
+          background_type?: string | null
+          background_value?: string | null
+          font_family?: string | null
+          views?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      page_components: {
+        Row: {
+          id: number
+          page_id: number | null
+          type: string
+          order_index: number
+          config: Json
+          is_visible: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          page_id?: number | null
+          type: string
+          order_index?: number
+          config?: Json
+          is_visible?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          page_id?: number | null
+          type?: string
+          order_index?: number
+          config?: Json
+          is_visible?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_components_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       stores: {
         Row: {

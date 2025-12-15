@@ -14,6 +14,8 @@ interface ShirtParallaxCardProps {
   description?: string;
   imageUrl: string;
   imageScale?: number;
+  imagePositionX?: number;
+  imagePositionY?: number;
   kits: ProductKit[];
   discountPercent?: number;
   className?: string;
@@ -25,6 +27,8 @@ export function ShirtParallaxCard({
   description,
   imageUrl,
   imageScale = 100,
+  imagePositionX = 50,
+  imagePositionY = 50,
   kits,
   discountPercent = 0,
   className,
@@ -90,11 +94,12 @@ export function ShirtParallaxCard({
 
         <div className="flex">
           {/* Image Section */}
-          <div className="relative w-28 sm:w-36 flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-3">
+          <div className="relative w-28 sm:w-36 flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
             <motion.img
               src={imageUrl}
               alt={title}
-              className="w-full h-full object-contain max-h-32"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
               initial={{ scale: imageScale / 100 }}
               animate={{ scale: imageScale / 100 }}
               whileHover={{ scale: (imageScale / 100) * 1.08 }}

@@ -4,9 +4,18 @@ import { useState } from "react";
 interface VideoPlayerProps {
   videoUrl: string;
   thumbnail?: string;
+  thumbnailScale?: number;
+  thumbnailPositionX?: number;
+  thumbnailPositionY?: number;
 }
 
-export function VideoPlayer({ videoUrl, thumbnail }: VideoPlayerProps) {
+export function VideoPlayer({
+  videoUrl,
+  thumbnail,
+  thumbnailScale = 100,
+  thumbnailPositionX = 50,
+  thumbnailPositionY = 50,
+}: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Simple check to see if we have a valid video URL to show
@@ -35,6 +44,10 @@ export function VideoPlayer({ videoUrl, thumbnail }: VideoPlayerProps) {
               src={thumbnail}
               alt="Video thumbnail"
               className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                transform: `scale(${thumbnailScale / 100})`,
+                objectPosition: `${thumbnailPositionX}% ${thumbnailPositionY}%`,
+              }}
             />
           ) : (
             <>

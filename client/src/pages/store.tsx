@@ -1,53 +1,32 @@
 import { useState, useEffect } from "react";
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Loader2, Settings } from "lucide-react";
 import { BackgroundEffect } from "@/components/background-effect";
-import { ProfileHeader } from "@/components/profile-header";
-import { VideoPlayer } from "@/components/video-player";
-import { ShirtParallaxCard } from "@/components/ui/shirt-parallax-card";
-import { SocialLinks } from "@/components/social-links";
+import { ComponentRenderer } from "@/components/page-builder/component-renderer";
+import type { Page, PageComponent } from "@/types/database";
 
-interface SocialLink {
-  id: string;
-  label: string;
-  url: string;
-  icon?: string;
-}
-
-interface StoreData {
-  id: number;
-  username: string;
-  profile_name: string;
-  profile_bio: string;
-  profile_image: string;
-  profile_image_scale: number;
-  video_url: string;
-  video_thumbnail: string;
-  show_video: boolean;
-  whatsapp_number: string;
-  whatsapp_message: string;
-  discount_percent: number;
-  products: any[];
-  links: SocialLink[];
+interface PageData extends Page {
+  components: PageComponent[];
 }
 
 export default function StorePage() {
   const [, params] = useRoute("/:username");
-  const [store, setStore] = useState<StoreData | null>(null);
+  const [, navigate] = useLocation();
+  const [page, setPage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!params?.username) return;
 
-    fetch(`/api/stores/${params.username}`)
+    fetch(`/api/pages/username/${params.username}`)
       .then((res) => {
         if (!res.ok) throw new Error("Not found");
         return res.json();
       })
       .then((data) => {
-        setStore(data);
+        setPage(data);
         setLoading(false);
       })
       .catch(() => {
@@ -64,7 +43,7 @@ export default function StorePage() {
     );
   }
 
-  if (notFound || !store) {
+  if (notFound || !page) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
         <div className="text-center">
@@ -93,24 +72,22 @@ export default function StorePage() {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Convert store data to config format for components
-  const config = {
-    profileName: store.profile_name,
-    profileBio: store.profile_bio,
-    profileImage: store.profile_image,
-    profileImageScale: store.profile_image_scale,
-    videoUrl: store.video_url,
-    videoThumbnail: store.video_thumbnail,
-    showVideo: store.show_video !== false, // Default to true
-    whatsappNumber: store.whatsapp_number,
-    whatsappMessage: store.whatsapp_message,
-    discountPercent: store.discount_percent,
-    products: store.products || [],
-    links: store.links || [],
+  // Get background style
+  const getBackgroundStyle = () => {
+    if (page.background_type === 'gradient') {
+      return { background: page.background_value || 'linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)' };
+    }
+    if (page.background_type === 'color') {
+      return { backgroundColor: page.background_value || '#fce7f3' };
+    }
+    return {};
   };
 
   return (
-    <div className="min-h-screen pb-12 transition-colors duration-500 relative">
+    <div
+      className="min-h-screen pb-12 transition-colors duration-500 relative"
+      style={getBackgroundStyle()}
+    >
       <BackgroundEffect />
 
       <motion.main
@@ -118,30 +95,38 @@ export default function StorePage() {
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        style={{ opacity: 1 }}
+        style={{
+          opacity: 1,
+          fontFamily: page.font_family || 'inherit'
+        }}
       >
         {/* Profile Header */}
         <motion.div variants={itemVariants} className="text-center mb-6">
           <div className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-white shadow-lg">
-            {config.profileImage ? (
+            {page.profile_image ? (
               <img
-                src={config.profileImage}
-                alt={config.profileName}
+                src={page.profile_image}
+                alt={page.profile_name}
                 className="w-full h-full object-cover"
-                style={{ transform: `scale(${config.profileImageScale / 100})` }}
+                style={{
+                  transform: `scale(${(page.profile_image_scale || 100) / 100})`,
+                  objectPosition: `${page.profile_image_position_x ?? 50}% ${page.profile_image_position_y ?? 50}%`,
+                }}
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-2xl font-bold text-primary">
-                {config.profileName.charAt(0)}
+                {page.profile_name?.charAt(0) || '?'}
               </div>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-foreground">{config.profileName}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{config.profileBio}</p>
+          <h1 className="text-2xl font-bold text-foreground">{page.profile_name}</h1>
+          {page.profile_bio && (
+            <p className="text-sm text-muted-foreground mt-1">{page.profile_bio}</p>
+          )}
 
-          {config.whatsappNumber && (
+          {page.whatsapp_number && (
             <a
-              href={`https://wa.me/${config.whatsappNumber}?text=${encodeURIComponent(config.whatsappMessage)}`}
+              href={`https://wa.me/${page.whatsapp_number}?text=${encodeURIComponent(page.whatsapp_message || '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 mt-4 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-full font-medium transition-colors"
@@ -154,55 +139,36 @@ export default function StorePage() {
           )}
         </motion.div>
 
-        {/* Social Links */}
-        {config.links.length > 0 && (
-          <motion.div variants={itemVariants}>
-            <SocialLinks links={config.links} />
-          </motion.div>
-        )}
-
-        {/* Video */}
-        {config.videoUrl && config.showVideo && (
-          <motion.div variants={itemVariants} className="mb-6">
-            <VideoPlayer videoUrl={config.videoUrl} thumbnail={config.videoThumbnail} />
-          </motion.div>
-        )}
-
-        {/* Products */}
-        {config.products && config.products.length > 0 && (
-          <motion.div variants={itemVariants} className="space-y-4">
-            <div className="flex items-center gap-2 px-1">
-              <h2 className="text-sm font-bold text-foreground/80 uppercase tracking-wider">
-                Ofertas Especiais
-              </h2>
-              <div className="h-px bg-border flex-1" />
-            </div>
-            <div className="px-2 space-y-4">
-              {config.products.map((product: any) => (
-                <ShirtParallaxCard
-                  key={product.id}
-                  productId={product.id}
-                  title={product.title}
-                  description={product.description}
-                  imageUrl={product.image}
-                  imageScale={product.imageScale}
-                  kits={product.kits}
-                  discountPercent={product.discountPercent ?? config.discountPercent}
-                />
+        {/* Dynamic Components */}
+        {page.components && page.components.length > 0 && (
+          <div className="space-y-4">
+            {page.components
+              .filter((c) => c.is_visible !== false)
+              .map((component) => (
+                <motion.div key={component.id} variants={itemVariants}>
+                  <ComponentRenderer component={component} />
+                </motion.div>
               ))}
-            </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Footer */}
         <motion.footer variants={itemVariants} className="mt-12 text-center space-y-4 opacity-60">
           <p className="text-xs text-muted-foreground">
-            © 2025 {config.profileName}. All rights reserved.
+            © 2025 {page.profile_name}. All rights reserved.
           </p>
           <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground font-medium tracking-wide uppercase">
             <a href="#" className="hover:text-primary transition-colors">Privacy</a>
             <span>•</span>
             <a href="#" className="hover:text-primary transition-colors">Terms</a>
+            <span>•</span>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="hover:text-primary transition-colors inline-flex items-center gap-1"
+            >
+              <Settings className="w-3 h-3" />
+              Editar
+            </button>
           </div>
         </motion.footer>
       </motion.main>

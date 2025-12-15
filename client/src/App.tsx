@@ -14,6 +14,8 @@ import CheckoutCancelPage from "@/pages/checkout-cancel";
 import ProdutoPage from "@/pages/produto";
 import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
+import PagesListPage from "@/pages/pages-list";
+import PageEditorPage from "@/pages/page-editor";
 import StorePage from "@/pages/store";
 
 function Router() {
@@ -21,7 +23,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/config" component={AdminPage} />
-      <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/dashboard" component={PagesListPage} />
+      <Route path="/dashboard/:pageId" component={PageEditorPage} />
+      <Route path="/dashboard-old" component={DashboardPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/produto/:id" component={ProdutoPage} />
       <Route path="/sign-in" component={SignInPage} />
