@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Play, Upload, Loader2, Pencil, Video, Crop } from "lucide-react";
+import { Play, Upload, Loader2, Pencil, Video, Crop, Download } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
@@ -56,6 +56,24 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
       }
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDownloadThumbnail = async () => {
+    if (!localConfig.thumbnail) return;
+    try {
+      const response = await fetch(localConfig.thumbnail);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `thumbnail-video-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      window.open(localConfig.thumbnail, "_blank");
     }
   };
 
@@ -144,15 +162,26 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
               />
             </div>
             {localConfig.thumbnail && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPositionModalOpen(true)}
-                className="w-full text-xs text-gray-500 hover:text-gray-700 mt-2"
-              >
-                <Crop className="w-3.5 h-3.5 mr-1.5" />
-                Ajustar posição da thumbnail
-              </Button>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPositionModalOpen(true)}
+                  className="flex-1 text-xs text-gray-500 hover:text-gray-700"
+                >
+                  <Crop className="w-3.5 h-3.5 mr-1.5" />
+                  Ajustar posição
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownloadThumbnail}
+                  className="flex-1 text-xs text-gray-500 hover:text-gray-700"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Baixar
+                </Button>
+              </div>
             )}
           </div>
 

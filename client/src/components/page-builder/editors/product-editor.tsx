@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil } from "lucide-react";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
@@ -51,6 +51,24 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
       }
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!config.image) return;
+    try {
+      const response = await fetch(config.image);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `produto-${localConfig.title || "imagem"}-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      window.open(config.image, "_blank");
     }
   };
 
@@ -184,15 +202,26 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
             />
           </div>
           {config.image && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPositionModalOpen(true)}
-              className="w-full text-xs text-gray-500 hover:text-gray-700"
-            >
-              <Crop className="w-3.5 h-3.5 mr-1.5" />
-              Ajustar posição da imagem
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPositionModalOpen(true)}
+                className="flex-1 text-xs text-gray-500 hover:text-gray-700"
+              >
+                <Crop className="w-3.5 h-3.5 mr-1.5" />
+                Ajustar posição
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadImage}
+                className="flex-1 text-xs text-gray-500 hover:text-gray-700"
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Baixar
+              </Button>
+            </div>
           )}
         </div>
       )}
