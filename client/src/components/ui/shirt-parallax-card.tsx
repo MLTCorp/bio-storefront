@@ -3,7 +3,6 @@
 import * as React from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Sparkles } from "lucide-react";
 import type { ProductKit } from "@/lib/store";
@@ -70,14 +69,17 @@ export function ShirtParallaxCard({
     }
   };
 
-  // Build card styles based on theme
+  // Build card styles based on theme - use innerCard for product cards
   const cardStyle: React.CSSProperties = theme ? {
-    background: theme.card.bg,
-    backdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
-    WebkitBackdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
-    border: theme.card.border,
-    boxShadow: theme.card.shadow,
+    background: theme.innerCard.bg,
+    backdropFilter: theme.innerCard.blur > 0 ? `blur(${theme.innerCard.blur}px)` : 'none',
+    WebkitBackdropFilter: theme.innerCard.blur > 0 ? `blur(${theme.innerCard.blur}px)` : 'none',
+    border: theme.innerCard.border,
+    boxShadow: theme.innerCard.shadow,
   } : {};
+
+  // Check if it's a dark theme
+  const isDarkTheme = theme?.id === 'dark' || theme?.id === 'cyber';
 
   return (
     <motion.div
@@ -112,7 +114,7 @@ export function ShirtParallaxCard({
 
         <div className="flex">
           {/* Image Section */}
-          <div className="relative w-28 sm:w-36 flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+          <div className="relative w-28 sm:w-36 flex-shrink-0 overflow-hidden">
             <motion.img
               src={imageUrl}
               alt={title}
@@ -160,49 +162,58 @@ export function ShirtParallaxCard({
                 const isHighlighted = index === 1;
                 const hasDiscount = discountPercent > 0;
 
+                // Button styles based on theme
+                const buttonStyle: React.CSSProperties = isHighlighted
+                  ? {
+                      background: theme?.button.highlight || 'linear-gradient(135deg, #059669, #047857)',
+                      color: theme?.button.highlightText || '#ffffff',
+                      border: 'none',
+                    }
+                  : {
+                      background: theme?.button.secondary || '#ffffff',
+                      color: theme?.button.secondaryText || '#111827',
+                      border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e5e7eb',
+                    };
+
                 return (
-                  <Button
+                  <button
                     key={kit.id}
-                    variant={isHighlighted ? "default" : "outline"}
-                    size="sm"
                     className={cn(
-                      "flex-1 min-w-[70px] flex flex-col h-auto py-1.5 px-2 gap-0 rounded-lg transition-all",
-                      isHighlighted
-                        ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md border-0"
-                        : "bg-white hover:bg-gray-50 border-gray-200 hover:border-emerald-300"
+                      "flex-1 min-w-[70px] flex flex-col items-center h-auto py-1.5 px-2 gap-0 rounded-lg transition-all hover:opacity-80",
+                      isHighlighted && "shadow-md"
                     )}
+                    style={buttonStyle}
                     onClick={() => handleKitClick(kit)}
                   >
-                    <span className={cn(
-                      "text-[9px] uppercase tracking-wider font-medium",
-                      isHighlighted ? "text-emerald-100" : "text-gray-400"
-                    )}>
+                    <span
+                      className="text-[9px] uppercase tracking-wider font-medium"
+                      style={{
+                        opacity: 0.7,
+                        color: isHighlighted
+                          ? theme?.button.highlightText || '#ffffff'
+                          : theme?.button.secondaryText || '#6b7280'
+                      }}
+                    >
                       {kit.label}
                     </span>
                     {hasDiscount ? (
                       <div className="flex flex-col items-center leading-none">
-                        <span className={cn(
-                          "text-[8px] line-through",
-                          isHighlighted ? "text-emerald-200" : "text-gray-300"
-                        )}>
+                        <span
+                          className="text-[8px] line-through"
+                          style={{ opacity: 0.5 }}
+                        >
                           R$ {kit.price.toFixed(0)}
                         </span>
-                        <span className={cn(
-                          "text-sm font-black",
-                          isHighlighted ? "text-white" : "text-emerald-600"
-                        )}>
+                        <span className="text-sm font-black">
                           R$ {discountedPrice.toFixed(0)}
                         </span>
                       </div>
                     ) : (
-                      <span className={cn(
-                        "text-sm font-black",
-                        isHighlighted ? "text-white" : "text-gray-800"
-                      )}>
+                      <span className="text-sm font-black">
                         R$ {kit.price.toFixed(0)}
                       </span>
                     )}
-                  </Button>
+                  </button>
                 );
               })}
             </div>

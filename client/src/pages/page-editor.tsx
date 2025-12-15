@@ -132,37 +132,39 @@ export default function PageEditorPage() {
     setSaving(true);
 
     try {
-      // Save page
-      await fetch(`/api/pages/${page.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
-        },
-        body: JSON.stringify({
-          profile_name: page.profile_name,
-          profile_bio: page.profile_bio,
-          profile_image: page.profile_image,
-          profile_image_scale: page.profile_image_scale,
-          whatsapp_number: page.whatsapp_number,
-          whatsapp_message: page.whatsapp_message,
-          background_type: page.background_type,
-          background_value: page.background_value,
-          font_family: page.font_family,
+      // Save page and reorder components in parallel for faster response
+      await Promise.all([
+        fetch(`/api/pages/${page.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-clerk-user-id": user.id,
+          },
+          body: JSON.stringify({
+            profile_name: page.profile_name,
+            profile_bio: page.profile_bio,
+            profile_image: page.profile_image,
+            profile_image_scale: page.profile_image_scale,
+            profile_image_position_x: page.profile_image_position_x,
+            profile_image_position_y: page.profile_image_position_y,
+            whatsapp_number: page.whatsapp_number,
+            whatsapp_message: page.whatsapp_message,
+            background_type: page.background_type,
+            background_value: page.background_value,
+            font_family: page.font_family,
+          }),
         }),
-      });
-
-      // Reorder components
-      await fetch(`/api/pages/${page.id}/reorder`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
-        },
-        body: JSON.stringify({
-          componentIds: components.map((c) => c.id),
+        fetch(`/api/pages/${page.id}/reorder`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-clerk-user-id": user.id,
+          },
+          body: JSON.stringify({
+            componentIds: components.map((c) => c.id),
+          }),
         }),
-      });
+      ]);
 
       toast({
         title: "Salvo!",

@@ -14,6 +14,13 @@ export interface Theme {
     border: string;
     shadow: string;
   };
+  // Styles for product cards and other inner components
+  innerCard: {
+    bg: string;
+    blur: number;
+    border: string;
+    shadow: string;
+  };
   text: {
     primary: string;
     secondary: string;
@@ -24,6 +31,8 @@ export interface Theme {
     primaryText: string;
     secondary: string;
     secondaryText: string;
+    highlight: string;
+    highlightText: string;
   };
 }
 
@@ -41,6 +50,12 @@ export const themes: Record<string, Theme> = {
       border: '1px solid #e5e7eb',
       shadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
     },
+    innerCard: {
+      bg: '#f9fafb',
+      blur: 0,
+      border: '1px solid #e5e7eb',
+      shadow: 'none'
+    },
     text: {
       primary: '#111827',
       secondary: '#6b7280',
@@ -49,8 +64,10 @@ export const themes: Record<string, Theme> = {
     button: {
       primary: '#111827',
       primaryText: '#ffffff',
-      secondary: '#f3f4f6',
-      secondaryText: '#374151'
+      secondary: '#ffffff',
+      secondaryText: '#111827',
+      highlight: 'linear-gradient(135deg, #059669, #047857)',
+      highlightText: '#ffffff'
     }
   },
 
@@ -59,13 +76,19 @@ export const themes: Record<string, Theme> = {
     name: 'Dark',
     background: {
       type: 'color',
-      value: '#0f172a'
+      value: '#0a0a0f'
     },
     card: {
-      bg: 'rgba(30, 41, 59, 0.8)',
-      blur: 8,
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      shadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
+      bg: 'rgba(30, 30, 40, 0.6)',
+      blur: 20,
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      shadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+    },
+    innerCard: {
+      bg: 'rgba(255, 255, 255, 0.05)',
+      blur: 10,
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      shadow: 'none'
     },
     text: {
       primary: '#f8fafc',
@@ -73,10 +96,12 @@ export const themes: Record<string, Theme> = {
       accent: '#f472b6'
     },
     button: {
-      primary: '#3b82f6',
+      primary: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
       primaryText: '#ffffff',
-      secondary: 'rgba(255, 255, 255, 0.1)',
-      secondaryText: '#e2e8f0'
+      secondary: 'rgba(255, 255, 255, 0.08)',
+      secondaryText: '#e2e8f0',
+      highlight: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+      highlightText: '#ffffff'
     }
   },
 
@@ -85,13 +110,19 @@ export const themes: Record<string, Theme> = {
     name: 'Cyber',
     background: {
       type: 'color',
-      value: '#0a0a0f'
+      value: '#050510'
     },
     card: {
-      bg: 'rgba(255, 255, 255, 0.03)',
-      blur: 16,
-      border: '1px solid rgba(34, 211, 238, 0.3)',
-      shadow: '0 0 30px rgba(34, 211, 238, 0.1)'
+      bg: 'rgba(10, 10, 20, 0.7)',
+      blur: 24,
+      border: '1px solid rgba(34, 211, 238, 0.2)',
+      shadow: '0 0 40px rgba(34, 211, 238, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+    },
+    innerCard: {
+      bg: 'rgba(34, 211, 238, 0.03)',
+      blur: 12,
+      border: '1px solid rgba(34, 211, 238, 0.15)',
+      shadow: '0 0 20px rgba(34, 211, 238, 0.05)'
     },
     text: {
       primary: '#22d3ee',
@@ -102,7 +133,9 @@ export const themes: Record<string, Theme> = {
       primary: 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
       primaryText: '#ffffff',
       secondary: 'rgba(34, 211, 238, 0.1)',
-      secondaryText: '#22d3ee'
+      secondaryText: '#22d3ee',
+      highlight: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+      highlightText: '#ffffff'
     }
   },
 
@@ -115,9 +148,15 @@ export const themes: Record<string, Theme> = {
     },
     card: {
       bg: 'rgba(255, 255, 255, 0.7)',
+      blur: 12,
+      border: '1px solid rgba(236, 72, 153, 0.15)',
+      shadow: '0 4px 20px rgba(236, 72, 153, 0.1)'
+    },
+    innerCard: {
+      bg: 'rgba(255, 255, 255, 0.6)',
       blur: 8,
-      border: '1px solid rgba(236, 72, 153, 0.2)',
-      shadow: '0 4px 6px rgba(236, 72, 153, 0.1)'
+      border: '1px solid rgba(236, 72, 153, 0.12)',
+      shadow: 'none'
     },
     text: {
       primary: '#831843',
@@ -125,10 +164,12 @@ export const themes: Record<string, Theme> = {
       accent: '#ec4899'
     },
     button: {
-      primary: '#ec4899',
+      primary: 'linear-gradient(135deg, #ec4899, #f472b6)',
       primaryText: '#ffffff',
-      secondary: 'rgba(236, 72, 153, 0.1)',
-      secondaryText: '#be185d'
+      secondary: 'rgba(255, 255, 255, 0.8)',
+      secondaryText: '#831843',
+      highlight: 'linear-gradient(135deg, #ec4899, #f472b6)',
+      highlightText: '#ffffff'
     }
   },
 
@@ -140,10 +181,16 @@ export const themes: Record<string, Theme> = {
       value: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%)'
     },
     card: {
-      bg: 'rgba(255, 255, 255, 0.8)',
-      blur: 4,
-      border: '1px solid rgba(34, 197, 94, 0.2)',
-      shadow: '0 2px 4px rgba(34, 197, 94, 0.1)'
+      bg: 'rgba(255, 255, 255, 0.75)',
+      blur: 10,
+      border: '1px solid rgba(34, 197, 94, 0.15)',
+      shadow: '0 4px 16px rgba(34, 197, 94, 0.1)'
+    },
+    innerCard: {
+      bg: 'rgba(255, 255, 255, 0.6)',
+      blur: 6,
+      border: '1px solid rgba(34, 197, 94, 0.12)',
+      shadow: 'none'
     },
     text: {
       primary: '#14532d',
@@ -151,10 +198,12 @@ export const themes: Record<string, Theme> = {
       accent: '#22c55e'
     },
     button: {
-      primary: '#22c55e',
+      primary: 'linear-gradient(135deg, #22c55e, #16a34a)',
       primaryText: '#ffffff',
-      secondary: 'rgba(34, 197, 94, 0.1)',
-      secondaryText: '#15803d'
+      secondary: 'rgba(255, 255, 255, 0.8)',
+      secondaryText: '#14532d',
+      highlight: 'linear-gradient(135deg, #22c55e, #16a34a)',
+      highlightText: '#ffffff'
     }
   }
 };

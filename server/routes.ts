@@ -427,7 +427,7 @@ export async function registerRoutes(
       const pagesWithUsers = (pages || []).map(page => ({
         ...page,
         users: {
-          email: userMap.get(page.user_id) || "Unknown"
+          email: page.user_id ? userMap.get(page.user_id) || "Unknown" : "Unknown"
         }
       }));
 
