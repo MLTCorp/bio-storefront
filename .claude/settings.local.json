@@ -78,7 +78,11 @@
       "Bash(powershell -Command \"Stop-Process -Id 247756 -Force\")",
       "Bash(cmd /c \"taskkill /F /PID 247548\")",
       "Bash(cmd //c \"taskkill /F /PID 247548\")",
-      "Bash(cmd //c \"taskkill /F /PID 272700\")"
+      "Bash(cmd //c \"taskkill /F /PID 272700\")",
+      "Bash(del /f /q \"C:\\Users\\Pichau\\AppData\\Local\\ms-playwright\\mcp-chrome-80c6411\\SingletonLock\")",
+      "Bash(cd:*)",
+      "Bash(git reset:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []
