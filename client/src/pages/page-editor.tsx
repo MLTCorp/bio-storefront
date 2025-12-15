@@ -57,7 +57,7 @@ import {
   X,
 } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
-import { themes, themeList, getThemeIdFromBackground } from "@/lib/themes";
+import { themes, themeList, getThemeIdFromBackground, getTheme } from "@/lib/themes";
 import type { Page, PageComponent, ComponentType, ComponentConfig } from "@/types/database";
 import { SortableComponent } from "@/components/page-builder/sortable-component";
 import { AddComponentMenu } from "@/components/page-builder/add-component-menu";
@@ -80,6 +80,9 @@ export default function PageEditorPage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+  // Get current theme based on page background
+  const currentTheme = getTheme(getThemeIdFromBackground(page?.background_value));
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -736,7 +739,7 @@ export default function PageEditorPage() {
                       .filter((c) => c.is_visible !== false)
                       .map((component) => (
                         <div key={component.id}>
-                          <ComponentRenderer component={component} />
+                          <ComponentRenderer component={component} theme={currentTheme} />
                         </div>
                       ))}
                   </div>
