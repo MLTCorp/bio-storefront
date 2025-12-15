@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
-import { Loader2, Upload, MoveHorizontal, MoveVertical, ZoomIn } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, Upload, Crop, Download } from "lucide-react";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
+import { ImagePositioner } from "@/components/ui/image-positioner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Page } from "@/types/database";
 
 interface ProfileEditorProps {
@@ -23,20 +30,52 @@ export function ProfileEditor({
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
+
+  const handleDownloadImage = async () => {
+    if (!page.profile_image) return;
+    try {
+      const response = await fetch(page.profile_image);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `foto-perfil-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      window.open(page.profile_image, "_blank");
+    }
+  };
+
+  // Render bio with line breaks
+  const renderBioWithBreaks = (bio: string) => {
+    return bio.split('\n').map((line, index, array) => (
+      <span key={index}>
+        {line}
+        {index < array.length - 1 && <br />}
+      </span>
+    ));
+  };
 
   return (
     <div className="p-6 pb-4 text-center">
-      {/* Profile Image */}
-      <div className="relative inline-block mb-4">
-        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gray-200 border-4 border-white shadow-lg relative group cursor-pointer">
+      {/* Profile Image Section */}
+      <div className="flex flex-col items-center mb-4">
+        {/* Image Container */}
+        <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-4 border-white shadow-lg relative group cursor-pointer">
           {page.profile_image ? (
             <img
               src={page.profile_image}
               alt={page.profile_name}
-              className="w-full h-full object-cover"
+              className="absolute object-cover"
               style={{
-                transform: `scale(${(page.profile_image_scale || 100) / 100})`,
-                objectPosition: `${page.profile_image_position_x ?? 50}% ${page.profile_image_position_y ?? 50}%`,
+                width: `${page.profile_image_scale || 100}%`,
+                height: `${page.profile_image_scale || 100}%`,
+                left: `${-((page.profile_image_scale || 100) - 100) * ((page.profile_image_position_x ?? 50) / 100)}%`,
+                top: `${-((page.profile_image_scale || 100) - 100) * ((page.profile_image_position_y ?? 50) / 100)}%`,
               }}
             />
           ) : (
@@ -62,50 +101,30 @@ export function ProfileEditor({
           </label>
         </div>
 
-        {/* Image Controls - Only show when image exists */}
-        {page.profile_image && (
-          <div className="mt-3 space-y-2 max-w-[200px] mx-auto">
-            {/* Zoom */}
-            <div className="flex items-center gap-2">
-              <ZoomIn className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <Slider
-                value={[page.profile_image_scale || 100]}
-                onValueChange={([val]) => onUpdate({ profile_image_scale: val })}
-                min={100}
-                max={200}
-                step={5}
-                className="flex-1"
-              />
-            </div>
-            {/* Position X */}
-            <div className="flex items-center gap-2">
-              <MoveHorizontal className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <Slider
-                value={[page.profile_image_position_x ?? 50]}
-                onValueChange={([val]) => onUpdate({ profile_image_position_x: val })}
-                min={0}
-                max={100}
-                step={1}
-                className="flex-1"
-              />
-            </div>
-            {/* Position Y */}
-            <div className="flex items-center gap-2">
-              <MoveVertical className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <Slider
-                value={[page.profile_image_position_y ?? 50]}
-                onValueChange={([val]) => onUpdate({ profile_image_position_y: val })}
-                min={0}
-                max={100}
-                step={1}
-                className="flex-1"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* AI Generate Button */}
-        <div className="mt-2">
+        {/* Image Action Buttons */}
+        <div className="flex items-center justify-center gap-2 mt-2">
+          {page.profile_image && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPositionModalOpen(true)}
+                className="text-xs text-gray-500 hover:text-gray-700 h-7 px-2"
+              >
+                <Crop className="w-3.5 h-3.5 mr-1" />
+                Ajustar
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadImage}
+                className="text-xs text-gray-500 hover:text-gray-700 h-7 px-2"
+              >
+                <Download className="w-3.5 h-3.5 mr-1" />
+                Salvar
+              </Button>
+            </>
+          )}
           <AnimatedGenerateButton
             labelIdle="Gerar com IA"
             labelActive="Gerando..."
@@ -116,14 +135,6 @@ export function ProfileEditor({
           />
         </div>
       </div>
-
-      {/* AI Image Generation Modal */}
-      <AIImageModal
-        open={aiModalOpen}
-        onOpenChange={setAiModalOpen}
-        type="profile"
-        onImageGenerated={(imageUrl) => onUpdate({ profile_image: imageUrl })}
-      />
 
       {/* Profile Name */}
       {editingName ? (
@@ -151,18 +162,58 @@ export function ProfileEditor({
           onChange={(e) => onUpdate({ profile_bio: e.target.value })}
           onBlur={() => setEditingBio(false)}
           autoFocus
-          rows={2}
+          rows={3}
           className="text-center text-sm text-gray-600 border-primary max-w-sm mx-auto mt-2"
-          placeholder="Sua bio aqui..."
+          placeholder="Sua bio aqui... (use Enter para quebrar linha)"
         />
       ) : (
         <p
           onClick={() => setEditingBio(true)}
-          className="text-sm text-gray-600 cursor-text hover:bg-gray-100 rounded px-2 py-1 mt-1 inline-block transition-colors"
+          className="text-sm text-gray-600 cursor-text hover:bg-gray-100 rounded px-2 py-1 mt-1 inline-block transition-colors whitespace-pre-line"
         >
-          {page.profile_bio || "Clique para adicionar uma bio"}
+          {page.profile_bio ? renderBioWithBreaks(page.profile_bio) : "Clique para adicionar uma bio"}
         </p>
       )}
+
+      {/* AI Image Generation Modal */}
+      <AIImageModal
+        open={aiModalOpen}
+        onOpenChange={setAiModalOpen}
+        type="profile"
+        onImageGenerated={(imageUrl) => onUpdate({ profile_image: imageUrl })}
+      />
+
+      {/* Image Position Modal */}
+      <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajustar foto de perfil</DialogTitle>
+          </DialogHeader>
+          {page.profile_image && (
+            <ImagePositioner
+              src={page.profile_image}
+              positionX={page.profile_image_position_x ?? 50}
+              positionY={page.profile_image_position_y ?? 50}
+              scale={page.profile_image_scale || 100}
+              aspectRatio="circle"
+              minScale={100}
+              maxScale={200}
+              onChange={({ positionX, positionY, scale }) => {
+                onUpdate({
+                  profile_image_position_x: positionX,
+                  profile_image_position_y: positionY,
+                  profile_image_scale: scale,
+                });
+              }}
+            />
+          )}
+          <div className="flex justify-end">
+            <Button onClick={() => setPositionModalOpen(false)}>
+              Pronto
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

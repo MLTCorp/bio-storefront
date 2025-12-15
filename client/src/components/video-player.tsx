@@ -43,10 +43,12 @@ export function VideoPlayer({
             <img
               src={thumbnail}
               alt="Video thumbnail"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute object-cover"
               style={{
-                transform: `scale(${thumbnailScale / 100})`,
-                objectPosition: `${thumbnailPositionX}% ${thumbnailPositionY}%`,
+                width: `${thumbnailScale}%`,
+                height: `${thumbnailScale}%`,
+                left: `${-((thumbnailScale) - 100) * (thumbnailPositionX / 100)}%`,
+                top: `${-((thumbnailScale) - 100) * (thumbnailPositionY / 100)}%`,
               }}
             />
           ) : (

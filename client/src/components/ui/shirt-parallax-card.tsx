@@ -94,15 +94,18 @@ export function ShirtParallaxCard({
 
         <div className="flex">
           {/* Image Section */}
-          <div className="relative w-28 sm:w-36 flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden">
+          <div className="relative w-28 sm:w-36 flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
             <motion.img
               src={imageUrl}
               alt={title}
-              className="w-full h-full object-cover"
-              style={{ objectPosition: `${imagePositionX}% ${imagePositionY}%` }}
-              initial={{ scale: imageScale / 100 }}
-              animate={{ scale: imageScale / 100 }}
-              whileHover={{ scale: (imageScale / 100) * 1.08 }}
+              className="absolute object-cover"
+              style={{
+                width: `${imageScale}%`,
+                height: `${imageScale}%`,
+                left: `${-((imageScale) - 100) * (imagePositionX / 100)}%`,
+                top: `${-((imageScale) - 100) * (imagePositionY / 100)}%`,
+              }}
+              whileHover={{ scale: 1.08 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             />
           </div>

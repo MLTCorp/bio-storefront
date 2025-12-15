@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Upload, Loader2, Plus, Trash2, Percent, ZoomIn, MoveHorizontal, MoveVertical } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
+import { ImagePositioner } from "@/components/ui/image-positioner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { ProductConfig, ProductKit } from "@/types/database";
 
 interface ProductEditorProps {
@@ -20,6 +26,15 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
   const [expanded, setExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
+  const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
+  const [imageEditMode, setImageEditMode] = useState(false);
+  const [discountLinksExpandedKitId, setDiscountLinksExpandedKitId] = useState<string | null>(null);
+
+  // Reset image edit mode when card is collapsed
+  useEffect(() => {
+    if (!expanded) setImageEditMode(false);
+  }, [expanded]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,31 +90,50 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
   return (
     <div className="space-y-3">
       {/* Preview */}
-      <div
-        onClick={() => setExpanded(!expanded)}
-        className="flex gap-3 cursor-pointer"
-      >
-        {/* Image */}
-        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative group">
+      <div className="flex gap-3">
+        {/* Image - Clickable to toggle edit mode when expanded */}
+        <div
+          onClick={(e) => {
+            if (expanded) {
+              e.stopPropagation();
+              setImageEditMode(!imageEditMode);
+            } else {
+              setExpanded(true);
+            }
+          }}
+          className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative group cursor-pointer"
+        >
           {config.image ? (
             <img
               src={config.image}
               alt={config.title}
-              className="w-full h-full object-cover"
+              className="absolute object-cover"
               style={{
-                transform: `scale(${(config.imageScale || 100) / 100})`,
-                objectPosition: `${config.imagePositionX ?? 50}% ${config.imagePositionY ?? 50}%`,
+                width: `${config.imageScale || 100}%`,
+                height: `${config.imageScale || 100}%`,
+                left: `${-((config.imageScale || 100) - 100) * ((config.imagePositionX ?? 50) / 100)}%`,
+                top: `${-((config.imageScale || 100) - 100) * ((config.imagePositionY ?? 50) / 100)}%`,
               }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <Upload className="h-6 w-6" />
+              <ImageIcon className="h-6 w-6" />
+            </div>
+          )}
+
+          {/* Edit Overlay - Only show when card is expanded */}
+          {expanded && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Pencil className="h-4 w-4 text-white" />
             </div>
           )}
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
+        {/* Info - Clickable to expand/collapse card */}
+        <div
+          onClick={() => setExpanded(!expanded)}
+          className="flex-1 min-w-0 cursor-pointer"
+        >
           <h3 className="font-medium truncate">{config.title || "Produto"}</h3>
           <p className="text-sm text-gray-500 truncate">
             {config.description || "Descricao"}
@@ -119,91 +153,54 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
         </div>
       </div>
 
+      {/* Image Edit Controls - Show below preview when active */}
+      {expanded && imageEditMode && (
+        <div className="space-y-2 p-3 bg-gray-100 rounded-lg">
+          <div className="flex gap-2">
+            <label className="flex-1 p-3 border-2 border-dashed rounded-lg text-center cursor-pointer hover:bg-white transition-colors bg-white/50">
+              {uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin mx-auto text-gray-400" />
+              ) : (
+                <>
+                  <Upload className="h-5 w-5 mx-auto text-gray-400" />
+                  <span className="text-xs text-gray-500 mt-1 block">
+                    Upload
+                  </span>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+            </label>
+            <AnimatedGenerateButton
+              labelIdle="Gerar"
+              labelActive="..."
+              generating={false}
+              onClick={() => setAiModalOpen(true)}
+              highlightHueDeg={160}
+            />
+          </div>
+          {config.image && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPositionModalOpen(true)}
+              className="w-full text-xs text-gray-500 hover:text-gray-700"
+            >
+              <Crop className="w-3.5 h-3.5 mr-1.5" />
+              Ajustar posição da imagem
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Expanded Editor */}
       {expanded && (
         <div className="space-y-4 p-3 bg-gray-50 rounded-lg">
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <Label className="text-xs">Imagem do Produto</Label>
-            <div className="flex gap-2">
-              <label className="flex-1 p-3 border-2 border-dashed rounded-lg text-center cursor-pointer hover:bg-gray-100 transition-colors">
-                {uploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-gray-400" />
-                ) : (
-                  <>
-                    <Upload className="h-5 w-5 mx-auto text-gray-400" />
-                    <span className="text-xs text-gray-500 mt-1 block">
-                      Upload
-                    </span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-              </label>
-              <AnimatedGenerateButton
-                labelIdle="Gerar"
-                labelActive="..."
-                generating={false}
-                onClick={() => setAiModalOpen(true)}
-                highlightHueDeg={160}
-              />
-            </div>
-            {config.image && (
-              <div className="space-y-2">
-                {/* Zoom */}
-                <div className="flex items-center gap-2">
-                  <ZoomIn className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <Slider
-                    value={[config.imageScale || 100]}
-                    min={50}
-                    max={200}
-                    step={10}
-                    onValueChange={([value]) =>
-                      onUpdate({ ...config, imageScale: value })
-                    }
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-gray-500 w-8">
-                    {config.imageScale || 100}%
-                  </span>
-                </div>
-                {/* Position X */}
-                <div className="flex items-center gap-2">
-                  <MoveHorizontal className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <Slider
-                    value={[config.imagePositionX ?? 50]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={([value]) =>
-                      onUpdate({ ...config, imagePositionX: value })
-                    }
-                    className="flex-1"
-                  />
-                </div>
-                {/* Position Y */}
-                <div className="flex items-center gap-2">
-                  <MoveVertical className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <Slider
-                    value={[config.imagePositionY ?? 50]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={([value]) =>
-                      onUpdate({ ...config, imagePositionY: value })
-                    }
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Title & Description */}
           <div className="space-y-2">
             <Label className="text-xs">Titulo</Label>
@@ -227,16 +224,16 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
           </div>
 
           {/* Discount */}
-          <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Percent className="h-4 w-4 text-orange-600" />
-              <span className="text-sm font-medium text-orange-700">
-                Desconto
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
+          {config.discountPercent > 0 ? (
+            <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Percent className="h-4 w-4 text-orange-600" />
+                <span className="text-sm font-medium text-orange-700">
+                  Desconto
+                </span>
+              </div>
               <select
-                value={config.discountPercent || 0}
+                value={config.discountPercent}
                 onChange={(e) =>
                   onUpdate({
                     ...config,
@@ -253,9 +250,29 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                 <option value="50">50%</option>
               </select>
             </div>
-          </div>
+          ) : (
+            <div className="flex justify-end">
+              <select
+                value={0}
+                onChange={(e) =>
+                  onUpdate({
+                    ...config,
+                    discountPercent: parseInt(e.target.value),
+                  })
+                }
+                className="text-sm text-orange-600 font-medium bg-transparent border-none cursor-pointer hover:text-orange-700 focus:outline-none focus:ring-0"
+              >
+                <option value="0">% Sem desconto</option>
+                <option value="10">10% de desconto</option>
+                <option value="20">20% de desconto</option>
+                <option value="30">30% de desconto</option>
+                <option value="40">40% de desconto</option>
+                <option value="50">50% de desconto</option>
+              </select>
+            </div>
+          )}
 
-          {/* Kits */}
+          {/* Kits - Mobile-friendly accordion */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs">Opcoes de Compra</Label>
@@ -265,45 +282,176 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
               </Button>
             </div>
 
-            {config.kits.map((kit) => (
-              <div
-                key={kit.id}
-                className="flex gap-2 items-center p-2 bg-white rounded-lg"
-              >
-                <Input
-                  value={kit.label}
-                  onChange={(e) => updateKit(kit.id, { label: e.target.value })}
-                  placeholder="Label"
-                  className="w-24"
-                />
-                <div className="flex items-center gap-1 flex-1">
-                  <span className="text-sm text-gray-500">R$</span>
-                  <Input
-                    type="number"
-                    value={kit.price}
-                    onChange={(e) =>
-                      updateKit(kit.id, { price: parseFloat(e.target.value) || 0 })
-                    }
-                    className="flex-1"
-                  />
+            {config.kits.map((kit) => {
+              const isExpanded = expandedKitId === kit.id;
+              return (
+                <div key={kit.id} className="bg-white rounded-lg overflow-hidden">
+                  {/* Kit Header - Always visible */}
+                  <div
+                    onClick={() => setExpandedKitId(isExpanded ? null : kit.id)}
+                    className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm truncate">
+                          {kit.label || "Sem nome"}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          R$ {kit.price.toFixed(2)}
+                        </span>
+                        {config.discountPercent > 0 && (
+                          <span className="text-xs text-green-600">
+                            → R$ {calculateDiscountedPrice(kit.price).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      {kit.link && (
+                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                          <LinkIcon className="h-3 w-3" />
+                          <span className="truncate max-w-[180px]">{kit.link}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeKit(kit.id);
+                        }}
+                        className="text-red-500 hover:text-red-600 h-8 w-8 p-0"
+                        disabled={config.kits.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Kit Editor - Expandable */}
+                  {isExpanded && (
+                    <div className="px-3 pb-3 space-y-3 border-t bg-gray-50/50">
+                      <div className="pt-3 space-y-2">
+                        <Label className="text-xs text-gray-500">Nome da opcao</Label>
+                        <Input
+                          value={kit.label}
+                          onChange={(e) => updateKit(kit.id, { label: e.target.value })}
+                          placeholder="Ex: 1 Unidade, Kit com 3, etc."
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Preco (R$)</Label>
+                        <Input
+                          type="number"
+                          value={kit.price}
+                          onChange={(e) =>
+                            updateKit(kit.id, { price: parseFloat(e.target.value) || 0 })
+                          }
+                          placeholder="99.90"
+                        />
+                      </div>
+
+                      {/* Links Section */}
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <LinkIcon className="h-3 w-3" />
+                            Link principal (sem desconto)
+                          </Label>
+                          <Input
+                            value={kit.link}
+                            onChange={(e) => updateKit(kit.id, { link: e.target.value })}
+                            placeholder="https://..."
+                          />
+                        </div>
+
+                        {/* Discount Links Section */}
+                        {kit.discountLinks === undefined ? (
+                          /* Compact: Use same link */
+                          <button
+                            onClick={() => updateKit(kit.id, { discountLinks: {} })}
+                            className="flex items-center gap-2 text-xs text-orange-600 hover:text-orange-700 transition-colors"
+                          >
+                            <Link2 className="h-3.5 w-3.5" />
+                            <span>Adicionar links com desconto</span>
+                          </button>
+                        ) : (
+                          /* Expanded: Different links per discount */
+                          <div className="space-y-2">
+                            {discountLinksExpandedKitId === kit.id ? (
+                              /* Expanded view */
+                              <div className="p-3 bg-orange-50 rounded-lg space-y-3">
+                                <div
+                                  onClick={() => setDiscountLinksExpandedKitId(null)}
+                                  className="flex items-center justify-between cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Link2 className="h-4 w-4 text-orange-600" />
+                                    <span className="text-xs font-medium text-orange-700">
+                                      Links com desconto
+                                    </span>
+                                  </div>
+                                  <ChevronUp className="h-4 w-4 text-orange-600" />
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t border-orange-200">
+                                  {[10, 20, 30, 40, 50].map((discount) => (
+                                    <div key={discount} className="flex items-center gap-2">
+                                      <span className="text-xs text-orange-700 font-medium w-10 flex-shrink-0">
+                                        {discount}%
+                                      </span>
+                                      <Input
+                                        value={kit.discountLinks?.[discount] || ""}
+                                        onChange={(e) => {
+                                          const newDiscountLinks = {
+                                            ...kit.discountLinks,
+                                            [discount]: e.target.value,
+                                          };
+                                          updateKit(kit.id, { discountLinks: newDiscountLinks });
+                                        }}
+                                        placeholder={`Link para ${discount}% off`}
+                                        className="text-xs h-8"
+                                      />
+                                    </div>
+                                  ))}
+                                  <p className="text-[10px] text-orange-600 mt-1">
+                                    Se vazio, usará o link principal
+                                  </p>
+                                </div>
+
+                                <button
+                                  onClick={() => updateKit(kit.id, { discountLinks: undefined })}
+                                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                                >
+                                  Usar mesmo link para todos
+                                </button>
+                              </div>
+                            ) : (
+                              /* Collapsed view */
+                              <button
+                                onClick={() => setDiscountLinksExpandedKitId(kit.id)}
+                                className="flex items-center gap-2 text-xs text-orange-600 hover:text-orange-700 transition-colors w-full justify-between p-2 bg-orange-50 rounded-lg"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Link2 className="h-3.5 w-3.5" />
+                                  <span>Editar links com desconto</span>
+                                </div>
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Input
-                  value={kit.link}
-                  onChange={(e) => updateKit(kit.id, { link: e.target.value })}
-                  placeholder="Link"
-                  className="flex-1"
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeKit(kit.id)}
-                  className="text-red-500 hover:text-red-600"
-                  disabled={config.kits.length <= 1}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -315,6 +463,39 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
         type="product"
         onImageGenerated={(imageUrl) => onUpdate({ ...config, image: imageUrl })}
       />
+
+      {/* Image Position Modal */}
+      <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajustar imagem do produto</DialogTitle>
+          </DialogHeader>
+          {config.image && (
+            <ImagePositioner
+              src={config.image}
+              positionX={config.imagePositionX ?? 50}
+              positionY={config.imagePositionY ?? 50}
+              scale={config.imageScale || 100}
+              aspectRatio="square"
+              minScale={50}
+              maxScale={200}
+              onChange={({ positionX, positionY, scale }) => {
+                onUpdate({
+                  ...config,
+                  imagePositionX: positionX,
+                  imagePositionY: positionY,
+                  imageScale: scale,
+                });
+              }}
+            />
+          )}
+          <div className="flex justify-end">
+            <Button onClick={() => setPositionModalOpen(false)}>
+              Pronto
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
   ImageIcon,
   UserCircle,
   Package,
+  Download,
 } from "lucide-react";
 
 type ImageType = "profile" | "product" | "thumbnail";
@@ -250,6 +251,26 @@ export function AIImageModal({
       setError(err.message);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!generatedImage) return;
+
+    try {
+      const response = await fetch(generatedImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `imagem-gerada-${type}-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      // Fallback: open in new tab
+      window.open(generatedImage, "_blank");
     }
   };
 
@@ -546,13 +567,23 @@ export function AIImageModal({
           /* Result Step */
           <div className="space-y-4">
             {/* Generated Image Preview */}
-            <div className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden">
+            <div className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden group">
               {generatedImage ? (
-                <img
-                  src={generatedImage}
-                  alt="Generated"
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <img
+                    src={generatedImage}
+                    alt="Generated"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Download button - always visible on mobile, hover on desktop */}
+                  <button
+                    onClick={handleDownload}
+                    className="absolute top-3 right-3 p-2.5 bg-white/90 hover:bg-white text-gray-700 rounded-full shadow-lg transition-all md:opacity-0 md:group-hover:opacity-100"
+                    title="Salvar imagem"
+                  >
+                    <Download className="h-5 w-5" />
+                  </button>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ImageIcon className="h-12 w-12 text-gray-400" />

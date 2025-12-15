@@ -107,10 +107,12 @@ export default function StorePage() {
               <img
                 src={page.profile_image}
                 alt={page.profile_name}
-                className="w-full h-full object-cover"
+                className="absolute object-cover"
                 style={{
-                  transform: `scale(${(page.profile_image_scale || 100) / 100})`,
-                  objectPosition: `${page.profile_image_position_x ?? 50}% ${page.profile_image_position_y ?? 50}%`,
+                  width: `${page.profile_image_scale || 100}%`,
+                  height: `${page.profile_image_scale || 100}%`,
+                  left: `${-((page.profile_image_scale || 100) - 100) * ((page.profile_image_position_x ?? 50) / 100)}%`,
+                  top: `${-((page.profile_image_scale || 100) - 100) * ((page.profile_image_position_y ?? 50) / 100)}%`,
                 }}
               />
             ) : (
@@ -121,7 +123,7 @@ export default function StorePage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">{page.profile_name}</h1>
           {page.profile_bio && (
-            <p className="text-sm text-muted-foreground mt-1">{page.profile_bio}</p>
+            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{page.profile_bio}</p>
           )}
 
           {page.whatsapp_number && (

@@ -2,11 +2,18 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Play, Upload, Loader2, Pencil, Video, ZoomIn, MoveHorizontal, MoveVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Play, Upload, Loader2, Pencil, Video, Crop } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
+import { ImagePositioner } from "@/components/ui/image-positioner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { VideoConfig } from "@/types/database";
 
 interface VideoEditorProps {
@@ -28,6 +35,7 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
   const [expanded, setExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
 
   const thumbnail =
     config.thumbnail || getYouTubeThumbnail(config.url || "") || "";
@@ -61,10 +69,12 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
             <img
               src={thumbnail}
               alt="Thumbnail"
-              className="w-full h-full object-cover"
+              className="absolute object-cover"
               style={{
-                transform: `scale(${(config.thumbnailScale || 100) / 100})`,
-                objectPosition: `${config.thumbnailPositionX ?? 50}% ${config.thumbnailPositionY ?? 50}%`,
+                width: `${config.thumbnailScale || 100}%`,
+                height: `${config.thumbnailScale || 100}%`,
+                left: `${-((config.thumbnailScale || 100) - 100) * ((config.thumbnailPositionX ?? 50) / 100)}%`,
+                top: `${-((config.thumbnailScale || 100) - 100) * ((config.thumbnailPositionY ?? 50) / 100)}%`,
               }}
             />
             {/* Edit Overlay - appears on hover when there's a thumbnail */}
@@ -132,53 +142,15 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
               />
             </div>
             {config.thumbnail && (
-              <div className="space-y-2 mt-2">
-                {/* Zoom */}
-                <div className="flex items-center gap-2">
-                  <ZoomIn className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <Slider
-                    value={[config.thumbnailScale || 100]}
-                    min={100}
-                    max={200}
-                    step={5}
-                    onValueChange={([value]) =>
-                      onUpdate({ ...config, thumbnailScale: value })
-                    }
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-gray-500 w-8">
-                    {config.thumbnailScale || 100}%
-                  </span>
-                </div>
-                {/* Position X */}
-                <div className="flex items-center gap-2">
-                  <MoveHorizontal className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <Slider
-                    value={[config.thumbnailPositionX ?? 50]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={([value]) =>
-                      onUpdate({ ...config, thumbnailPositionX: value })
-                    }
-                    className="flex-1"
-                  />
-                </div>
-                {/* Position Y */}
-                <div className="flex items-center gap-2">
-                  <MoveVertical className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  <Slider
-                    value={[config.thumbnailPositionY ?? 50]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={([value]) =>
-                      onUpdate({ ...config, thumbnailPositionY: value })
-                    }
-                    className="flex-1"
-                  />
-                </div>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPositionModalOpen(true)}
+                className="w-full text-xs text-gray-500 hover:text-gray-700 mt-2"
+              >
+                <Crop className="w-3.5 h-3.5 mr-1.5" />
+                Ajustar posição da thumbnail
+              </Button>
             )}
           </div>
 
@@ -210,6 +182,39 @@ export function VideoEditor({ config, onUpdate }: VideoEditorProps) {
         type="thumbnail"
         onImageGenerated={(imageUrl) => onUpdate({ ...config, thumbnail: imageUrl })}
       />
+
+      {/* Image Position Modal */}
+      <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajustar thumbnail do video</DialogTitle>
+          </DialogHeader>
+          {config.thumbnail && (
+            <ImagePositioner
+              src={config.thumbnail}
+              positionX={config.thumbnailPositionX ?? 50}
+              positionY={config.thumbnailPositionY ?? 50}
+              scale={config.thumbnailScale || 100}
+              aspectRatio="landscape"
+              minScale={100}
+              maxScale={200}
+              onChange={({ positionX, positionY, scale }) => {
+                onUpdate({
+                  ...config,
+                  thumbnailPositionX: positionX,
+                  thumbnailPositionY: positionY,
+                  thumbnailScale: scale,
+                });
+              }}
+            />
+          )}
+          <div className="flex justify-end">
+            <Button onClick={() => setPositionModalOpen(false)}>
+              Pronto
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
