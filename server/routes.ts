@@ -1105,7 +1105,7 @@ export async function registerRoutes(
         content: messageContent
       });
 
-      // Call OpenRouter API with Gemini 2.5 Flash Image (working model)
+      // Call OpenRouter API with Gemini 3 Pro Image
       const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -1115,7 +1115,7 @@ export async function registerRoutes(
           "X-Title": "Bio-Storefront"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image-preview",
+          model: "google/gemini-3-pro-image-preview",
           messages,
           modalities: ["image", "text"]
         })
