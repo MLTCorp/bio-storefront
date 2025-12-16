@@ -1105,11 +1105,7 @@ export async function registerRoutes(
         content: messageContent
       });
 
-      // Call OpenRouter API with Gemini 2.5 Flash Image (image generation capable)
-      const imageConfig = type === "thumbnail"
-        ? { aspect_ratio: "16:9" }
-        : { aspect_ratio: "1:1" };
-
+      // Call OpenRouter API with Gemini 2.5 Flash Image (working model)
       const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -1121,8 +1117,7 @@ export async function registerRoutes(
         body: JSON.stringify({
           model: "google/gemini-2.5-flash-image-preview",
           messages,
-          modalities: ["image", "text"],
-          image_config: imageConfig
+          modalities: ["image", "text"]
         })
       });
 
