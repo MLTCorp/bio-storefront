@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PageComponent, ComponentConfig } from "@/types/database";
+import type { Theme } from "@/lib/themes";
 import { ButtonEditor } from "./editors/button-editor";
 import { TextEditor } from "./editors/text-editor";
 import { ProductEditor } from "./editors/product-editor";
@@ -15,6 +16,7 @@ interface SortableComponentProps {
   onUpdate: (config: ComponentConfig) => void;
   onDelete: () => void;
   onToggleVisibility: () => void;
+  theme?: Theme;
 }
 
 export function SortableComponent({
@@ -22,6 +24,7 @@ export function SortableComponent({
   onUpdate,
   onDelete,
   onToggleVisibility,
+  theme,
 }: SortableComponentProps) {
   const isHidden = component.is_visible === false;
   const {
@@ -33,10 +36,15 @@ export function SortableComponent({
     isDragging,
   } = useSortable({ id: component.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    background: theme?.card.bg || 'white',
+    backdropFilter: theme?.card.blur ? `blur(${theme.card.blur}px)` : 'none',
+    WebkitBackdropFilter: theme?.card.blur ? `blur(${theme.card.blur}px)` : 'none',
+    border: theme?.card.border || '1px solid #e5e7eb',
+    boxShadow: theme?.card.shadow,
   };
 
   const renderEditor = () => {
@@ -60,6 +68,7 @@ export function SortableComponent({
           <ProductEditor
             config={component.config as any}
             onUpdate={onUpdate}
+            theme={theme}
           />
         );
       case "video":
@@ -92,10 +101,8 @@ export function SortableComponent({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group bg-white rounded-xl border overflow-hidden transition-colors ${
-        isHidden
-          ? "border-gray-300 border-dashed"
-          : "border-gray-200 hover:border-primary/50"
+      className={`relative group rounded-xl overflow-hidden transition-colors ${
+        isHidden ? "opacity-70" : ""
       }`}
     >
       {/* Hidden Overlay */}

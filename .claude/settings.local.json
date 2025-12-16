@@ -82,7 +82,8 @@
       "Bash(del /f /q \"C:\\Users\\Pichau\\AppData\\Local\\ms-playwright\\mcp-chrome-80c6411\\SingletonLock\")",
       "Bash(cd:*)",
       "Bash(git reset:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(npx vercel:*)"
     ],
     "deny": [],
     "ask": []

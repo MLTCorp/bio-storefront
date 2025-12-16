@@ -51,13 +51,14 @@
     100% { transform: scale(1); opacity: 0.8; }
   }
 
-  @keyframes shine {
-    0% { background-position: 0% 0%; }
-    50% { background-position: 100% 100%; }
-    100% { background-position: 0% 0%; }
-  }
-
   --animate-shine: shine var(--shine-pulse-duration, 14s) infinite linear;
+}
+
+/* Shine animation for border effects - MUST be global for inline styles */
+@keyframes shine {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
 }
 
 :root {

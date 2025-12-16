@@ -84,6 +84,17 @@ export default function PageEditorPage() {
   // Get current theme based on page background
   const currentTheme = getTheme(getThemeIdFromBackground(page?.background_value));
 
+  // Apply theme background to body for consistent editor look
+  useEffect(() => {
+    if (page) {
+      // Use a slightly lighter version of the theme for editor context
+      document.body.style.background = currentTheme.background.value;
+    }
+    return () => {
+      document.body.style.background = '';
+    };
+  }, [currentTheme, page]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -381,7 +392,13 @@ export default function PageEditorPage() {
     try {
       const url = await uploadImage(file, "profile");
       if (url) {
-        setPage({ ...page, profile_image: url });
+        setPage({
+          ...page,
+          profile_image: url,
+          profile_image_position_x: 50,
+          profile_image_position_y: 50,
+          profile_image_scale: 100,
+        });
         toast({
           title: "Imagem enviada!",
           className: "bg-green-600 text-white",
@@ -415,7 +432,7 @@ export default function PageEditorPage() {
         <RedirectToSignIn />
       </SignedOut>
       <SignedIn>
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen" style={{ background: currentTheme.background.value }}>
           {/* Header */}
           <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
             <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -454,20 +471,34 @@ export default function PageEditorPage() {
 
           {/* Content */}
           <main className="max-w-lg mx-auto p-4 pb-24">
-            {/* Preview Container */}
+            {/* Preview Container with full theme support */}
             <div
-              className="bg-white rounded-2xl shadow-lg overflow-hidden min-h-[600px]"
+              className="rounded-2xl shadow-lg overflow-hidden min-h-[600px] relative"
               style={{
-                backgroundColor: page.background_value || "#ffffff",
+                background: currentTheme.background.value,
                 fontFamily: page.font_family || "Inter",
               }}
             >
+              {/* Background Effects */}
+              <BackgroundEffect theme={currentTheme} />
+
+              {/* Card Container with theme styling */}
+              <div
+                className="relative"
+                style={{
+                  background: currentTheme.card.bg,
+                  backdropFilter: currentTheme.card.blur > 0 ? `blur(${currentTheme.card.blur}px)` : 'none',
+                  WebkitBackdropFilter: currentTheme.card.blur > 0 ? `blur(${currentTheme.card.blur}px)` : 'none',
+                }}
+              >
               {/* Profile Section */}
               <ProfileEditor
                 page={page}
                 onUpdate={(updates) => setPage({ ...page, ...updates })}
+                onSave={handleSave}
                 onImageUpload={handleProfileImageUpload}
                 uploading={uploadingProfile}
+                theme={currentTheme}
               />
 
               {/* Components List */}
@@ -485,6 +516,7 @@ export default function PageEditorPage() {
                       <SortableComponent
                         key={component.id}
                         component={component}
+                        theme={currentTheme}
                         onUpdate={(config) => handleUpdateComponent(component.id, config)}
                         onDelete={() => handleDeleteComponent(component.id)}
                         onToggleVisibility={() => handleToggleVisibility(component.id)}
@@ -493,16 +525,24 @@ export default function PageEditorPage() {
                   </SortableContext>
                 </DndContext>
               </div>
+              </div>{/* Close Card Container */}
             </div>
 
             {/* Add Component Menu */}
-            <AddComponentMenu onAdd={handleAddComponent} />
+            <AddComponentMenu onAdd={handleAddComponent} theme={currentTheme} />
 
             {/* Personalization Section */}
-            <Card className="mt-4">
+            <Card
+              className="mt-4 border-0"
+              style={{
+                background: currentTheme.card.bg,
+                border: currentTheme.card.border,
+              }}
+            >
               <button
                 className="w-full p-4 flex items-center justify-between text-left"
                 onClick={() => setShowPersonalization(!showPersonalization)}
+                style={{ color: currentTheme.text.primary }}
               >
                 <span className="font-medium">Personalização</span>
                 {showPersonalization ? (
@@ -514,7 +554,7 @@ export default function PageEditorPage() {
               {showPersonalization && (
                 <CardContent className="pt-0 space-y-4">
                   <div className="space-y-3">
-                    <label className="text-sm font-medium">Tema</label>
+                    <label className="text-sm font-medium" style={{ color: currentTheme.text.primary }}>Tema</label>
                     <div className="grid grid-cols-5 gap-2">
                       {themeList.map((theme) => {
                         const currentThemeId = getThemeIdFromBackground(page.background_value);
@@ -583,13 +623,18 @@ export default function PageEditorPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Fonte</label>
+                    <label className="text-sm font-medium" style={{ color: currentTheme.text.primary }}>Fonte</label>
                     <select
                       value={page.font_family || "Inter"}
                       onChange={(e) =>
                         setPage({ ...page, font_family: e.target.value })
                       }
-                      className="w-full h-9 px-3 rounded-md border border-input bg-background"
+                      className="w-full h-9 px-3 rounded-md border"
+                      style={{
+                        background: currentTheme.card.bg,
+                        color: currentTheme.text.primary,
+                        borderColor: currentTheme.card.border.replace('1px solid ', ''),
+                      }}
                     >
                       <option value="Inter">Inter</option>
                       <option value="Poppins">Poppins</option>
@@ -604,10 +649,17 @@ export default function PageEditorPage() {
             </Card>
 
             {/* Templates Section */}
-            <Card className="mt-4">
+            <Card
+              className="mt-4 border-0"
+              style={{
+                background: currentTheme.card.bg,
+                border: currentTheme.card.border,
+              }}
+            >
               <button
                 className="w-full p-4 flex items-center justify-between text-left"
                 onClick={() => setShowTemplates(!showTemplates)}
+                style={{ color: currentTheme.text.primary }}
               >
                 <span className="font-medium">Templates</span>
                 {showTemplates ? (
@@ -618,10 +670,26 @@ export default function PageEditorPage() {
               </button>
               {showTemplates && (
                 <CardContent className="pt-0 space-y-4">
-                  <Button variant="outline" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full border"
+                    style={{
+                      background: currentTheme.button.secondary,
+                      color: currentTheme.button.secondaryText,
+                      borderColor: currentTheme.card.border.replace('1px solid ', ''),
+                    }}
+                  >
                     Salvar como Template
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full border"
+                    style={{
+                      background: currentTheme.button.secondary,
+                      color: currentTheme.button.secondaryText,
+                      borderColor: currentTheme.card.border.replace('1px solid ', ''),
+                    }}
+                  >
                     Importar Template
                   </Button>
                 </CardContent>

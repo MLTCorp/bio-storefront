@@ -42,22 +42,43 @@ export default function StorePage() {
     return getTheme(themeId);
   }, [page?.background_value]);
 
+  // Apply theme background to body to eliminate white line at top
+  useEffect(() => {
+    document.body.style.background = theme.background.value;
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    return () => {
+      document.body.style.background = '';
+      document.body.style.margin = '';
+      document.body.style.padding = '';
+    };
+  }, [theme]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-pink-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: theme.background.value }}
+      >
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: theme.text.accent }} />
       </div>
     );
   }
 
   if (notFound || !page) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: theme.background.value }}
+      >
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">404</h1>
-          <p className="text-gray-600 mb-4">Página não encontrada</p>
+          <h1 className="text-4xl font-bold mb-2" style={{ color: theme.text.primary }}>404</h1>
+          <p className="mb-4" style={{ color: theme.text.secondary }}>Página não encontrada</p>
           <Link href="/">
-            <button className="px-4 py-2 bg-primary text-white rounded-lg">
+            <button
+              className="px-4 py-2 rounded-lg transition-colors"
+              style={{ background: theme.button.primary, color: theme.button.primaryText }}
+            >
               Voltar ao início
             </button>
           </Link>
