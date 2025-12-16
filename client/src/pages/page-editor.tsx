@@ -778,7 +778,7 @@ export default function PageEditorPage() {
                 <div className="text-center mb-4">
                   <div
                     className="relative w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden shadow-lg"
-                    style={{ border: `3px solid ${currentTheme.text.accent}40` }}
+                    style={{ border: `3px solid #9ca3af40` }}
                   >
                     {page.profile_image ? (
                       <img

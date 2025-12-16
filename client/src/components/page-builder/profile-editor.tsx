@@ -85,7 +85,7 @@ export function ProfileEditor({
         {/* Image Container */}
         <div
           className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 shadow-lg relative group cursor-pointer"
-          style={{ border: `4px solid ${theme?.text.accent || '#fff'}40` }}
+          style={{ border: `4px solid #9ca3af40` }}
         >
           {page.profile_image ? (
             <img
