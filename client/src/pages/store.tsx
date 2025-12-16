@@ -135,7 +135,7 @@ export default function StorePage() {
         <motion.div variants={itemVariants} className="text-center mb-6">
           <div
             className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden shadow-lg"
-            style={{ border: `4px solid ${theme.text.accent}40` }}
+            style={{ border: `4px solid ${theme.avatarBorder}40` }}
           >
             {page.profile_image ? (
               <img

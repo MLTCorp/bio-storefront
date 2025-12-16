@@ -15,6 +15,7 @@ export interface ProductKit {
   };
   isVisible?: boolean;   // default true - when false, kit is hidden from display
   isSpecial?: boolean;   // when true, shows shine-border animation
+  ignoreDiscount?: boolean; // when true, this kit ignores product discount
 }
 
 export interface Product {

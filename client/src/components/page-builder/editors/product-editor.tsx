@@ -334,7 +334,7 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
                         <span className="text-sm text-gray-500">
                           R$ {kit.price.toFixed(2)}
                         </span>
-                        {localConfig.discountPercent > 0 && (
+                        {localConfig.discountPercent > 0 && !kit.ignoreDiscount && (
                           <span className="text-xs text-green-600">
                             → R$ {calculateDiscountedPrice(kit.price).toFixed(2)}
                           </span>
@@ -342,6 +342,11 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
                         {isHidden && (
                           <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                             oculto
+                          </span>
+                        )}
+                        {kit.ignoreDiscount && localConfig.discountPercent > 0 && (
+                          <span className="text-[10px] text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded">
+                            sem desc.
                           </span>
                         )}
                       </div>
@@ -513,6 +518,21 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
                         <Sparkles className={`h-4 w-4 ${kit.isSpecial ? 'text-purple-500' : 'text-gray-400'}`} />
                         <span className="text-sm">{kit.isSpecial ? 'Destaque Ativo' : 'Ativar Destaque'}</span>
                       </button>
+
+                      {/* Ignore Discount Toggle - only show when discount is active */}
+                      {localConfig.discountPercent > 0 && (
+                        <button
+                          onClick={() => updateKit(kit.id, { ignoreDiscount: !kit.ignoreDiscount })}
+                          className={`w-full flex items-center gap-2 p-2.5 rounded-lg transition-colors ${
+                            kit.ignoreDiscount
+                              ? 'bg-orange-50 border border-orange-200 text-orange-700'
+                              : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Percent className={`h-4 w-4 ${kit.ignoreDiscount ? 'text-orange-500' : 'text-gray-400'}`} />
+                          <span className="text-sm">{kit.ignoreDiscount ? 'Desconto Ignorado' : 'Ignorar Desconto'}</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

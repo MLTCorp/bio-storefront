@@ -60,9 +60,11 @@ export function ShirtParallaxCard({
 
   const handleKitClick = (kit: ProductKit) => {
     // Use discount-specific link if discount is active and link exists
+    // But respect ignoreDiscount flag
     let link = kit.link;
-    if (discountPercent > 0 && kit.discountLinks?.[discountPercent]) {
-      link = kit.discountLinks[discountPercent];
+    const effectiveDiscount = kit.ignoreDiscount ? 0 : discountPercent;
+    if (effectiveDiscount > 0 && kit.discountLinks?.[effectiveDiscount]) {
+      link = kit.discountLinks[effectiveDiscount];
     }
 
     if (link && link !== '#') {
@@ -171,8 +173,10 @@ export function ShirtParallaxCard({
               {kits
                 .filter((kit) => kit.isVisible !== false)
                 .map((kit) => {
-                const discountedPrice = kit.price * (1 - discountPercent / 100);
-                const hasDiscount = discountPercent > 0;
+                // Check if this kit should ignore the discount
+                const effectiveDiscount = kit.ignoreDiscount ? 0 : discountPercent;
+                const discountedPrice = kit.price * (1 - effectiveDiscount / 100);
+                const hasDiscount = effectiveDiscount > 0;
 
                 // Button styles based on theme - all buttons equal
                 const buttonStyle: React.CSSProperties = {
@@ -185,7 +189,7 @@ export function ShirtParallaxCard({
                   <button
                     key={kit.id}
                     className={cn(
-                      "relative flex-1 min-w-[70px] flex flex-col items-center h-auto py-1.5 px-2 gap-0 rounded-lg transition-all hover:opacity-80 overflow-hidden"
+                      "relative flex-1 min-w-[70px] flex flex-col items-center h-auto py-2 px-2 gap-0 rounded-lg transition-all hover:opacity-80 overflow-hidden"
                     )}
                     style={buttonStyle}
                     onClick={() => handleKitClick(kit)}
@@ -200,10 +204,9 @@ export function ShirtParallaxCard({
                       />
                     )}
                     <span
-                      className="text-[9px] uppercase tracking-wider font-medium"
+                      className="text-xs font-semibold uppercase tracking-wide"
                       style={{
-                        opacity: 0.7,
-                        color: theme?.button.secondaryText || '#6b7280'
+                        color: theme?.button.secondaryText || '#374151'
                       }}
                     >
                       {kit.label}
@@ -211,17 +214,20 @@ export function ShirtParallaxCard({
                     {hasDiscount ? (
                       <div className="flex flex-col items-center leading-none">
                         <span
-                          className="text-[8px] line-through"
-                          style={{ opacity: 0.5 }}
+                          className="text-[10px] line-through mt-0.5"
+                          style={{
+                            opacity: 0.6,
+                            color: theme?.button.secondaryText || '#9ca3af'
+                          }}
                         >
                           R$ {kit.price.toFixed(0)}
                         </span>
-                        <span className="text-sm font-black">
+                        <span className="text-base font-bold">
                           R$ {discountedPrice.toFixed(0)}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-sm font-black">
+                      <span className="text-base font-bold">
                         R$ {kit.price.toFixed(0)}
                       </span>
                     )}

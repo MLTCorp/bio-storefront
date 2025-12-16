@@ -34,6 +34,8 @@ export interface Theme {
     highlight: string;
     highlightText: string;
   };
+  // Avatar border color (separate from accent for neutral themes)
+  avatarBorder: string;
 }
 
 export const themes: Record<string, Theme> = {
@@ -68,7 +70,8 @@ export const themes: Record<string, Theme> = {
       secondaryText: '#111827',
       highlight: 'linear-gradient(135deg, #059669, #047857)',
       highlightText: '#ffffff'
-    }
+    },
+    avatarBorder: '#d1d5db' // neutral gray
   },
 
   dark: {
@@ -102,7 +105,8 @@ export const themes: Record<string, Theme> = {
       secondaryText: '#e2e8f0',
       highlight: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
       highlightText: '#ffffff'
-    }
+    },
+    avatarBorder: '#4b5563' // neutral dark gray
   },
 
   cyber: {
@@ -136,7 +140,8 @@ export const themes: Record<string, Theme> = {
       secondaryText: '#22d3ee',
       highlight: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
       highlightText: '#ffffff'
-    }
+    },
+    avatarBorder: '#374151' // neutral gray for cyber
   },
 
   rosa: {
@@ -170,7 +175,8 @@ export const themes: Record<string, Theme> = {
       secondaryText: '#831843',
       highlight: 'linear-gradient(135deg, #ec4899, #f472b6)',
       highlightText: '#ffffff'
-    }
+    },
+    avatarBorder: '#ec4899' // pink accent for rosa theme
   },
 
   saude: {
@@ -204,7 +210,8 @@ export const themes: Record<string, Theme> = {
       secondaryText: '#14532d',
       highlight: 'linear-gradient(135deg, #22c55e, #16a34a)',
       highlightText: '#ffffff'
-    }
+    },
+    avatarBorder: '#22c55e' // green accent for saude theme
   }
 };
 
