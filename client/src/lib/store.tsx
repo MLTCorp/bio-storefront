@@ -13,6 +13,8 @@ export interface ProductKit {
   discountLinks?: {
     [percent: number]: string; // Links por percentual: { 10: "url", 20: "url", 30: "url" }
   };
+  isVisible?: boolean;   // default true - when false, kit is hidden from display
+  isSpecial?: boolean;   // when true, shows shine-border animation
 }
 
 export interface Product {

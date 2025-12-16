@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download } from "lucide-react";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
@@ -16,13 +16,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ProductConfig, ProductKit } from "@/types/database";
+import type { Theme } from "@/lib/themes";
 
 interface ProductEditorProps {
   config: ProductConfig;
   onUpdate: (config: ProductConfig) => void;
+  theme?: Theme;
 }
 
-export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
+export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
   const [expanded, setExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
@@ -133,7 +135,10 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <div
+              className="w-full h-full flex items-center justify-center"
+              style={{ color: theme?.text.secondary || '#9ca3af' }}
+            >
               <ImageIcon className="h-6 w-6" />
             </div>
           )}
@@ -151,20 +156,26 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
           onClick={() => setExpanded(!expanded)}
           className="flex-1 min-w-0 cursor-pointer"
         >
-          <h3 className="font-medium truncate">{localConfig.title || "Produto"}</h3>
-          <p className="text-sm text-gray-500 truncate">
+          <h3
+            className="font-medium truncate"
+            style={{ color: theme?.text.primary }}
+          >
+            {localConfig.title || "Produto"}
+          </h3>
+          <p
+            className="text-sm truncate"
+            style={{ color: theme?.text.secondary || '#6b7280' }}
+          >
             {localConfig.description || "Descricao"}
           </p>
           {localConfig.kits.length > 0 && (
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm font-medium">
-                R$ {localConfig.kits[0].price.toFixed(2)}
+              <span
+                className="text-sm"
+                style={{ color: theme?.text.secondary || '#6b7280' }}
+              >
+                {localConfig.kits.length} {localConfig.kits.length === 1 ? 'kit configurado' : 'kits configurados'}
               </span>
-              {localConfig.discountPercent > 0 && (
-                <span className="text-xs text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
-                  -{localConfig.discountPercent}%
-                </span>
-              )}
             </div>
           )}
         </div>
@@ -304,8 +315,9 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
 
             {localConfig.kits.map((kit) => {
               const isExpanded = expandedKitId === kit.id;
+              const isHidden = kit.isVisible === false;
               return (
-                <div key={kit.id} className="bg-white rounded-lg overflow-hidden">
+                <div key={kit.id} className={`bg-white rounded-lg overflow-hidden ${isHidden ? 'opacity-50' : ''}`}>
                   {/* Kit Header - Always visible */}
                   <div
                     onClick={() => setExpandedKitId(isExpanded ? null : kit.id)}
@@ -313,7 +325,10 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">
+                        {kit.isSpecial && (
+                          <Sparkles className="h-3.5 w-3.5 text-purple-500 flex-shrink-0" />
+                        )}
+                        <span className={`font-medium text-sm truncate ${isHidden ? 'line-through' : ''}`}>
                           {kit.label || "Sem nome"}
                         </span>
                         <span className="text-sm text-gray-500">
@@ -322,6 +337,11 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                         {localConfig.discountPercent > 0 && (
                           <span className="text-xs text-green-600">
                             → R$ {calculateDiscountedPrice(kit.price).toFixed(2)}
+                          </span>
+                        )}
+                        {isHidden && (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                            oculto
                           </span>
                         )}
                       </div>
@@ -333,6 +353,19 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
+                      {/* Visibility Toggle */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateKit(kit.id, { isVisible: isHidden ? true : false });
+                        }}
+                        className={`h-8 w-8 p-0 ${isHidden ? 'text-gray-400' : 'text-gray-500 hover:text-gray-700'}`}
+                        title={isHidden ? 'Mostrar kit' : 'Ocultar kit'}
+                      >
+                        {isHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -467,6 +500,19 @@ export function ProductEditor({ config, onUpdate }: ProductEditorProps) {
                           </div>
                         )}
                       </div>
+
+                      {/* Special Highlight Toggle */}
+                      <button
+                        onClick={() => updateKit(kit.id, { isSpecial: !kit.isSpecial })}
+                        className={`w-full flex items-center gap-2 p-2.5 rounded-lg transition-colors ${
+                          kit.isSpecial
+                            ? 'bg-purple-50 border border-purple-200 text-purple-700'
+                            : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Sparkles className={`h-4 w-4 ${kit.isSpecial ? 'text-purple-500' : 'text-gray-400'}`} />
+                        <span className="text-sm">{kit.isSpecial ? 'Destaque Ativo' : 'Ativar Destaque'}</span>
+                      </button>
                     </div>
                   )}
                 </div>

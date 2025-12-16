@@ -34,6 +34,8 @@ export interface ProductKit {
   price: number;
   link: string;
   discountLinks?: Record<number, string>;
+  isVisible?: boolean;   // default true - when false, kit is hidden from display
+  isSpecial?: boolean;   // when true, shows shine-border animation
 }
 
 export interface ProductConfig {

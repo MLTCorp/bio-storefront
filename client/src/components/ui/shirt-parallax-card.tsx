@@ -5,6 +5,7 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Sparkles } from "lucide-react";
+import { ShineBorderOverlay } from "@/components/magicui/shine-border";
 import type { ProductKit } from "@/lib/store";
 import type { Theme } from "@/lib/themes";
 
@@ -99,6 +100,16 @@ export function ShirtParallaxCard({
         )}
         style={cardStyle}
       >
+        {/* Shine Border for Discount Products - golden gradient for sales */}
+        {discountPercent > 0 && (
+          <ShineBorderOverlay
+            borderRadius={16}
+            borderWidth={2}
+            duration={8}
+            color={["#f59e0b", "#fbbf24", "#d97706"]}
+          />
+        )}
+
         {/* Discount Badge */}
         {discountPercent > 0 && (
           <div className="absolute top-3 right-3 z-20">
@@ -155,43 +166,44 @@ export function ShirtParallaxCard({
               )}
             </div>
 
-            {/* Kit Buttons */}
+            {/* Kit Buttons - Filter hidden kits */}
             <div className="flex gap-1.5 flex-wrap">
-              {kits.map((kit, index) => {
+              {kits
+                .filter((kit) => kit.isVisible !== false)
+                .map((kit) => {
                 const discountedPrice = kit.price * (1 - discountPercent / 100);
-                const isHighlighted = index === 1;
                 const hasDiscount = discountPercent > 0;
 
-                // Button styles based on theme
-                const buttonStyle: React.CSSProperties = isHighlighted
-                  ? {
-                      background: theme?.button.highlight || 'linear-gradient(135deg, #059669, #047857)',
-                      color: theme?.button.highlightText || '#ffffff',
-                      border: 'none',
-                    }
-                  : {
-                      background: theme?.button.secondary || '#ffffff',
-                      color: theme?.button.secondaryText || '#111827',
-                      border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e5e7eb',
-                    };
+                // Button styles based on theme - all buttons equal
+                const buttonStyle: React.CSSProperties = {
+                  background: theme?.button.secondary || '#ffffff',
+                  color: theme?.button.secondaryText || '#111827',
+                  border: isDarkTheme ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid #e5e7eb',
+                };
 
                 return (
                   <button
                     key={kit.id}
                     className={cn(
-                      "flex-1 min-w-[70px] flex flex-col items-center h-auto py-1.5 px-2 gap-0 rounded-lg transition-all hover:opacity-80",
-                      isHighlighted && "shadow-md"
+                      "relative flex-1 min-w-[70px] flex flex-col items-center h-auto py-1.5 px-2 gap-0 rounded-lg transition-all hover:opacity-80 overflow-hidden"
                     )}
                     style={buttonStyle}
                     onClick={() => handleKitClick(kit)}
                   >
+                    {/* Shine Border for Special Kits */}
+                    {kit.isSpecial && (
+                      <ShineBorderOverlay
+                        borderRadius={8}
+                        borderWidth={2}
+                        duration={8}
+                        color={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
+                      />
+                    )}
                     <span
                       className="text-[9px] uppercase tracking-wider font-medium"
                       style={{
                         opacity: 0.7,
-                        color: isHighlighted
-                          ? theme?.button.highlightText || '#ffffff'
-                          : theme?.button.secondaryText || '#6b7280'
+                        color: theme?.button.secondaryText || '#6b7280'
                       }}
                     >
                       {kit.label}

@@ -14,19 +14,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Page } from "@/types/database";
+import type { Theme } from "@/lib/themes";
 
 interface ProfileEditorProps {
   page: Page;
   onUpdate: (updates: Partial<Page>) => void;
+  onSave: () => Promise<boolean>;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   uploading: boolean;
+  theme?: Theme;
 }
 
 export function ProfileEditor({
   page,
   onUpdate,
+  onSave,
   onImageUpload,
   uploading,
+  theme,
 }: ProfileEditorProps) {
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
@@ -78,7 +83,10 @@ export function ProfileEditor({
       {/* Profile Image Section */}
       <div className="flex flex-col items-center mb-4">
         {/* Image Container */}
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-4 border-white shadow-lg relative group cursor-pointer">
+        <div
+          className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 shadow-lg relative group cursor-pointer"
+          style={{ border: `4px solid ${theme?.text.accent || '#fff'}40` }}
+        >
           {page.profile_image ? (
             <img
               src={page.profile_image}
@@ -162,7 +170,8 @@ export function ProfileEditor({
       ) : (
         <h1
           onClick={() => setEditingName(true)}
-          className="text-xl font-bold cursor-text hover:bg-gray-100 rounded px-2 py-1 inline-block transition-colors"
+          className="text-xl font-bold cursor-text hover:opacity-80 rounded px-2 py-1 inline-block transition-colors"
+          style={{ color: theme?.text.primary || '#111827' }}
         >
           {localName || "Seu Nome"}
         </h1>
@@ -182,7 +191,8 @@ export function ProfileEditor({
       ) : (
         <p
           onClick={() => setEditingBio(true)}
-          className="text-sm text-gray-600 cursor-text hover:bg-gray-100 rounded px-2 py-1 mt-1 inline-block transition-colors whitespace-pre-line"
+          className="text-sm cursor-text hover:opacity-80 rounded px-2 py-1 mt-1 inline-block transition-colors whitespace-pre-line"
+          style={{ color: theme?.text.secondary || '#6b7280' }}
         >
           {localBio ? renderBioWithBreaks(localBio) : "Clique para adicionar uma bio"}
         </p>
@@ -221,7 +231,12 @@ export function ProfileEditor({
             />
           )}
           <div className="flex justify-end">
-            <Button onClick={() => setPositionModalOpen(false)}>
+            <Button
+              onClick={async () => {
+                await onSave();
+                setPositionModalOpen(false);
+              }}
+            >
               Pronto
             </Button>
           </div>
