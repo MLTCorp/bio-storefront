@@ -764,6 +764,278 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // ============ AI ROUTES ============
+    if (path === '/api/ai/generate-image' && method === 'POST') {
+      const clerkId = req.headers['x-clerk-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { type, prompt, referenceImage, personImage } = req.body;
+
+      if (!type || !prompt) {
+        return res.status(400).json({ error: 'Type and prompt are required' });
+      }
+
+      if (!['profile', 'product', 'thumbnail'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid type' });
+      }
+
+      // Find user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Check daily limit (30 per day)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { count } = await supabase
+        .from('ai_generations')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id.toString())
+        .gte('created_at', today.toISOString());
+
+      const usedToday = count || 0;
+      const remaining = 30 - usedToday;
+
+      if (remaining <= 0) {
+        return res.status(429).json({
+          error: 'Limite diário atingido. Tente novamente amanhã.',
+          remaining: 0
+        });
+      }
+
+      // Prepare dimensions based on type
+      const dimensions = type === 'thumbnail'
+        ? '1280x720 (16:9 aspect ratio)'
+        : '512x512 (square)';
+
+      // Build prompt based on type and available images
+      let enhancedPrompt = '';
+      const hasDualImages = (type === 'product' || type === 'thumbnail') && personImage && referenceImage;
+
+      if (type === 'profile') {
+        enhancedPrompt = `Generate a professional portrait/headshot image: ${prompt}. The image should be ${dimensions}. Make it professional and high quality.`;
+        if (referenceImage) {
+          enhancedPrompt += ' Use the provided photo as a reference for the person\'s appearance and likeness.';
+        }
+      } else if (type === 'product') {
+        if (hasDualImages) {
+          enhancedPrompt = `Generate a professional product image: ${prompt}. The image should be ${dimensions}. Combine the person from the first reference photo with the product from the second photo to create an engaging product showcase where the person is holding, using, or presenting the product.`;
+        } else {
+          enhancedPrompt = `Generate a professional product image: ${prompt}. The image should be ${dimensions}. Make it professional and high quality.`;
+          if (referenceImage) {
+            enhancedPrompt += ' Use the provided product photo as reference.';
+          }
+        }
+      } else if (type === 'thumbnail') {
+        if (hasDualImages) {
+          enhancedPrompt = `Generate a video thumbnail image: ${prompt}. The image should be ${dimensions}. Create an eye-catching YouTube-style thumbnail featuring the person from the first photo presenting or using the product from the second photo. Make it vibrant, professional, and click-worthy.`;
+        } else {
+          enhancedPrompt = `Generate a video thumbnail image: ${prompt}. The image should be ${dimensions}. Make it eye-catching and professional.`;
+          if (referenceImage) {
+            enhancedPrompt += ' Use the provided image as reference.';
+          }
+        }
+      }
+
+      // Build messages for OpenRouter
+      const messages: any[] = [];
+      const messageContent: any[] = [
+        {
+          type: 'text',
+          text: enhancedPrompt
+        }
+      ];
+
+      // Add person image first (if provided for dual upload types)
+      if (personImage && (type === 'product' || type === 'thumbnail')) {
+        messageContent.push({
+          type: 'image_url',
+          image_url: {
+            url: personImage.startsWith('data:')
+              ? personImage
+              : `data:image/jpeg;base64,${personImage}`
+          }
+        });
+      }
+
+      // Add reference/product image if provided
+      if (referenceImage) {
+        messageContent.push({
+          type: 'image_url',
+          image_url: {
+            url: referenceImage.startsWith('data:')
+              ? referenceImage
+              : `data:image/jpeg;base64,${referenceImage}`
+          }
+        });
+      }
+
+      messages.push({
+        role: 'user',
+        content: messageContent
+      });
+
+      // Call OpenRouter API with Gemini 3 Pro Image
+      const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://bio-storefront.com',
+          'X-Title': 'Bio-Storefront'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-3-pro-image-preview',
+          messages,
+          modalities: ['image', 'text']
+        })
+      });
+
+      if (!openRouterResponse.ok) {
+        const errorText = await openRouterResponse.text();
+        console.error('OpenRouter error:', errorText);
+        return res.status(500).json({ error: 'Falha ao gerar imagem. Tente novamente.' });
+      }
+
+      const aiResult = await openRouterResponse.json();
+      console.log('Full AI Response:', JSON.stringify(aiResult, null, 2));
+
+      // Extract image URL from response
+      let generatedImageUrl: string | null = null;
+      const message = aiResult.choices?.[0]?.message;
+      const content = message?.content;
+
+      // Check for images array in message
+      if (Array.isArray(message?.images) && message.images.length > 0) {
+        const firstImage = message.images[0];
+        if (firstImage?.image_url?.url) {
+          generatedImageUrl = firstImage.image_url.url;
+        } else if (firstImage?.url) {
+          generatedImageUrl = firstImage.url;
+        }
+      }
+
+      // Check for multipart response with image
+      if (!generatedImageUrl && Array.isArray(content)) {
+        for (const part of content) {
+          if (part.type === 'image_url' && part.image_url?.url) {
+            generatedImageUrl = part.image_url.url;
+            break;
+          }
+          if (part.inline_data?.data) {
+            generatedImageUrl = `data:${part.inline_data.mime_type || 'image/png'};base64,${part.inline_data.data}`;
+            break;
+          }
+        }
+      }
+
+      // Check if content is string with image URL or base64
+      if (!generatedImageUrl && typeof content === 'string' && content) {
+        const urlMatch = content.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
+        if (urlMatch) {
+          generatedImageUrl = urlMatch[1];
+        }
+        const base64Match = content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
+        if (base64Match) {
+          generatedImageUrl = base64Match[0];
+        }
+        const anyUrlMatch = content.match(/(https?:\/\/[^\s"'<>]+\.(jpg|jpeg|png|gif|webp)[^\s"'<>]*)/i);
+        if (anyUrlMatch) {
+          generatedImageUrl = anyUrlMatch[1];
+        }
+      }
+
+      // Check for image_url in the message itself
+      if (!generatedImageUrl && message?.image_url) {
+        generatedImageUrl = message.image_url;
+      }
+
+      // Record generation in database
+      await supabase
+        .from('ai_generations')
+        .insert({
+          user_id: user.id.toString(),
+          type,
+          prompt,
+          reference_image_url: referenceImage ? 'provided' : null,
+          generated_image_url: generatedImageUrl
+        });
+
+      return res.json({
+        imageUrl: generatedImageUrl,
+        remaining: remaining - 1,
+        rawResponse: generatedImageUrl ? undefined : content
+      });
+    }
+
+    if (path === '/api/ai/improve-prompt' && method === 'POST') {
+      const clerkId = req.headers['x-clerk-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { prompt, type } = req.body;
+
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+      }
+
+      const typeContext = type === 'profile'
+        ? 'portrait/headshot photo'
+        : type === 'product'
+          ? 'product photography'
+          : 'video thumbnail';
+
+      // Call OpenRouter with a fast/cheap model
+      const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://bio-storefront.com',
+          'X-Title': 'Bio-Storefront'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert at writing prompts for AI image generation. Improve the user's prompt to be more detailed and effective for generating a ${typeContext}. Focus on:
+- Lighting and composition
+- Style and mood
+- Specific visual details
+- Professional quality indicators
+
+Respond ONLY with the improved prompt in English, no explanations or additional text.`
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 500
+        })
+      });
+
+      if (!openRouterResponse.ok) {
+        const errorText = await openRouterResponse.text();
+        console.error('OpenRouter error:', errorText);
+        return res.status(500).json({ error: 'Falha ao melhorar prompt' });
+      }
+
+      const result = await openRouterResponse.json();
+      const improvedPrompt = result.choices?.[0]?.message?.content?.trim();
+
+      if (!improvedPrompt) {
+        return res.status(500).json({ error: 'No response from AI' });
+      }
+
+      return res.json({ improvedPrompt });
+    }
+
     // 404 for unmatched routes
     return res.status(404).json({ error: 'Not found' });
 
