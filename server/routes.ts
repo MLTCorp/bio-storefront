@@ -1105,7 +1105,11 @@ export async function registerRoutes(
         content: messageContent
       });
 
-      // Call OpenRouter API with Gemini 3 Pro (image generation capable)
+      // Call OpenRouter API with Gemini 2.5 Flash Image (image generation capable)
+      const imageConfig = type === "thumbnail"
+        ? { aspect_ratio: "16:9" }
+        : { aspect_ratio: "1:1" };
+
       const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -1115,10 +1119,10 @@ export async function registerRoutes(
           "X-Title": "Bio-Storefront"
         },
         body: JSON.stringify({
-          model: "google/gemini-3-pro-image-preview",
+          model: "google/gemini-2.5-flash-image-preview",
           messages,
           modalities: ["image", "text"],
-          max_tokens: 8192
+          image_config: imageConfig
         })
       });
 
@@ -1241,7 +1245,7 @@ export async function registerRoutes(
           "X-Title": "Bio-Storefront"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-001",
+          model: "google/gemini-2.5-flash",
           messages: [
             {
               role: "system",
