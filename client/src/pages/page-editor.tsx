@@ -55,6 +55,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Copy,
+  Check,
 } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { themes, themeList, getThemeIdFromBackground, getTheme } from "@/lib/themes";
@@ -80,6 +82,20 @@ export default function PageEditorPage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Copy page link to clipboard
+  const handleCopyLink = async () => {
+    if (!page) return;
+    const url = `${window.location.origin}/${page.username}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    toast({
+      title: "Link copiado!",
+      className: "bg-green-600 text-white",
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Get current theme based on page background
   const currentTheme = getTheme(getThemeIdFromBackground(page?.background_value));
@@ -447,22 +463,36 @@ export default function PageEditorPage() {
                 <span className="font-medium text-gray-700">@{page.username}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  className="px-2 sm:px-3"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline ml-1">Copiar</span>
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handlePreviewClick}
+                  className="px-2 sm:px-3"
                 >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Visualizar
+                  <Eye className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1">Visualizar</span>
                 </Button>
-                <Button size="sm" onClick={handleSave} disabled={saving}>
+                <Button size="sm" onClick={handleSave} disabled={saving} className="px-2 sm:px-3">
                   {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Save className="h-4 w-4 mr-1" />
+                    <Save className="h-4 w-4" />
                   )}
-                  Salvar
+                  <span className="hidden sm:inline ml-1">Salvar</span>
                 </Button>
                 <UserButton afterSignOutUrl="/" />
               </div>
