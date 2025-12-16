@@ -592,7 +592,7 @@ export default function PageEditorPage() {
                                 {/* Avatar */}
                                 <div
                                   className="w-4 h-4 rounded-full mb-1"
-                                  style={{ backgroundColor: theme.text.accent }}
+                                  style={{ backgroundColor: '#9ca3af' }}
                                 />
                                 {/* Text lines */}
                                 <div
