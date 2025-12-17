@@ -5,23 +5,15 @@
   "functions": {
     "api/index.ts": {
       "runtime": "@vercel/node@3.2.0"
+    },
+    "middleware.ts": {
+      "runtime": "@vercel/edge"
     }
   },
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/api"
-    },
-    {
-      "source": "/:username",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Embedly|pinterest|vkShare).*"
-        }
-      ],
-      "destination": "/api/og/:username"
     },
     {
       "source": "/(.*)",
