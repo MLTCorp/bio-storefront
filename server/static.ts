@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { serveCrawlerMeta } from "./og-meta";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
@@ -11,6 +12,9 @@ export function serveStatic(app: Express) {
   }
 
   app.use(express.static(distPath));
+
+  // SSR meta tags for social media crawlers
+  app.use("*", serveCrawlerMeta);
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {

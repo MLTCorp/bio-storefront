@@ -5,6 +5,7 @@ import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
+import { serveCrawlerMeta } from "./og-meta";
 
 const viteLogger = createLogger();
 
@@ -30,6 +31,9 @@ export async function setupVite(server: Server, app: Express) {
   });
 
   app.use(vite.middlewares);
+
+  // SSR meta tags for social media crawlers
+  app.use("*", serveCrawlerMeta);
 
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
