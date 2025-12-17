@@ -34,6 +34,80 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const path = url?.replace(/\?.*$/, '') || '';
 
   try {
+    // ============ OG META TAGS FOR CRAWLERS ============
+    const ogMatch = path.match(/^\/api\/og\/([^/]+)$/);
+    if (ogMatch && method === 'GET') {
+      const username = ogMatch[1].toLowerCase();
+
+      // Try pages table first
+      let pageData: any = null;
+      const { data: page } = await supabase
+        .from('pages')
+        .select('profile_name, profile_bio, profile_image')
+        .eq('username', username)
+        .eq('is_active', true)
+        .single();
+
+      if (page) {
+        pageData = page;
+      } else {
+        // Fallback to stores table
+        const { data: store } = await supabase
+          .from('stores')
+          .select('profile_name, profile_bio, profile_image')
+          .eq('username', username)
+          .eq('is_active', true)
+          .single();
+
+        if (store) {
+          pageData = store;
+        }
+      }
+
+      if (!pageData) {
+        return res.status(404).json({ error: 'Page not found' });
+      }
+
+      // Escape HTML to prevent XSS
+      const escapeHtml = (text: string): string => {
+        const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, char => map[char]);
+      };
+
+      const title = escapeHtml(`${pageData.profile_name} - Bio`);
+      const description = escapeHtml(pageData.profile_bio || 'Confira meus produtos e conteúdos exclusivos.');
+      const image = pageData.profile_image || 'https://biolanding.com/opengraph.jpg';
+      const pageUrl = `https://biolanding.com/${username}`;
+
+      const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${title}</title>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${pageUrl}" />
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:image" content="${image}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="${pageUrl}" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${image}" />
+  <meta http-equiv="refresh" content="0;url=${pageUrl}" />
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${description}</p>
+  <p>Redirecionando...</p>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    }
+
     // ============ CONFIG ROUTES ============
     if (path === '/api/config' && method === 'GET') {
       const { data, error } = await supabase

@@ -13,6 +13,17 @@
       "destination": "/api"
     },
     {
+      "source": "/:username",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Embedly|pinterest|vkShare).*"
+        }
+      ],
+      "destination": "/api/og/:username"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
