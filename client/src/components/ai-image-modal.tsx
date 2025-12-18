@@ -567,13 +567,13 @@ export function AIImageModal({
           /* Result Step */
           <div className="space-y-4">
             {/* Generated Image Preview */}
-            <div className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden group">
+            <div className={`relative bg-gray-100 rounded-xl overflow-hidden group ${type === 'thumbnail' ? 'aspect-video' : 'aspect-square'}`}>
               {generatedImage ? (
                 <>
                   <img
                     src={generatedImage}
                     alt="Generated"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                   {/* Download button - always visible on mobile, hover on desktop */}
                   <button

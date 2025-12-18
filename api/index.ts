@@ -331,7 +331,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ============ ADMIN ROUTES ============
     if (path === '/api/admin/all-pages' && method === 'GET') {
-      // First get all pages
+      // Fetch pages with user emails in a single optimized query
       const { data: pages, error: pagesError } = await supabase
         .from('pages')
         .select('id, user_id, username, profile_name, is_active, created_at')
@@ -339,10 +339,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (pagesError) return res.status(500).json({ error: 'Failed to fetch pages' });
 
-      // Then get all users to match
-      const { data: users } = await supabase
-        .from('users')
-        .select('id, email');
+      // Get only the user_ids we need (not all users)
+      const userIds = [...new Set((pages || []).map((p: any) => p.user_id).filter(Boolean))];
+
+      // Fetch only required users in parallel
+      const { data: users } = userIds.length > 0
+        ? await supabase
+            .from('users')
+            .select('id, email')
+            .in('id', userIds)
+        : { data: [] };
 
       // Create a map of user_id to email
       const userMap = new Map((users || []).map((u: any) => [u.id, u.email]));
@@ -744,14 +750,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'componentIds must be an array' });
       }
 
-      // Update each component's order_index
-      for (let i = 0; i < componentIds.length; i++) {
-        await supabase
-          .from('page_components')
-          .update({ order_index: i })
-          .eq('id', componentIds[i])
-          .eq('page_id', pageId);
-      }
+      // Update all components in parallel (fixes N+1 query)
+      await Promise.all(
+        componentIds.map((id: number, index: number) =>
+          supabase
+            .from('page_components')
+            .update({ order_index: index })
+            .eq('id', id)
+            .eq('page_id', pageId)
+        )
+      );
 
       return res.json({ success: true });
     }

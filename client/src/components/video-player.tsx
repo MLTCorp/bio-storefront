@@ -43,6 +43,8 @@ export function VideoPlayer({
             <img
               src={thumbnail}
               alt="Video thumbnail"
+              loading="lazy"
+              decoding="async"
               className="absolute object-cover"
               style={{
                 width: `${thumbnailScale}%`,

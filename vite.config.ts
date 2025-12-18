@@ -39,6 +39,26 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core vendor libraries
+          vendor: ['react', 'react-dom', 'react-router-dom', 'wouter'],
+          // UI components
+          ui: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toast',
+            '@radix-ui/react-tooltip',
+          ],
+          // Animation library (heavy)
+          animations: ['framer-motion'],
+          // Form handling
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+        },
+      },
+    },
   },
   server: {
     host: "0.0.0.0",

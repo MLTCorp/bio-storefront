@@ -57,10 +57,23 @@ export default function StorePage() {
   if (loading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
+        className="min-h-screen pb-12 transition-colors duration-500"
         style={{ background: theme.background.value }}
       >
-        <Loader2 className="h-8 w-8 animate-spin" style={{ color: theme.text.accent }} />
+        <div className="max-w-[480px] mx-auto min-h-screen px-4 py-8 md:my-8 md:rounded-[32px]">
+          {/* Skeleton Profile */}
+          <div className="text-center mb-6 animate-pulse">
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gray-300/30" />
+            <div className="h-6 w-32 mx-auto mb-2 rounded bg-gray-300/30" />
+            <div className="h-4 w-48 mx-auto rounded bg-gray-300/30" />
+          </div>
+          {/* Skeleton Components */}
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-xl bg-gray-300/20 animate-pulse" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -141,6 +154,8 @@ export default function StorePage() {
               <img
                 src={page.profile_image}
                 alt={page.profile_name}
+                loading="eager"
+                decoding="async"
                 className="absolute object-cover"
                 style={{
                   width: `${page.profile_image_scale || 100}%`,

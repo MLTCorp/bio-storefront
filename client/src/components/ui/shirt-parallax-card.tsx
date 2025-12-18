@@ -131,6 +131,8 @@ export function ShirtParallaxCard({
             <motion.img
               src={imageUrl}
               alt={title}
+              loading="lazy"
+              decoding="async"
               className="absolute object-cover"
               style={{
                 width: `${imageScale}%`,
