@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth, useUser, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import { ArrowLeft, Eye, MousePointer, TrendingUp, Smartphone, Monitor, Tablet, Loader2, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,7 +28,7 @@ interface AnalyticsData {
 export default function AnalyticsPage() {
   const [, params] = useRoute("/analytics/:pageId");
   const { getToken } = useAuth();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("7d");
@@ -106,6 +106,25 @@ export default function AnalyticsPage() {
     }
   };
 
+  // Show loading while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  // Redirect to sign in if not authenticated
+  if (!user) {
+    return (
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    );
+  }
+
+  // Show loading while fetching data
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

@@ -430,7 +430,26 @@ export default function PageEditorPage() {
     }
   };
 
-  if (!isLoaded || loading) {
+  // Show loading only while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  // If not signed in, redirect to sign in
+  if (!user) {
+    return (
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    );
+  }
+
+  // Show loading while fetching page data
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

@@ -177,7 +177,26 @@ export default function PagesListPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  if (!isLoaded || loading) {
+  // Show loading only while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  // If not signed in, Clerk will handle redirect below
+  if (!user) {
+    return (
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    );
+  }
+
+  // Show loading while fetching pages
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
