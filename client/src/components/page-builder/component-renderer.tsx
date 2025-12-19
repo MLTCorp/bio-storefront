@@ -7,7 +7,24 @@ import type { PageComponent, ButtonConfig, TextConfig, ProductConfig, VideoConfi
 interface ComponentRendererProps {
   component: PageComponent;
   theme?: Theme;
+  pageId?: number;
 }
+
+// Analytics tracking function
+const trackClick = (pageId: number | undefined, componentId: number, componentType: string, componentLabel: string, targetUrl: string) => {
+  if (!pageId) return;
+  fetch('/api/analytics/click', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pageId,
+      componentId,
+      componentType,
+      componentLabel,
+      targetUrl
+    })
+  }).catch(() => {}); // Silently fail
+};
 
 const platformIcons: Record<string, React.ReactNode> = {
   instagram: <Instagram className="h-5 w-5" />,
@@ -30,37 +47,43 @@ const platformColors: Record<string, string> = {
   custom: "bg-gray-600",
 };
 
-export function ComponentRenderer({ component, theme }: ComponentRendererProps) {
+export function ComponentRenderer({ component, theme, pageId }: ComponentRendererProps) {
   const currentTheme = theme || themes.light;
 
   switch (component.type) {
     case "button":
-      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} />;
+      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
     case "text":
       return <TextRenderer config={component.config as TextConfig} theme={currentTheme} />;
     case "product":
-      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} />;
+      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
     case "video":
       return <VideoRenderer config={component.config as VideoConfig} />;
     case "social":
-      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} />;
+      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
     case "link":
-      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} />;
+      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
     default:
       return null;
   }
 }
 
-function ButtonRenderer({ config, theme }: { config: ButtonConfig; theme: Theme }) {
+function ButtonRenderer({ config, theme, componentId, pageId }: { config: ButtonConfig; theme: Theme; componentId?: number; pageId?: number }) {
   const isWhatsApp = config.type === "whatsapp";
 
   const handleClick = () => {
+    let targetUrl = '';
     if (isWhatsApp && config.whatsappNumber) {
       const message = encodeURIComponent(config.whatsappMessage || "");
-      window.open(`https://wa.me/${config.whatsappNumber}?text=${message}`, "_blank");
+      targetUrl = `https://wa.me/${config.whatsappNumber}?text=${message}`;
+      window.open(targetUrl, "_blank");
     } else if (config.url) {
+      targetUrl = config.url;
       window.open(config.url, "_blank");
     }
+
+    // Track click
+    trackClick(pageId, componentId || 0, isWhatsApp ? 'whatsapp' : 'button', config.text, targetUrl);
   };
 
   const buttonStyle = isWhatsApp
@@ -113,7 +136,11 @@ function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
   );
 }
 
-function ProductRenderer({ config, theme }: { config: ProductConfig; theme: Theme }) {
+function ProductRenderer({ config, theme, componentId, pageId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number }) {
+  const handleProductClick = (kitLabel: string, kitUrl: string) => {
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl);
+  };
+
   return (
     <ShirtParallaxCard
       productId={config.id || crypto.randomUUID()}
@@ -126,6 +153,7 @@ function ProductRenderer({ config, theme }: { config: ProductConfig; theme: Them
       kits={config.kits}
       discountPercent={config.discountPercent || 0}
       theme={theme}
+      onKitClick={handleProductClick}
     />
   );
 }
@@ -142,7 +170,11 @@ function VideoRenderer({ config }: { config: VideoConfig }) {
   );
 }
 
-function SocialRenderer({ config, theme }: { config: SocialConfig; theme: Theme }) {
+function SocialRenderer({ config, theme, componentId, pageId }: { config: SocialConfig; theme: Theme; componentId?: number; pageId?: number }) {
+  const handleSocialClick = (platform: string, url: string) => {
+    trackClick(pageId, componentId || 0, 'social', platform, url);
+  };
+
   return (
     <div className="flex flex-wrap gap-2 justify-center">
       {config.links.map((link) => (
@@ -151,6 +183,7 @@ function SocialRenderer({ config, theme }: { config: SocialConfig; theme: Theme 
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => handleSocialClick(link.platform, link.url)}
           className={`w-12 h-12 rounded-xl flex items-center justify-center text-white ${
             platformColors[link.platform]
           } hover:opacity-80 transition-opacity`}
@@ -162,12 +195,17 @@ function SocialRenderer({ config, theme }: { config: SocialConfig; theme: Theme 
   );
 }
 
-function LinkRenderer({ config, theme }: { config: LinkConfig; theme: Theme }) {
+function LinkRenderer({ config, theme, componentId, pageId }: { config: LinkConfig; theme: Theme; componentId?: number; pageId?: number }) {
+  const handleLinkClick = () => {
+    trackClick(pageId, componentId || 0, 'link', config.text, config.url || '');
+  };
+
   return (
     <a
       href={config.url || "#"}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={handleLinkClick}
       className="block w-full py-3 px-4 rounded-xl font-medium text-center transition-all hover:opacity-80"
       style={{
         background: theme.button.secondary,

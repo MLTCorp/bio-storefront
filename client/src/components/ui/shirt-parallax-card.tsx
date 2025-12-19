@@ -21,6 +21,7 @@ interface ShirtParallaxCardProps {
   discountPercent?: number;
   className?: string;
   theme?: Theme;
+  onKitClick?: (kitLabel: string, kitUrl: string) => void;
 }
 
 export function ShirtParallaxCard({
@@ -35,6 +36,7 @@ export function ShirtParallaxCard({
   discountPercent = 0,
   className,
   theme,
+  onKitClick,
 }: ShirtParallaxCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -68,6 +70,8 @@ export function ShirtParallaxCard({
     }
 
     if (link && link !== '#') {
+      // Track click before opening
+      onKitClick?.(kit.label, link);
       window.open(link, '_blank');
     }
   };

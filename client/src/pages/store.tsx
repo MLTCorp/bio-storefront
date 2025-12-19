@@ -29,6 +29,19 @@ export default function StorePage() {
       .then((data) => {
         setPage(data);
         setLoading(false);
+
+        // Track page view
+        if (data?.id) {
+          fetch('/api/analytics/view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pageId: data.id,
+              referrer: document.referrer || null,
+              userAgent: navigator.userAgent
+            })
+          }).catch(() => {}); // Silently fail - don't affect UX
+        }
       })
       .catch(() => {
         setNotFound(true);
@@ -200,7 +213,7 @@ export default function StorePage() {
               .filter((c) => c.is_visible !== false)
               .map((component) => (
                 <motion.div key={component.id} variants={itemVariants}>
-                  <ComponentRenderer component={component} theme={theme} />
+                  <ComponentRenderer component={component} theme={theme} pageId={page.id} />
                 </motion.div>
               ))}
           </div>

@@ -14,7 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, ExternalLink, Edit, Eye, Loader2, Copy, Check, Trash2 } from "lucide-react";
+import { Plus, ExternalLink, Edit, Eye, Loader2, Copy, Check, Trash2, BarChart2, MousePointer } from "lucide-react";
 import type { Page } from "@/types/database";
 
 const MAX_PAGES = 3;
@@ -229,7 +229,16 @@ export default function PagesListPage() {
                     <div className="space-y-1">
                       <h3 className="font-medium truncate">{page.profile_name}</h3>
                       <p className="text-sm text-gray-500">@{page.username}</p>
-                      <p className="text-xs text-gray-400">{page.views || 0} visualizações</p>
+                      <div className="flex items-center gap-3 text-xs text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          {page.views || 0}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MousePointer className="h-3 w-3" />
+                          {(page as any).clicks || 0}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Actions */}
@@ -247,13 +256,23 @@ export default function PagesListPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(`/${page.username}`, "_blank")}
+                        title="Ver página"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => navigate(`/analytics/${page.id}`)}
+                        title="Ver analytics"
+                      >
+                        <BarChart2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => copyLink(page.username, page.id)}
+                        title="Copiar link"
                       >
                         {copiedId === page.id ? (
                           <Check className="h-4 w-4 text-green-600" />

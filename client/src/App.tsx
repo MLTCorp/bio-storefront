@@ -17,6 +17,7 @@ import OnboardingPage from "@/pages/onboarding";
 import DashboardPage from "@/pages/dashboard";
 import PagesListPage from "@/pages/pages-list";
 import PageEditorPage from "@/pages/page-editor";
+import AnalyticsPage from "@/pages/analytics";
 import StorePage from "@/pages/store";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/sign-up" component={SignUpPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel" component={CheckoutCancelPage} />
+      <Route path="/analytics/:pageId" component={AnalyticsPage} />
       <Route path="/:username" component={StorePage} />
       <Route component={NotFound} />
     </Switch>
