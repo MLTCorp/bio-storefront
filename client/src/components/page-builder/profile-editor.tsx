@@ -123,26 +123,28 @@ export function ProfileEditor({
         </div>
 
         {/* Image Action Buttons */}
-        <div className="flex items-center justify-center gap-2 mt-2">
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mt-2">
           {page.profile_image && (
             <>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setPositionModalOpen(true)}
-                className="text-xs text-gray-500 hover:text-gray-700 h-7 px-2"
+                className="text-xs text-gray-500 hover:text-gray-700 h-7 px-1.5 sm:px-2"
+                title="Ajustar posição da imagem"
               >
-                <Crop className="w-3.5 h-3.5 mr-1" />
-                Ajustar
+                <Crop className="w-3.5 h-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Ajustar</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleDownloadImage}
-                className="text-xs text-gray-500 hover:text-gray-700 h-7 px-2"
+                className="text-xs text-gray-500 hover:text-gray-700 h-7 px-1.5 sm:px-2"
+                title="Baixar imagem"
               >
-                <Download className="w-3.5 h-3.5 mr-1" />
-                Salvar
+                <Download className="w-3.5 h-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Salvar</span>
               </Button>
             </>
           )}
@@ -153,6 +155,7 @@ export function ProfileEditor({
             onClick={() => setAiModalOpen(true)}
             highlightHueDeg={280}
             className="text-xs"
+            hideTextOnMobile
           />
         </div>
       </div>

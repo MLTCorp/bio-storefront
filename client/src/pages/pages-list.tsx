@@ -224,30 +224,32 @@ export default function PagesListPage() {
                 >
                   <CardContent className="p-4">
                     {/* Preview da página */}
-                    <div className="aspect-[9/16] bg-gradient-to-b from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                    <div className="aspect-[4/3] bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden border border-gray-100">
                       {page.profile_image ? (
                         <img
                           src={page.profile_image}
                           alt={page.profile_name}
-                          className="w-16 h-16 rounded-full object-cover"
+                          className="w-14 h-14 rounded-full object-cover ring-2 ring-white shadow-md"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-2xl text-gray-500">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-xl font-bold text-white shadow-md">
                           {page.profile_name?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                       )}
                     </div>
 
                     {/* Info */}
-                    <div className="space-y-1">
-                      <h3 className="font-medium truncate">{page.profile_name}</h3>
-                      <p className="text-sm text-gray-500">@{page.username}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
+                    <div className="space-y-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 truncate">{page.profile_name}</h3>
+                        <p className="text-sm text-gray-500">@{page.username}</p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-gray-600">
                           <Eye className="h-3 w-3" />
                           {page.views || 0}
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-gray-600">
                           <MousePointer className="h-3 w-3" />
                           {(page as any).clicks || 0}
                         </span>
@@ -255,57 +257,65 @@ export default function PagesListPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 mt-4">
+                    <div className="space-y-2 mt-4">
+                      {/* Primary action */}
                       <Button
-                        variant="default"
                         size="sm"
-                        className="flex-1"
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                         onClick={() => navigate(`/dashboard/${page.id}`)}
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Editar
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar Página
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`/${page.username}`, "_blank")}
-                        title="Ver página"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/analytics/${page.id}`)}
-                        title="Ver analytics"
-                      >
-                        <BarChart2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyLink(page.username, page.id)}
-                        title="Copiar link"
-                      >
-                        {copiedId === page.id ? (
-                          <Check className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeletePage(page.id)}
-                        disabled={deletingId === page.id}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        {deletingId === page.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
+
+                      {/* Secondary actions */}
+                      <div className="grid grid-cols-4 gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`/${page.username}`, "_blank")}
+                          title="Ver página"
+                          className="hover:bg-gray-100"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/analytics/${page.id}`)}
+                          title="Ver analytics"
+                          className="hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200"
+                        >
+                          <BarChart2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyLink(page.username, page.id)}
+                          title="Copiar link"
+                          className={copiedId === page.id ? "bg-green-50 text-green-600 border-green-200" : "hover:bg-gray-100"}
+                        >
+                          {copiedId === page.id ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeletePage(page.id)}
+                          disabled={deletingId === page.id}
+                          title="Excluir página"
+                          className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                        >
+                          {deletingId === page.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -314,12 +324,12 @@ export default function PagesListPage() {
               {/* Card de criar nova página */}
               {pages.length < MAX_PAGES && (
                 <Card
-                  className="border-dashed border-2 hover:border-primary/50 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="border-dashed border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all cursor-pointer group"
                   onClick={() => setShowCreateModal(true)}
                 >
-                  <CardContent className="p-4 h-full flex flex-col items-center justify-center min-h-[300px]">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                      <Plus className="h-6 w-6 text-primary" />
+                  <CardContent className="p-4 h-full flex flex-col items-center justify-center min-h-[200px]">
+                    <div className="w-12 h-12 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center mb-3 transition-colors">
+                      <Plus className="h-6 w-6 text-indigo-600" />
                     </div>
                     <p className="font-medium text-gray-700">Nova Página</p>
                     <p className="text-sm text-gray-500 mt-1">
@@ -380,7 +390,11 @@ export default function PagesListPage() {
               <Button variant="outline" onClick={() => setShowCreateModal(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreatePage} disabled={creating}>
+              <Button
+                onClick={handleCreatePage}
+                disabled={creating}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
                 {creating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />

@@ -139,8 +139,8 @@ export default function AnalyticsPage() {
         <div className="text-center">
           <BarChart3 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-500">Nenhum dado disponível</p>
-          <Link href="/pages">
-            <button className="mt-4 text-blue-600 hover:underline">Voltar para páginas</button>
+          <Link href="/dashboard">
+            <button className="mt-4 text-indigo-600 hover:underline">Voltar para páginas</button>
           </Link>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/pages">
+            <Link href="/dashboard">
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <ArrowLeft className="h-5 w-5" />
               </button>

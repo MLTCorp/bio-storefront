@@ -1319,5 +1319,228 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     }
   });
 
+  // ============ ANALYTICS API ============
+
+  // Helper function to detect device type
+  const detectDevice = (userAgent: string): string => {
+    if (!userAgent) return 'unknown';
+    const ua = userAgent.toLowerCase();
+    if (/mobile|android|iphone|ipad|ipod|blackberry|windows phone/i.test(ua)) {
+      if (/ipad|tablet/i.test(ua)) return 'tablet';
+      return 'mobile';
+    }
+    return 'desktop';
+  };
+
+  // Helper to get start date based on period
+  const getStartDate = (period: string): string => {
+    const now = new Date();
+    switch (period) {
+      case '1d':
+        now.setDate(now.getDate() - 1);
+        break;
+      case '7d':
+        now.setDate(now.getDate() - 7);
+        break;
+      case '30d':
+        now.setDate(now.getDate() - 30);
+        break;
+      default:
+        now.setDate(now.getDate() - 7);
+    }
+    return now.toISOString();
+  };
+
+  // POST /api/analytics/view - Track page view
+  app.post("/api/analytics/view", async (req, res) => {
+    try {
+      const { pageId, referrer, userAgent } = req.body;
+
+      if (!pageId) {
+        return res.status(400).json({ error: 'pageId is required' });
+      }
+
+      const deviceType = detectDevice(userAgent || '');
+
+      // Insert view record
+      await supabase.from('page_views').insert({
+        page_id: pageId,
+        referrer: referrer || null,
+        user_agent: userAgent || null,
+        device_type: deviceType
+      });
+
+      // Also increment the views counter on pages table (for quick access)
+      const { data: page } = await supabase
+        .from('pages')
+        .select('views')
+        .eq('id', pageId)
+        .single();
+
+      if (page) {
+        await supabase
+          .from('pages')
+          .update({ views: (page.views || 0) + 1 })
+          .eq('id', pageId);
+      }
+
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error tracking view:", error);
+      res.status(500).json({ error: "Failed to track view" });
+    }
+  });
+
+  // POST /api/analytics/click - Track component click
+  app.post("/api/analytics/click", async (req, res) => {
+    try {
+      const { pageId, componentId, componentType, componentLabel, targetUrl } = req.body;
+
+      if (!pageId || !componentType) {
+        return res.status(400).json({ error: 'pageId and componentType are required' });
+      }
+
+      // Insert click record
+      await supabase.from('component_clicks').insert({
+        page_id: pageId,
+        component_id: componentId || null,
+        component_type: componentType,
+        component_label: componentLabel || null,
+        target_url: targetUrl || null
+      });
+
+      // Also increment the clicks counter on pages table (for quick access)
+      const { data: page } = await supabase
+        .from('pages')
+        .select('clicks')
+        .eq('id', pageId)
+        .single();
+
+      if (page) {
+        await supabase
+          .from('pages')
+          .update({ clicks: ((page as any).clicks || 0) + 1 })
+          .eq('id', pageId);
+      }
+
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error tracking click:", error);
+      res.status(500).json({ error: "Failed to track click" });
+    }
+  });
+
+  // GET /api/analytics/:pageId - Get detailed analytics
+  app.get("/api/analytics/:pageId", async (req, res) => {
+    try {
+      const clerkId = req.headers['x-clerk-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const pageId = parseInt(req.params.pageId);
+      const period = (req.query.period as string) || '7d';
+      const startDate = getStartDate(period);
+
+      // Verify ownership
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id, views, clicks')
+        .eq('id', pageId)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Get views in period
+      const { data: views } = await supabase
+        .from('page_views')
+        .select('viewed_at, device_type, referrer')
+        .eq('page_id', pageId)
+        .gte('viewed_at', startDate)
+        .order('viewed_at', { ascending: true });
+
+      // Get clicks in period
+      const { data: clicks } = await supabase
+        .from('component_clicks')
+        .select('clicked_at, component_type, component_label, target_url')
+        .eq('page_id', pageId)
+        .gte('clicked_at', startDate)
+        .order('clicked_at', { ascending: true });
+
+      // Aggregate views by day
+      const viewsByDay: Record<string, number> = {};
+      (views || []).forEach((v: any) => {
+        const day = v.viewed_at.split('T')[0];
+        viewsByDay[day] = (viewsByDay[day] || 0) + 1;
+      });
+
+      // Aggregate clicks by day
+      const clicksByDay: Record<string, number> = {};
+      (clicks || []).forEach((c: any) => {
+        const day = c.clicked_at.split('T')[0];
+        clicksByDay[day] = (clicksByDay[day] || 0) + 1;
+      });
+
+      // Aggregate by device
+      const deviceStats: Record<string, number> = {};
+      (views || []).forEach((v: any) => {
+        const device = v.device_type || 'unknown';
+        deviceStats[device] = (deviceStats[device] || 0) + 1;
+      });
+
+      // Top components clicked
+      const componentStats: Record<string, { count: number; label: string; type: string }> = {};
+      (clicks || []).forEach((c: any) => {
+        const key = c.component_label || c.component_type;
+        if (!componentStats[key]) {
+          componentStats[key] = { count: 0, label: c.component_label || c.component_type, type: c.component_type };
+        }
+        componentStats[key].count++;
+      });
+
+      const topComponents = Object.values(componentStats)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      // Generate chart data (last N days)
+      const chartData: Array<{ date: string; views: number; clicks: number }> = [];
+      const days = period === '1d' ? 1 : period === '7d' ? 7 : 30;
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        chartData.push({
+          date: dateStr,
+          views: viewsByDay[dateStr] || 0,
+          clicks: clicksByDay[dateStr] || 0
+        });
+      }
+
+      const totalViews = (views || []).length;
+      const totalClicks = (clicks || []).length;
+      const ctr = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : '0';
+
+      res.json({
+        totalViews,
+        totalClicks,
+        ctr: parseFloat(ctr),
+        chartData,
+        deviceStats,
+        topComponents,
+        period
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
   return httpServer;
 }
