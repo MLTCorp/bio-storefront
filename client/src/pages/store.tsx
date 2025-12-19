@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRoute, Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Loader2, Settings } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 import { BackgroundEffect } from "@/components/background-effect";
 import { ComponentRenderer } from "@/components/page-builder/component-renderer";
 import { getThemeIdFromBackground, getTheme, type Theme } from "@/lib/themes";
@@ -14,6 +15,7 @@ interface PageData extends Page {
 export default function StorePage() {
   const [, params] = useRoute("/:username");
   const [, navigate] = useLocation();
+  const { user } = useUser();
   const [page, setPage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -30,7 +32,7 @@ export default function StorePage() {
         setPage(data);
         setLoading(false);
 
-        // Track page view
+        // Track page view (exclude owner)
         if (data?.id) {
           fetch('/api/analytics/view', {
             method: 'POST',
@@ -38,7 +40,8 @@ export default function StorePage() {
             body: JSON.stringify({
               pageId: data.id,
               referrer: document.referrer || null,
-              userAgent: navigator.userAgent
+              userAgent: navigator.userAgent,
+              clerkId: user?.id || null // Pass clerkId to exclude owner
             })
           }).catch(() => {}); // Silently fail - don't affect UX
         }
@@ -213,7 +216,7 @@ export default function StorePage() {
               .filter((c) => c.is_visible !== false)
               .map((component) => (
                 <motion.div key={component.id} variants={itemVariants}>
-                  <ComponentRenderer component={component} theme={theme} pageId={page.id} />
+                  <ComponentRenderer component={component} theme={theme} pageId={page.id} clerkId={user?.id} />
                 </motion.div>
               ))}
           </div>

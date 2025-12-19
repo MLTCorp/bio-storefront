@@ -8,10 +8,11 @@ interface ComponentRendererProps {
   component: PageComponent;
   theme?: Theme;
   pageId?: number;
+  clerkId?: string; // To exclude owner from analytics
 }
 
 // Analytics tracking function
-const trackClick = (pageId: number | undefined, componentId: number, componentType: string, componentLabel: string, targetUrl: string) => {
+const trackClick = (pageId: number | undefined, componentId: number, componentType: string, componentLabel: string, targetUrl: string, clerkId?: string) => {
   if (!pageId) return;
   fetch('/api/analytics/click', {
     method: 'POST',
@@ -21,7 +22,8 @@ const trackClick = (pageId: number | undefined, componentId: number, componentTy
       componentId,
       componentType,
       componentLabel,
-      targetUrl
+      targetUrl,
+      clerkId: clerkId || null // Pass clerkId to exclude owner
     })
   }).catch(() => {}); // Silently fail
 };
@@ -47,28 +49,28 @@ const platformColors: Record<string, string> = {
   custom: "bg-gray-600",
 };
 
-export function ComponentRenderer({ component, theme, pageId }: ComponentRendererProps) {
+export function ComponentRenderer({ component, theme, pageId, clerkId }: ComponentRendererProps) {
   const currentTheme = theme || themes.light;
 
   switch (component.type) {
     case "button":
-      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
+      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
     case "text":
       return <TextRenderer config={component.config as TextConfig} theme={currentTheme} />;
     case "product":
-      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
+      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
     case "video":
       return <VideoRenderer config={component.config as VideoConfig} />;
     case "social":
-      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
+      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
     case "link":
-      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} componentId={component.id} pageId={pageId} />;
+      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
     default:
       return null;
   }
 }
 
-function ButtonRenderer({ config, theme, componentId, pageId }: { config: ButtonConfig; theme: Theme; componentId?: number; pageId?: number }) {
+function ButtonRenderer({ config, theme, componentId, pageId, clerkId }: { config: ButtonConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const isWhatsApp = config.type === "whatsapp";
 
   const handleClick = () => {
@@ -82,8 +84,8 @@ function ButtonRenderer({ config, theme, componentId, pageId }: { config: Button
       window.open(config.url, "_blank");
     }
 
-    // Track click
-    trackClick(pageId, componentId || 0, isWhatsApp ? 'whatsapp' : 'button', config.text, targetUrl);
+    // Track click (exclude owner)
+    trackClick(pageId, componentId || 0, isWhatsApp ? 'whatsapp' : 'button', config.text, targetUrl, clerkId);
   };
 
   const buttonStyle = isWhatsApp
@@ -136,9 +138,9 @@ function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
   );
 }
 
-function ProductRenderer({ config, theme, componentId, pageId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number }) {
+function ProductRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const handleProductClick = (kitLabel: string, kitUrl: string) => {
-    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl);
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl, clerkId);
   };
 
   return (
@@ -170,9 +172,9 @@ function VideoRenderer({ config }: { config: VideoConfig }) {
   );
 }
 
-function SocialRenderer({ config, theme, componentId, pageId }: { config: SocialConfig; theme: Theme; componentId?: number; pageId?: number }) {
+function SocialRenderer({ config, theme, componentId, pageId, clerkId }: { config: SocialConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const handleSocialClick = (platform: string, url: string) => {
-    trackClick(pageId, componentId || 0, 'social', platform, url);
+    trackClick(pageId, componentId || 0, 'social', platform, url, clerkId);
   };
 
   return (
@@ -195,9 +197,9 @@ function SocialRenderer({ config, theme, componentId, pageId }: { config: Social
   );
 }
 
-function LinkRenderer({ config, theme, componentId, pageId }: { config: LinkConfig; theme: Theme; componentId?: number; pageId?: number }) {
+function LinkRenderer({ config, theme, componentId, pageId, clerkId }: { config: LinkConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const handleLinkClick = () => {
-    trackClick(pageId, componentId || 0, 'link', config.text, config.url || '');
+    trackClick(pageId, componentId || 0, 'link', config.text, config.url || '', clerkId);
   };
 
   return (

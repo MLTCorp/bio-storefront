@@ -561,11 +561,7 @@ export async function registerRoutes(
         .single();
 
       if (page && !pageError) {
-        // Increment views
-        await supabase
-          .from("pages")
-          .update({ views: (page.views || 0) + 1 })
-          .eq("id", page.id);
+        // Note: Views are tracked via /api/analytics/view endpoint (not here to avoid duplicates)
 
         // Get page components
         const { data: components } = await supabase
@@ -1354,10 +1350,32 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // POST /api/analytics/view - Track page view
   app.post("/api/analytics/view", async (req, res) => {
     try {
-      const { pageId, referrer, userAgent } = req.body;
+      const { pageId, referrer, userAgent, clerkId } = req.body;
 
       if (!pageId) {
         return res.status(400).json({ error: 'pageId is required' });
+      }
+
+      // Check if visitor is the page owner (don't count owner views)
+      if (clerkId) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('id')
+          .eq('clerk_id', clerkId)
+          .single();
+
+        if (user) {
+          const { data: page } = await supabase
+            .from('pages')
+            .select('user_id')
+            .eq('id', pageId)
+            .single();
+
+          if (page && page.user_id === user.id) {
+            // Owner is viewing their own page - don't track
+            return res.json({ ok: true, skipped: true, reason: 'owner' });
+          }
+        }
       }
 
       const deviceType = detectDevice(userAgent || '');
@@ -1394,10 +1412,32 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // POST /api/analytics/click - Track component click
   app.post("/api/analytics/click", async (req, res) => {
     try {
-      const { pageId, componentId, componentType, componentLabel, targetUrl } = req.body;
+      const { pageId, componentId, componentType, componentLabel, targetUrl, clerkId } = req.body;
 
       if (!pageId || !componentType) {
         return res.status(400).json({ error: 'pageId and componentType are required' });
+      }
+
+      // Check if visitor is the page owner (don't count owner clicks)
+      if (clerkId) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('id')
+          .eq('clerk_id', clerkId)
+          .single();
+
+        if (user) {
+          const { data: page } = await supabase
+            .from('pages')
+            .select('user_id')
+            .eq('id', pageId)
+            .single();
+
+          if (page && page.user_id === user.id) {
+            // Owner is clicking their own page - don't track
+            return res.json({ ok: true, skipped: true, reason: 'owner' });
+          }
+        }
       }
 
       // Insert click record
