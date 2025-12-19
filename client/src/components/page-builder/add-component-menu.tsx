@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, ChevronDown } from "lucide-react";
 import type { ComponentType } from "@/types/database";
 import type { Theme } from "@/lib/themes";
 
@@ -46,7 +46,7 @@ const componentOptions: {
   },
   {
     type: "button",
-    label: "Botao",
+    label: "Botão",
     icon: <MousePointer2 className="h-5 w-5" />,
     iconColor: "text-indigo-500",
   },
@@ -54,65 +54,80 @@ const componentOptions: {
 
 export function AddComponentMenu({ onAdd, theme }: AddComponentMenuProps) {
   const [expanded, setExpanded] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  // Measure content height for smooth animation
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, []);
 
   const handleAdd = (type: ComponentType) => {
     onAdd(type);
     setExpanded(false);
   };
 
-  // Helper to get border color from theme
-  const getBorderColor = () => {
-    if (!theme) return undefined;
-    return theme.card.border.replace('1px solid ', '');
-  };
-
   return (
-    <div className="mt-4">
-      {!expanded ? (
-        <button
-          onClick={() => setExpanded(true)}
-          className="w-full py-3 px-4 rounded-xl border-2 border-dashed transition-all flex items-center justify-center gap-2"
-          style={{
-            borderColor: theme?.text.secondary || '#d1d5db',
-            color: theme?.text.secondary || '#6b7280',
-            background: 'transparent',
-          }}
-        >
-          <Plus className="h-5 w-5" />
+    <div
+      className="mt-4 rounded-lg overflow-hidden transition-all duration-300 shadow-sm"
+      style={{
+        background: theme?.card.bg || 'white',
+        border: theme?.card.border || '1px solid #e5e7eb',
+      }}
+    >
+      {/* Toggle Button - Always visible */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full py-3 px-4 flex items-center justify-between transition-colors hover:bg-black/5"
+        style={{
+          color: theme?.text.primary || '#374151',
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <Plus
+            className="h-5 w-5 transition-transform duration-300"
+            style={{
+              transform: expanded ? 'rotate(45deg)' : 'rotate(0deg)',
+              color: theme?.text.accent || '#6366f1',
+            }}
+          />
           <span className="text-sm font-medium">Adicionar elemento</span>
-        </button>
-      ) : (
-        <div
-          className="p-4 rounded-xl shadow-sm"
+        </div>
+        <ChevronDown
+          className="h-4 w-4 transition-transform duration-300"
           style={{
-            background: theme?.card.bg || 'white',
-            border: theme?.card.border || '1px solid #e5e7eb',
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            color: theme?.text.secondary || '#9ca3af',
           }}
+        />
+      </button>
+
+      {/* Expandable Content */}
+      <div
+        className="overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          maxHeight: expanded ? `${contentHeight}px` : '0px',
+          opacity: expanded ? 1 : 0,
+        }}
+      >
+        <div
+          ref={contentRef}
+          className="px-3 pb-3"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span
-              className="text-sm font-medium"
-              style={{ color: theme?.text.primary || '#374151' }}
-            >
-              Adicionar elemento
-            </span>
-            <button
-              onClick={() => setExpanded(false)}
-              className="p-1 rounded-lg transition-colors"
-              style={{ color: theme?.text.secondary || '#9ca3af' }}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
           <div className="grid grid-cols-3 gap-2">
-            {componentOptions.map((option) => (
+            {componentOptions.map((option, index) => (
               <button
                 key={option.type}
                 onClick={() => handleAdd(option.type)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all active:scale-95"
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-95"
                 style={{
                   background: theme?.button.secondary || '#f9fafb',
-                  border: `1px solid ${getBorderColor() || '#e5e7eb'}`,
+                  border: theme?.card.border || '1px solid #e5e7eb',
+                  transitionDelay: expanded ? `${index * 30}ms` : '0ms',
+                  transform: expanded ? 'translateY(0)' : 'translateY(-8px)',
+                  opacity: expanded ? 1 : 0,
                 }}
               >
                 <span className={option.iconColor}>{option.icon}</span>
@@ -126,7 +141,7 @@ export function AddComponentMenu({ onAdd, theme }: AddComponentMenuProps) {
             ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
