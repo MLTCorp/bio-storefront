@@ -48,12 +48,6 @@ export default function PagesListPage() {
         if (response.ok) {
           const data = await response.json();
           setPages(data);
-
-          // Se só tem uma página, redireciona direto para o editor
-          if (data.length === 1) {
-            navigate(`/dashboard/${data[0].id}`);
-            return;
-          }
         }
       } catch (error) {
         console.error("Erro ao buscar páginas:", error);

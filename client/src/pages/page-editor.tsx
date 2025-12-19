@@ -38,6 +38,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
@@ -57,6 +64,9 @@ import {
   X,
   Copy,
   Check,
+  Menu,
+  BarChart2,
+  LayoutList,
 } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { themes, themeList, getThemeIdFromBackground, getTheme } from "@/lib/themes";
@@ -472,13 +482,23 @@ export default function PageEditorPage() {
           <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
             <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/dashboard")}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Menu className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                      <LayoutList className="h-4 w-4 mr-2" />
+                      Minhas Páginas
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/analytics/${page.id}`)}>
+                      <BarChart2 className="h-4 w-4 mr-2" />
+                      Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <span className="font-medium text-gray-700">@{page.username}</span>
               </div>
 
