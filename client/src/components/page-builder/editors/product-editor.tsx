@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, LayoutGrid, ShoppingCart, CreditCard } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
@@ -240,6 +240,46 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
       {/* Expanded Editor */}
       {expanded && (
         <div className="space-y-4 p-3 bg-gray-50 rounded-lg">
+          {/* Display Style Selector */}
+          <div className="space-y-2">
+            <Label className="text-xs">Estilo de Exibicao</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => updateField("displayStyle", "card")}
+                className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${
+                  (!localConfig.displayStyle || localConfig.displayStyle === "card")
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <LayoutGrid className="h-5 w-5" />
+                <span className="text-xs font-medium">Card 3D</span>
+              </button>
+              <button
+                onClick={() => updateField("displayStyle", "compact")}
+                className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${
+                  localConfig.displayStyle === "compact"
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <CreditCard className="h-5 w-5" />
+                <span className="text-xs font-medium">Compacto</span>
+              </button>
+              <button
+                onClick={() => updateField("displayStyle", "ecommerce")}
+                className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${
+                  localConfig.displayStyle === "ecommerce"
+                    ? "border-primary bg-primary/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                <span className="text-xs font-medium">E-commerce</span>
+              </button>
+            </div>
+          </div>
+
           {/* Title & Description */}
           <div className="space-y-2">
             <Label className="text-xs">Titulo</Label>
@@ -300,6 +340,51 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
                 <option value="40">40% de desconto</option>
                 <option value="50">50% de desconto</option>
               </select>
+            </div>
+          )}
+
+          {/* Compact Style: Rating & CTA */}
+          {localConfig.displayStyle === "compact" && (
+            <div className="space-y-4 p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">Avaliacoes</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-blue-600">Nota (0-5)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={localConfig.rating || ""}
+                    onChange={(e) => updateField("rating", parseFloat(e.target.value) || 0)}
+                    placeholder="4.7"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-blue-600">Qtd. avaliacoes</Label>
+                  <Input
+                    type="number"
+                    value={localConfig.ratingCount || ""}
+                    onChange={(e) => updateField("ratingCount", parseInt(e.target.value) || 0)}
+                    placeholder="127"
+                    className="h-9"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1 pt-2 border-t border-blue-200">
+                <Label className="text-xs text-blue-600">Texto do Botao</Label>
+                <Input
+                  value={localConfig.ctaText || ""}
+                  onChange={(e) => updateField("ctaText", e.target.value)}
+                  placeholder="Comprar Agora"
+                />
+              </div>
             </div>
           )}
 
@@ -531,6 +616,28 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
                         >
                           <Percent className={`h-4 w-4 ${kit.ignoreDiscount ? 'text-orange-500' : 'text-gray-400'}`} />
                           <span className="text-sm">{kit.ignoreDiscount ? 'Desconto Ignorado' : 'Ignorar Desconto'}</span>
+                        </button>
+                      )}
+
+                      {/* Highlight Toggle - only for ecommerce style */}
+                      {localConfig.displayStyle === "ecommerce" && (
+                        <button
+                          onClick={() => {
+                            // Only one kit can be highlighted at a time
+                            const newKits = localConfig.kits.map((k) => ({
+                              ...k,
+                              isHighlighted: k.id === kit.id ? !kit.isHighlighted : false,
+                            }));
+                            updateField("kits", newKits);
+                          }}
+                          className={`w-full flex items-center gap-2 p-2.5 rounded-lg transition-colors ${
+                            kit.isHighlighted
+                              ? 'bg-amber-50 border border-amber-200 text-amber-700'
+                              : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Star className={`h-4 w-4 ${kit.isHighlighted ? 'text-amber-500 fill-amber-500' : 'text-gray-400'}`} />
+                          <span className="text-sm">{kit.isHighlighted ? 'Kit em Destaque' : 'Destacar Este Kit'}</span>
                         </button>
                       )}
                     </div>

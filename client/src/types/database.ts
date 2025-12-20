@@ -36,6 +36,8 @@ export interface ProductKit {
   discountLinks?: Record<number, string>;
   isVisible?: boolean;   // default true - when false, kit is hidden from display
   isSpecial?: boolean;   // when true, shows shine-border animation
+  isHighlighted?: boolean; // for ecommerce style - highlights this kit (border + "MAIS VENDIDO")
+  ignoreDiscount?: boolean; // when true, this kit ignores the product's discount percentage
 }
 
 export interface ProductConfig {
@@ -48,6 +50,14 @@ export interface ProductConfig {
   imagePositionY?: number; // 0-100, default 50 (center)
   discountPercent: number;
   kits: ProductKit[];
+  // Display style options
+  displayStyle?: 'card' | 'compact' | 'ecommerce'; // default: 'card'
+  // Rating (for compact style)
+  rating?: number;       // 0-5, with decimals (e.g., 4.7)
+  ratingCount?: number;  // number of reviews (e.g., 127)
+  // CTA button (for compact style)
+  ctaText?: string;      // button text (e.g., "Comprar Agora", "Get Started")
+  ctaLink?: string;      // button link (if different from kit link)
 }
 
 export interface VideoConfig {

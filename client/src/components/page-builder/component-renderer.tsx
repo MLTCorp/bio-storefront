@@ -183,7 +183,20 @@ function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
   );
 }
 
+// Product Renderer - Dispatches to different styles
 function ProductRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+  switch (config.displayStyle) {
+    case 'compact':
+      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} />;
+    case 'ecommerce':
+      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} />;
+    default:
+      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} />;
+  }
+}
+
+// Product Card Renderer - Original 3D parallax style
+function ProductCardRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const handleProductClick = (kitLabel: string, kitUrl: string) => {
     trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl, clerkId);
   };
@@ -202,6 +215,228 @@ function ProductRenderer({ config, theme, componentId, pageId, clerkId }: { conf
       theme={theme}
       onKitClick={handleProductClick}
     />
+  );
+}
+
+// Product Compact Renderer - Rating + single CTA button style
+function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+  const visibleKits = config.kits.filter(k => k.isVisible !== false);
+  const mainKit = visibleKits[0];
+
+  const handleClick = () => {
+    const url = config.ctaLink || mainKit?.link || '';
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${config.ctaText || 'CTA'}`, url, clerkId);
+    if (url) window.open(url, '_blank');
+  };
+
+  const originalPrice = mainKit?.price || 0;
+  const discountedPrice = config.discountPercent > 0
+    ? originalPrice - (originalPrice * config.discountPercent / 100)
+    : originalPrice;
+
+  // Render stars
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<Star key={i} className="w-3.5 h-3.5 fill-amber-400/50 text-amber-400" />);
+      } else {
+        stars.push(<Star key={i} className="w-3.5 h-3.5 text-gray-300" />);
+      }
+    }
+    return stars;
+  };
+
+  return (
+    <div
+      className="rounded-2xl p-4 shadow-sm border"
+      style={{
+        background: theme.card.bg,
+        borderColor: theme.card.border,
+      }}
+    >
+      <div className="flex gap-4">
+        {/* Image */}
+        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+          {config.image && (
+            <img
+              src={config.image}
+              alt={config.title}
+              className="w-full h-full object-cover"
+              style={{
+                transform: `scale(${(config.imageScale || 100) / 100})`,
+                objectPosition: `${config.imagePositionX ?? 50}% ${config.imagePositionY ?? 50}%`,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-base truncate" style={{ color: theme.text.primary }}>
+            {config.title}
+          </h3>
+          <p className="text-sm truncate" style={{ color: theme.text.secondary }}>
+            {config.description}
+          </p>
+
+          {/* Price + Rating Row */}
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            {/* Price */}
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-bold text-lg" style={{ color: theme.text.primary }}>
+                R$ {discountedPrice.toFixed(0)}
+              </span>
+              {config.discountPercent > 0 && (
+                <span className="text-sm line-through" style={{ color: theme.text.secondary }}>
+                  R$ {originalPrice.toFixed(0)}
+                </span>
+              )}
+            </div>
+
+            {/* Rating */}
+            {config.rating && config.rating > 0 && (
+              <div className="flex items-center gap-1">
+                <div className="flex">{renderStars(config.rating)}</div>
+                <span className="text-xs font-medium" style={{ color: theme.text.secondary }}>
+                  {config.rating.toFixed(1)}
+                </span>
+                {config.ratingCount && (
+                  <span className="text-xs" style={{ color: theme.text.secondary }}>
+                    ({config.ratingCount})
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Discount Badge */}
+            {config.discountPercent > 0 && (
+              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                {config.discountPercent}% OFF
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Button */}
+      <button
+        onClick={handleClick}
+        className="w-full mt-4 py-3 px-4 rounded-xl font-semibold text-center transition-all hover:opacity-90 flex items-center justify-center gap-2"
+        style={{
+          background: theme.button.primary,
+          color: theme.button.primaryText,
+        }}
+      >
+        {config.ctaText || 'Comprar Agora'}
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// Product E-commerce Renderer - Horizontal with kit selection
+function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+  const visibleKits = config.kits.filter(k => k.isVisible !== false);
+
+  const handleKitClick = (kit: typeof config.kits[0]) => {
+    // Get the appropriate link based on discount
+    let url = kit.link;
+    if (config.discountPercent > 0 && kit.discountLinks?.[config.discountPercent]) {
+      url = kit.discountLinks[config.discountPercent];
+    }
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kit.label}`, url, clerkId);
+    if (url) window.open(url, '_blank');
+  };
+
+  const calculatePrice = (price: number, ignoreDiscount?: boolean) => {
+    if (ignoreDiscount || !config.discountPercent) return price;
+    return price - (price * config.discountPercent / 100);
+  };
+
+  return (
+    <div
+      className="rounded-2xl p-4 shadow-sm border relative overflow-hidden"
+      style={{
+        background: theme.card.bg,
+        borderColor: theme.card.border,
+      }}
+    >
+      {/* Discount Badge */}
+      {config.discountPercent > 0 && (
+        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-lg">
+          {config.discountPercent}% OFF
+        </div>
+      )}
+
+      <div className="flex gap-4">
+        {/* Image */}
+        <div className="w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+          {config.image && (
+            <img
+              src={config.image}
+              alt={config.title}
+              className="w-full h-full object-cover"
+              style={{
+                transform: `scale(${(config.imageScale || 100) / 100})`,
+                objectPosition: `${config.imagePositionX ?? 50}% ${config.imagePositionY ?? 50}%`,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-lg pr-16" style={{ color: theme.text.primary }}>
+            {config.title}
+          </h3>
+          <p className="text-sm mt-1" style={{ color: theme.text.secondary }}>
+            {config.description}
+          </p>
+
+          {/* Kits Grid */}
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {visibleKits.map((kit) => {
+              const originalPrice = kit.price;
+              const finalPrice = calculatePrice(originalPrice, kit.ignoreDiscount);
+              const isHighlighted = kit.isHighlighted;
+
+              return (
+                <button
+                  key={kit.id}
+                  onClick={() => handleKitClick(kit)}
+                  className={`flex-1 min-w-[80px] p-2 rounded-xl border-2 transition-all hover:scale-[1.02] ${
+                    isHighlighted
+                      ? 'border-amber-400 bg-amber-50 shadow-lg'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  {isHighlighted && (
+                    <div className="text-[10px] font-bold text-amber-600 mb-1">MAIS VENDIDO</div>
+                  )}
+                  <div className="text-xs font-medium uppercase" style={{ color: theme.text.secondary }}>
+                    {kit.label}
+                  </div>
+                  {config.discountPercent > 0 && !kit.ignoreDiscount && (
+                    <div className="text-[10px] line-through" style={{ color: theme.text.secondary }}>
+                      R$ {originalPrice.toFixed(0)}
+                    </div>
+                  )}
+                  <div className={`font-bold ${isHighlighted ? 'text-amber-600' : ''}`} style={isHighlighted ? {} : { color: theme.text.primary }}>
+                    R$ {finalPrice.toFixed(0)}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
