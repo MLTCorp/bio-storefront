@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 // Component Types
-export type ComponentType = 'button' | 'text' | 'product' | 'video' | 'social' | 'link';
+export type ComponentType = 'button' | 'text' | 'product' | 'video' | 'social' | 'link' | 'carousel' | 'calendly' | 'maps' | 'pix';
 
 // Component Config Types
 export interface ButtonConfig {
@@ -76,9 +76,66 @@ export interface LinkConfig {
   url: string;
   icon?: string;
   style: 'large' | 'small';
+  // Advanced customization
+  backgroundColor?: string;
+  shape?: 'rounded' | 'pill' | 'square';
+  variant?: 'filled' | 'outline' | 'soft';
+  animation?: 'none' | 'pulse' | 'shine';
+  badge?: string;
+  thumbnail?: string;
+  thumbnailScale?: number;
+  thumbnailPositionX?: number;
+  thumbnailPositionY?: number;
 }
 
-export type ComponentConfig = ButtonConfig | TextConfig | ProductConfig | VideoConfig | SocialConfig | LinkConfig;
+// Carousel (Gallery) Config
+export interface CarouselImage {
+  id: string;
+  url: string;
+  scale?: number;       // 100-200
+  positionX?: number;   // 0-100
+  positionY?: number;   // 0-100
+  badge?: string;       // "NOVO", "🔥"
+  link?: string;        // optional click URL
+}
+
+export interface CarouselConfig {
+  images: CarouselImage[];  // max 10
+  autoPlay?: boolean;
+  showDots?: boolean;
+  aspectRatio?: 'square' | 'landscape' | 'portrait';
+}
+
+// Calendly Config
+export interface CalendlyConfig {
+  url: string;
+  embedType: 'button' | 'inline';
+  buttonText?: string;
+  height?: number;  // for inline embed
+}
+
+// Maps Config
+export interface MapsConfig {
+  embedUrl?: string;
+  address?: string;
+  height?: number;
+  showOpenButton?: boolean;
+}
+
+// PIX Payment Config
+export interface PixConfig {
+  mode: 'qrcode' | 'copypaste';
+  qrcodeImage?: string;
+  qrcodeScale?: number;
+  qrcodePositionX?: number;
+  qrcodePositionY?: number;
+  pixCode?: string;
+  recipientName?: string;
+  amount?: number;
+  description?: string;
+}
+
+export type ComponentConfig = ButtonConfig | TextConfig | ProductConfig | VideoConfig | SocialConfig | LinkConfig | CarouselConfig | CalendlyConfig | MapsConfig | PixConfig;
 
 // Page Types
 export interface Page {

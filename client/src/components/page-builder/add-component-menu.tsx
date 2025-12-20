@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, ChevronDown } from "lucide-react";
+import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, ChevronDown, Images, Calendar, MapPin, QrCode } from "lucide-react";
 import type { ComponentType } from "@/types/database";
 import type { Theme } from "@/lib/themes";
 
@@ -49,6 +49,30 @@ const componentOptions: {
     label: "Botão",
     icon: <MousePointer2 className="h-5 w-5" />,
     iconColor: "text-indigo-500",
+  },
+  {
+    type: "carousel",
+    label: "Galeria",
+    icon: <Images className="h-5 w-5" />,
+    iconColor: "text-amber-500",
+  },
+  {
+    type: "calendly",
+    label: "Calendly",
+    icon: <Calendar className="h-5 w-5" />,
+    iconColor: "text-cyan-500",
+  },
+  {
+    type: "maps",
+    label: "Mapa",
+    icon: <MapPin className="h-5 w-5" />,
+    iconColor: "text-emerald-500",
+  },
+  {
+    type: "pix",
+    label: "PIX",
+    icon: <QrCode className="h-5 w-5" />,
+    iconColor: "text-teal-500",
   },
 ];
 

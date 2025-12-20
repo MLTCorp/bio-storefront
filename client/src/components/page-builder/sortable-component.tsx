@@ -10,6 +10,10 @@ import { ProductEditor } from "./editors/product-editor";
 import { VideoEditor } from "./editors/video-editor";
 import { SocialEditor } from "./editors/social-editor";
 import { LinkEditor } from "./editors/link-editor";
+import { CarouselEditor } from "./editors/carousel-editor";
+import { CalendlyEditor } from "./editors/calendly-editor";
+import { MapsEditor } from "./editors/maps-editor";
+import { PixEditor } from "./editors/pix-editor";
 
 interface SortableComponentProps {
   component: PageComponent;
@@ -88,6 +92,34 @@ export function SortableComponent({
       case "link":
         return (
           <LinkEditor
+            config={component.config as any}
+            onUpdate={onUpdate}
+          />
+        );
+      case "carousel":
+        return (
+          <CarouselEditor
+            config={component.config as any}
+            onUpdate={onUpdate}
+          />
+        );
+      case "calendly":
+        return (
+          <CalendlyEditor
+            config={component.config as any}
+            onUpdate={onUpdate}
+          />
+        );
+      case "maps":
+        return (
+          <MapsEditor
+            config={component.config as any}
+            onUpdate={onUpdate}
+          />
+        );
+      case "pix":
+        return (
+          <PixEditor
             config={component.config as any}
             onUpdate={onUpdate}
           />

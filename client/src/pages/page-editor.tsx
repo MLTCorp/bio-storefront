@@ -296,6 +296,28 @@ export default function PageEditorPage() {
         url: "",
         style: "large",
       },
+      carousel: {
+        images: [],
+        autoPlay: false,
+        showDots: true,
+        aspectRatio: "landscape",
+      },
+      calendly: {
+        url: "",
+        embedType: "button",
+        buttonText: "Agendar",
+      },
+      maps: {
+        embedUrl: "",
+        address: "",
+        height: 200,
+        showOpenButton: true,
+      },
+      pix: {
+        mode: "copypaste",
+        pixCode: "",
+        recipientName: "",
+      },
     };
 
     try {
