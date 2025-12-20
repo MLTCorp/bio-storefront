@@ -44,12 +44,12 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="precos" className="py-20 bg-[#F9FAFB]">
-      <div className="max-w-5xl mx-auto px-6">
+    <section id="precos" className="py-16 sm:py-20 bg-[#F9FAFB]">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <BlurFade inView className="text-center mb-16">
+        <BlurFade inView className="text-center mb-10 sm:mb-16">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+            className="inline-block px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-4"
             style={{
               background: 'rgba(127, 74, 255, 0.1)',
               color: '#7F4AFF',
@@ -57,7 +57,7 @@ export function PricingSection() {
           >
             Precos
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-4">
             Escolha seu{' '}
             <span
               style={{
@@ -69,17 +69,17 @@ export function PricingSection() {
               plano
             </span>
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
             Comece gratis e evolua conforme seu negocio cresce.
           </p>
         </BlurFade>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
               key={index}
-              className={`relative bg-white rounded-3xl p-8 ${
+              className={`relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 ${
                 plan.popular ? 'ring-2 ring-[#7F4AFF] shadow-xl' : 'border border-gray-200'
               }`}
               initial={{ opacity: 0, y: 20 }}
@@ -91,42 +91,42 @@ export function PricingSection() {
               {/* Popular badge */}
               {plan.popular && (
                 <div
-                  className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-white text-sm font-medium flex items-center gap-1.5"
+                  className="absolute -top-3 sm:-top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-white text-xs sm:text-sm font-medium flex items-center gap-1.5"
                   style={{
                     background:
                       'radial-gradient(41.3% 114.84% at 50% 54.35%, #B090FF 0%, #7F4AFF 100%)',
                   }}
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Mais Popular
                 </div>
               )}
 
               {/* Plan header */}
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-black mb-2">{plan.name}</h3>
-                <p className="text-gray-500 text-sm">{plan.description}</p>
+              <div className="mb-6 sm:mb-8">
+                <h3 className="text-lg sm:text-xl font-bold text-black mb-2">{plan.name}</h3>
+                <p className="text-gray-500 text-xs sm:text-sm">{plan.description}</p>
               </div>
 
               {/* Price */}
-              <div className="mb-8">
-                <span className="text-5xl font-bold text-black">{plan.price}</span>
-                <span className="text-gray-500">{plan.period}</span>
+              <div className="mb-6 sm:mb-8">
+                <span className="text-4xl sm:text-5xl font-bold text-black">{plan.price}</span>
+                <span className="text-gray-500 text-sm sm:text-base">{plan.period}</span>
               </div>
 
               {/* Features */}
-              <ul className="space-y-4 mb-8">
+              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3">
+                  <li key={i} className="flex items-center gap-2 sm:gap-3">
                     <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{
                         background: plan.popular ? '#7F4AFF' : '#10B981',
                       }}
                     >
-                      <Check className="w-3 h-3 text-white" />
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                     </div>
-                    <span className="text-gray-600">{feature}</span>
+                    <span className="text-sm sm:text-base text-gray-600">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -134,7 +134,7 @@ export function PricingSection() {
               {/* CTA */}
               <SignInButton mode="modal">
                 <Button
-                  className={`w-full h-12 text-base font-semibold rounded-xl ${
+                  className={`w-full h-11 sm:h-12 text-sm sm:text-base font-semibold rounded-xl ${
                     plan.popular ? 'text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
                   }`}
                   style={

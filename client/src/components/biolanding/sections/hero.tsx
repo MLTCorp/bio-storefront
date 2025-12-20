@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SignInButton } from '@clerk/clerk-react';
 import { AnimatedGroup } from '../ui/animated-group';
 import { GradientOrbsBackground } from '../ui/gradient-orb';
-import { PhoneMockup } from '../phone-mockup';
+import { HeroPhoneMockup } from '../hero-phone-mockup';
 
 const transitionVariants = {
   item: {
@@ -105,7 +105,7 @@ export function HeroSection() {
 
                 {/* Title */}
                 <h1
-                  className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
+                  className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     letterSpacing: '-0.04em',
@@ -132,19 +132,20 @@ export function HeroSection() {
                 </p>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row items-start gap-4 mb-12">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4 mb-10 sm:mb-12">
                   <SignInButton mode="modal">
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Button
                         size="lg"
-                        className="h-14 px-8 text-lg font-semibold rounded-2xl text-white shadow-xl gap-2"
+                        className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-semibold rounded-2xl text-white shadow-xl gap-2 w-full sm:w-auto"
                         style={{
                           background:
                             'radial-gradient(41.3% 114.84% at 50% 54.35%, #B090FF 0%, #7F4AFF 100%)',
                           boxShadow: '0 20px 50px rgba(127, 74, 255, 0.3)',
                         }}
                       >
-                        Criar meu site pessoal de links na bio
+                        <span className="sm:hidden">Comecar Agora</span>
+                        <span className="hidden sm:inline">Criar meu site de links</span>
                         <ArrowRight className="w-5 h-5" />
                       </Button>
                     </motion.div>
@@ -154,7 +155,7 @@ export function HeroSection() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="h-14 px-8 text-lg font-semibold rounded-2xl border-2 border-gray-200 hover:bg-gray-50"
+                      className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-semibold rounded-2xl border-2 border-gray-200 hover:bg-gray-50 w-full sm:w-auto"
                       onClick={() => {
                         document
                           .getElementById('como-funciona')
@@ -167,7 +168,7 @@ export function HeroSection() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
                   {stats.map((stat, index) => (
                     <motion.div
                       key={index}
@@ -178,12 +179,12 @@ export function HeroSection() {
                       transition={{ delay: 0.8 + index * 0.1 }}
                     >
                       <div
-                        className="absolute top-0 left-0 w-8 h-1 rounded-full"
+                        className="absolute top-0 left-0 w-6 sm:w-8 h-1 rounded-full"
                         style={{ background: '#7F4AFF' }}
                       />
-                      <div className="pt-4">
-                        <div className="text-3xl md:text-4xl font-bold text-black">{stat.value}</div>
-                        <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                      <div className="pt-3 sm:pt-4">
+                        <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-black">{stat.value}</div>
+                        <div className="text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wide">
                           {stat.label}
                         </div>
                       </div>
@@ -193,9 +194,9 @@ export function HeroSection() {
               </AnimatedGroup>
             </div>
 
-            {/* Right side - Phone mockup */}
-            <div className="flex justify-center lg:justify-end">
-              <PhoneMockup />
+            {/* Right side - Phone mockup - Hidden on mobile for cleaner layout */}
+            <div className="hidden lg:flex justify-end relative">
+              <HeroPhoneMockup />
             </div>
           </div>
         </div>

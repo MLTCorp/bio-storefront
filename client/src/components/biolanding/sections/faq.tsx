@@ -57,13 +57,13 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: FAQItemProps) {
     >
       <button
         onClick={onToggle}
-        className="w-full py-6 flex items-center justify-between text-left group"
+        className="w-full py-4 sm:py-6 flex items-center justify-between text-left group"
       >
-        <span className="text-lg font-medium text-black group-hover:text-[#7F4AFF] transition-colors pr-8">
+        <span className="text-base sm:text-lg font-medium text-black group-hover:text-[#7F4AFF] transition-colors pr-4 sm:pr-8">
           {question}
         </span>
         <motion.div
-          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
           style={{
             background: isOpen ? '#7F4AFF' : '#F3F4F6',
           }}
@@ -71,9 +71,9 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: FAQItemProps) {
           transition={{ duration: 0.2 }}
         >
           {isOpen ? (
-            <Minus className="w-4 h-4 text-white" />
+            <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
           ) : (
-            <Plus className="w-4 h-4 text-gray-500" />
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500" />
           )}
         </motion.div>
       </button>
@@ -87,7 +87,7 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: FAQItemProps) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <p className="pb-6 text-gray-500 leading-relaxed pr-16">{answer}</p>
+            <p className="pb-4 sm:pb-6 text-sm sm:text-base text-gray-500 leading-relaxed pr-8 sm:pr-16">{answer}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -99,12 +99,12 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-20 bg-white">
-      <div className="max-w-3xl mx-auto px-6">
+    <section id="faq" className="py-16 sm:py-20 bg-white">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <BlurFade inView className="text-center mb-12">
+        <BlurFade inView className="text-center mb-8 sm:mb-12">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+            className="inline-block px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-4"
             style={{
               background: 'rgba(127, 74, 255, 0.1)',
               color: '#7F4AFF',
@@ -112,7 +112,7 @@ export function FAQSection() {
           >
             FAQ
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-4">
             Perguntas{' '}
             <span
               style={{
@@ -124,7 +124,7 @@ export function FAQSection() {
               frequentes
             </span>
           </h2>
-          <p className="text-lg text-gray-500">
+          <p className="text-base sm:text-lg text-gray-500">
             Tudo que voce precisa saber sobre o BioLanding.
           </p>
         </BlurFade>

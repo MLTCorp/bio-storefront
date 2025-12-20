@@ -30,12 +30,12 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="como-funciona" className="py-20 bg-white relative overflow-hidden">
-      <div className="max-w-6xl mx-auto px-6">
+    <section id="como-funciona" className="py-16 sm:py-20 bg-white relative overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <BlurFade inView className="text-center mb-16">
+        <BlurFade inView className="text-center mb-10 sm:mb-16">
           <span
-            className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+            className="inline-block px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium mb-4"
             style={{
               background: 'rgba(127, 74, 255, 0.1)',
               color: '#7F4AFF',
@@ -43,7 +43,7 @@ export function HowItWorksSection() {
           >
             Como Funciona
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-4">
             Tres passos para sua{' '}
             <span
               style={{
@@ -55,7 +55,7 @@ export function HowItWorksSection() {
               loja online
             </span>
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto">
             De zero a vendendo em menos de 5 minutos. Sem conhecimento tecnico necessario.
           </p>
         </BlurFade>
@@ -72,7 +72,7 @@ export function HowItWorksSection() {
             />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 relative z-10">
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8 relative z-10">
             {steps.map((step, index) => (
               <motion.div
                 key={index}
@@ -83,13 +83,13 @@ export function HowItWorksSection() {
                 transition={{ duration: 0.5, delay: index * 0.2 }}
               >
                 <motion.div
-                  className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 h-full relative group"
+                  className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-100 h-full relative group"
                   whileHover={{ y: -8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
                   transition={{ duration: 0.3 }}
                 >
                   {/* Step Number Badge */}
                   <div
-                    className="absolute -top-4 left-8 px-4 py-1.5 rounded-full text-white text-sm font-bold shadow-lg"
+                    className="absolute -top-3 sm:-top-4 left-6 sm:left-8 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-white text-xs sm:text-sm font-bold shadow-lg"
                     style={{ background: step.color }}
                   >
                     {step.number}
@@ -97,17 +97,17 @@ export function HowItWorksSection() {
 
                   {/* Icon */}
                   <motion.div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg"
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-lg"
                     style={{ background: `${step.color}15` }}
                     whileHover={{ scale: 1.1 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <step.icon className="w-8 h-8" style={{ color: step.color }} />
+                    <step.icon className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: step.color }} />
                   </motion.div>
 
                   {/* Content */}
-                  <h3 className="text-xl font-bold text-black mb-3">{step.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{step.description}</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-black mb-2 sm:mb-3">{step.title}</h3>
+                  <p className="text-sm sm:text-base text-gray-500 leading-relaxed">{step.description}</p>
 
                   {/* Arrow for non-last items on large screens */}
                   {index < steps.length - 1 && (
