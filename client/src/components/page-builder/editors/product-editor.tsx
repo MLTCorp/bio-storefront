@@ -3,7 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, LayoutGrid, ShoppingCart, CreditCard, CalendarIcon, Clock, X } from "lucide-react";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, CalendarIcon, Clock, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, addDays, addHours } from "date-fns";
@@ -245,44 +246,22 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
       {/* Expanded Editor */}
       {expanded && (
         <div className="space-y-4 p-3 bg-gray-50 rounded-lg">
-          {/* Display Style Selector */}
-          <div className="space-y-2">
-            <Label className="text-xs">Estilo de Exibicao</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => updateField("displayStyle", "card")}
-                className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${
-                  (!localConfig.displayStyle || localConfig.displayStyle === "card")
-                    ? "border-primary bg-primary/5"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <LayoutGrid className="h-5 w-5" />
-                <span className="text-xs font-medium">Card 3D</span>
-              </button>
-              <button
-                onClick={() => updateField("displayStyle", "compact")}
-                className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${
-                  localConfig.displayStyle === "compact"
-                    ? "border-primary bg-primary/5"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <CreditCard className="h-5 w-5" />
-                <span className="text-xs font-medium">Compacto</span>
-              </button>
-              <button
-                onClick={() => updateField("displayStyle", "ecommerce")}
-                className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1.5 ${
-                  localConfig.displayStyle === "ecommerce"
-                    ? "border-primary bg-primary/5"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span className="text-xs font-medium">E-commerce</span>
-              </button>
-            </div>
+          {/* Display Style */}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Estilo</Label>
+            <Select
+              value={localConfig.displayStyle || "card"}
+              onValueChange={(value) => updateField("displayStyle", value)}
+            >
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="card">Card 3D</SelectItem>
+                <SelectItem value="compact">Compacto</SelectItem>
+                <SelectItem value="ecommerce">E-commerce</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Title & Description */}
