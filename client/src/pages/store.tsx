@@ -10,6 +10,7 @@ import type { Page, PageComponent } from "@/types/database";
 
 interface PageData extends Page {
   components: PageComponent[];
+  showBranding?: boolean;
 }
 
 export default function StorePage() {
@@ -245,6 +246,24 @@ export default function StorePage() {
           </div>
         </motion.footer>
       </motion.main>
+
+      {/* Branding badge for free plan users */}
+      {page.showBranding && (
+        <motion.a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:shadow-xl transition-shadow"
+        >
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+            <span className="text-white text-[10px] font-bold">B</span>
+          </div>
+          <span>Feito com BioLink</span>
+        </motion.a>
+      )}
     </div>
   );
 }

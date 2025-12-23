@@ -130,8 +130,8 @@ export function ShirtParallaxCard({
         )}
 
         <div className="flex">
-          {/* Image Section */}
-          <div className="relative w-28 sm:w-36 flex-shrink-0 overflow-hidden">
+          {/* Image Section - smaller on mobile */}
+          <div className="relative w-20 sm:w-28 md:w-36 aspect-square flex-shrink-0 overflow-hidden">
             <motion.img
               src={imageUrl}
               alt={title}

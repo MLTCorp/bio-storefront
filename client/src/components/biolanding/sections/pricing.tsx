@@ -1,41 +1,70 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SignInButton } from '@clerk/clerk-react';
+import { SignInButton, useAuth } from '@clerk/clerk-react';
 import { BlurFade } from '../ui/blur-fade';
+import { useState } from 'react';
 
 const plans = [
   {
+    id: 'free',
     name: 'Gratis',
     price: 'R$ 0',
     period: '/mes',
     description: 'Perfeito para comecar',
     features: [
-      '1 pagina de links',
-      'Ate 5 produtos',
-      'Integracao WhatsApp',
-      'Temas basicos',
-      'Analytics basico',
+      { text: '1 pagina de links', included: true },
+      { text: 'Ate 3 produtos', included: true },
+      { text: '10 componentes por pagina', included: true },
+      { text: 'Todos os temas', included: true },
+      { text: 'Analytics basico (7 dias)', included: true },
+      { text: 'Geracoes IA', included: false },
+      { text: 'Remover branding', included: false },
     ],
     cta: 'Comecar Gratis',
     popular: false,
   },
   {
-    name: 'Pro',
-    price: 'R$ 29',
+    id: 'starter',
+    name: 'Starter',
+    price: 'R$ 29,90',
     period: '/mes',
-    description: 'Para criadores serios',
+    description: 'Para criadores em crescimento',
     features: [
-      'Paginas ilimitadas',
-      'Produtos ilimitados',
-      'Todas as integracoes',
-      'Temas premium',
-      'Analytics avancado',
-      'Dominio personalizado',
-      'Suporte prioritario',
-      'Remocao da marca',
+      { text: '3 paginas de links', included: true },
+      { text: 'Ate 10 produtos', included: true },
+      { text: '20 componentes por pagina', included: true },
+      { text: 'Todos os temas', included: true },
+      { text: 'Analytics 30 dias', included: true },
+      { text: '1 geracao IA/dia (HD)', included: true },
+      { text: 'Remover branding', included: true },
+      { text: 'Historico IA 7 dias', included: true },
+    ],
+    cta: 'Assinar Starter',
+    popular: false,
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 'R$ 97',
+    period: '/mes',
+    description: 'Para profissionais',
+    features: [
+      { text: '10 paginas de links', included: true },
+      { text: 'Produtos ilimitados', included: true },
+      { text: 'Componentes ilimitados', included: true },
+      { text: 'Todos os temas', included: true },
+      { text: 'Analytics avancado 12 meses', included: true },
+      { text: '3 geracoes IA/dia (HD)', included: true },
+      { text: 'Remover branding', included: true },
+      { text: 'Historico IA 30 dias', included: true },
+      { text: 'Dominio personalizado', included: true },
+      { text: 'Origem do trafego', included: true },
+      { text: 'Exportar relatorios', included: true },
+      { text: 'Pixel Facebook', included: true },
+      { text: 'Google Analytics', included: true },
     ],
     cta: 'Assinar Pro',
     popular: true,
@@ -43,9 +72,34 @@ const plans = [
 ];
 
 export function PricingSection() {
+  const { isSignedIn } = useAuth();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  // Checkout anonimo para planos pagos - vai direto pro Stripe
+  const handleAnonymousCheckout = async (planId: string) => {
+    setLoadingPlan(planId);
+    try {
+      const response = await fetch('/api/subscriptions/anonymous-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.error) {
+        console.error('Checkout error:', data.error);
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <section id="precos" className="py-16 sm:py-20 bg-[#F9FAFB]">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
         <BlurFade inView className="text-center mb-10 sm:mb-16">
           <span
@@ -75,12 +129,12 @@ export function PricingSection() {
         </BlurFade>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
-              key={index}
+              key={plan.id}
               className={`relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 ${
-                plan.popular ? 'ring-2 ring-[#7F4AFF] shadow-xl' : 'border border-gray-200'
+                plan.popular ? 'ring-2 ring-[#7F4AFF] shadow-xl md:scale-105' : 'border border-gray-200'
               }`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -110,30 +164,63 @@ export function PricingSection() {
 
               {/* Price */}
               <div className="mb-6 sm:mb-8">
-                <span className="text-4xl sm:text-5xl font-bold text-black">{plan.price}</span>
+                <span className="text-3xl sm:text-4xl font-bold text-black">{plan.price}</span>
                 <span className="text-gray-500 text-sm sm:text-base">{plan.period}</span>
               </div>
 
               {/* Features */}
-              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+              <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-2 sm:gap-3">
                     <div
-                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: plan.popular ? '#7F4AFF' : '#10B981',
-                      }}
+                      className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        feature.included ? '' : 'bg-gray-200'
+                      }`}
+                      style={
+                        feature.included
+                          ? { background: plan.popular ? '#7F4AFF' : '#10B981' }
+                          : {}
+                      }
                     >
-                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
+                      {feature.included ? (
+                        <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
+                      ) : (
+                        <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
+                      )}
                     </div>
-                    <span className="text-sm sm:text-base text-gray-600">{feature}</span>
+                    <span
+                      className={`text-xs sm:text-sm ${
+                        feature.included ? 'text-gray-600' : 'text-gray-400'
+                      }`}
+                    >
+                      {feature.text}
+                    </span>
                   </li>
                 ))}
               </ul>
 
-              {/* CTA */}
-              <SignInButton mode="modal">
+              {/* CTA Button */}
+              {plan.id === 'free' ? (
+                // Plano gratis: precisa de conta primeiro
+                isSignedIn ? (
+                  <Button
+                    onClick={() => (window.location.href = '/dashboard')}
+                    className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold rounded-xl bg-gray-100 text-black hover:bg-gray-200"
+                  >
+                    {plan.cta}
+                  </Button>
+                ) : (
+                  <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+                    <Button className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold rounded-xl bg-gray-100 text-black hover:bg-gray-200">
+                      {plan.cta}
+                    </Button>
+                  </SignInButton>
+                )
+              ) : (
+                // Planos pagos: vai direto pro Stripe (checkout anonimo)
                 <Button
+                  onClick={() => handleAnonymousCheckout(plan.id)}
+                  disabled={loadingPlan === plan.id}
                   className={`w-full h-11 sm:h-12 text-sm sm:text-base font-semibold rounded-xl ${
                     plan.popular ? 'text-white' : 'bg-gray-100 text-black hover:bg-gray-200'
                   }`}
@@ -146,9 +233,9 @@ export function PricingSection() {
                       : {}
                   }
                 >
-                  {plan.cta}
+                  {loadingPlan === plan.id ? 'Carregando...' : plan.cta}
                 </Button>
-              </SignInButton>
+              )}
             </motion.div>
           ))}
         </div>

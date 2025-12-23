@@ -147,17 +147,17 @@ export function SortableComponent({
         </div>
       )}
 
-      {/* Drag Handle */}
+      {/* Drag Handle - visible on mobile, hover on desktop */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 p-1 rounded cursor-grab active:cursor-grabbing bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        className="absolute top-2 left-2 p-1 rounded cursor-grab active:cursor-grabbing bg-gray-100 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10"
       >
         <GripVertical className="h-4 w-4 text-gray-400" />
       </div>
 
-      {/* Action Buttons */}
-      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+      {/* Action Buttons - visible on mobile, hover on desktop */}
+      <div className="absolute top-2 right-2 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
         {/* Visibility Toggle */}
         <Button
           variant="ghost"

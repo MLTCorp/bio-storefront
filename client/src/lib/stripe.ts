@@ -1,6 +1,9 @@
 import { loadStripe } from "@stripe/stripe-js";
 
-// Fallback for build time - Stripe publishable key is safe to expose
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51Se5fwHKoL7v2cU3RTpiaEJmSESckfW7b5cR7IIQCgMxNBeH32Ju7qShUvPjTEWFI4lgJlJyzHpKmrEukoraViCo00xOgIz9bL';
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-export const stripePromise = loadStripe(stripePublishableKey);
+if (!stripePublishableKey) {
+  console.warn('VITE_STRIPE_PUBLISHABLE_KEY not configured - Stripe payments will not work');
+}
+
+export const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;

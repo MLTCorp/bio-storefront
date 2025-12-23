@@ -14,24 +14,29 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, ExternalLink, Edit, Eye, Loader2, Copy, Check, Trash2, BarChart2, MousePointer } from "lucide-react";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { Plus, ExternalLink, Edit, Eye, Loader2, Copy, Check, Trash2, BarChart2, MousePointer, Lock, Crown } from "lucide-react";
 import type { Page } from "@/types/database";
-
-const MAX_PAGES = 3;
 
 export default function PagesListPage() {
   const { user, isLoaded } = useUser();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { limits, plan, canCreatePage, isFree } = usePlanLimits();
 
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [newPageUsername, setNewPageUsername] = useState("");
   const [newPageName, setNewPageName] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // Dynamic max pages based on plan
+  const maxPages = limits.pages === -1 ? Infinity : limits.pages;
 
   // Fetch user's pages
   useEffect(() => {
@@ -322,7 +327,7 @@ export default function PagesListPage() {
               ))}
 
               {/* Card de criar nova página */}
-              {pages.length < MAX_PAGES && (
+              {canCreatePage(pages.length) ? (
                 <Card
                   className="border-dashed border-2 border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all cursor-pointer group"
                   onClick={() => setShowCreateModal(true)}
@@ -333,7 +338,23 @@ export default function PagesListPage() {
                     </div>
                     <p className="font-medium text-gray-700">Nova Página</p>
                     <p className="text-sm text-gray-500 mt-1">
-                      {MAX_PAGES - pages.length} restante{MAX_PAGES - pages.length !== 1 ? "s" : ""}
+                      {limits.pages === -1 ? "Ilimitado" : `${maxPages - pages.length} restante${maxPages - pages.length !== 1 ? "s" : ""}`}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card
+                  className="border-dashed border-2 border-gray-200 hover:border-purple-300 transition-all cursor-pointer group"
+                  onClick={() => setShowUpgradeModal(true)}
+                >
+                  <CardContent className="p-4 h-full flex flex-col items-center justify-center min-h-[200px]">
+                    <div className="w-12 h-12 rounded-full bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center mb-3 transition-colors">
+                      <Lock className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <p className="font-medium text-gray-700">Limite Atingido</p>
+                    <p className="text-sm text-purple-600 mt-1 flex items-center gap-1">
+                      <Crown className="h-3 w-3" />
+                      Fazer Upgrade
                     </p>
                   </CardContent>
                 </Card>
@@ -341,9 +362,19 @@ export default function PagesListPage() {
             </div>
 
             {/* Info do plano */}
-            <p className="text-center text-sm text-gray-500 mt-8">
-              Você pode criar até {MAX_PAGES} páginas no plano atual
-            </p>
+            <div className="text-center text-sm text-gray-500 mt-8 space-y-1">
+              <p>
+                {pages.length} / {limits.pages === -1 ? "∞" : limits.pages} páginas criadas
+              </p>
+              {isFree && (
+                <p className="text-purple-600 flex items-center justify-center gap-1">
+                  <Crown className="h-3 w-3" />
+                  <button onClick={() => setShowUpgradeModal(true)} className="hover:underline">
+                    Fazer upgrade para mais páginas
+                  </button>
+                </p>
+              )}
+            </div>
           </main>
         </div>
 
@@ -407,6 +438,16 @@ export default function PagesListPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          open={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature="pages"
+          currentPlan={plan}
+          currentCount={pages.length}
+          limit={limits.pages}
+        />
       </SignedIn>
     </>
   );

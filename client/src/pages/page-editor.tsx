@@ -46,6 +46,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
+import { UpgradeModal, UpgradeFeature } from "@/components/upgrade-modal";
 import {
   ArrowLeft,
   Eye,
@@ -67,6 +69,7 @@ import {
   Menu,
   BarChart2,
   LayoutList,
+  Crown,
 } from "lucide-react";
 import { uploadImage } from "@/lib/supabase";
 import { themes, themeList, getThemeIdFromBackground, getTheme } from "@/lib/themes";
@@ -82,6 +85,7 @@ export default function PageEditorPage() {
   const [, navigate] = useLocation();
   const params = useParams<{ pageId: string }>();
   const { toast } = useToast();
+  const { limits, plan, canAddComponent, canAddProduct, canUseAI } = usePlanLimits();
 
   const [page, setPage] = useState<Page | null>(null);
   const [components, setComponents] = useState<PageComponent[]>([]);
@@ -93,6 +97,8 @@ export default function PageEditorPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<UpgradeFeature>("components");
 
   // Copy page link to clipboard
   const handleCopyLink = async () => {
@@ -259,6 +265,23 @@ export default function PageEditorPage() {
   // Add component
   const handleAddComponent = async (type: ComponentType) => {
     if (!page || !user) return;
+
+    // Check component limit
+    if (!canAddComponent(components.length)) {
+      setUpgradeFeature("components");
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    // Check product limit for product components
+    if (type === "product") {
+      const productCount = components.filter(c => c.type === "product").length;
+      if (!canAddProduct(productCount)) {
+        setUpgradeFeature("products");
+        setShowUpgradeModal(true);
+        return;
+      }
+    }
 
     const defaultConfigs: Record<ComponentType, ComponentConfig> = {
       button: {
@@ -932,6 +955,28 @@ export default function PageEditorPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          open={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature={upgradeFeature}
+          currentPlan={plan}
+          currentCount={
+            upgradeFeature === "components"
+              ? components.length
+              : upgradeFeature === "products"
+              ? components.filter(c => c.type === "product").length
+              : 0
+          }
+          limit={
+            upgradeFeature === "components"
+              ? limits.components_per_page
+              : upgradeFeature === "products"
+              ? limits.products
+              : 0
+          }
+        />
       </SignedIn>
     </>
   );

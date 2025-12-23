@@ -19,6 +19,7 @@ import PagesListPage from "@/pages/pages-list";
 import PageEditorPage from "@/pages/page-editor";
 import AnalyticsPage from "@/pages/analytics";
 import StorePage from "@/pages/store";
+import SetupAccountPage from "@/pages/setup-account";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel" component={CheckoutCancelPage} />
       <Route path="/analytics/:pageId" component={AnalyticsPage} />
+      <Route path="/setup-account" component={SetupAccountPage} />
       <Route path="/:username" component={StorePage} />
       <Route component={NotFound} />
     </Switch>

@@ -1,9 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { insertBioConfigSchema } from "@shared/schema";
-import { createCheckoutSession, getCheckoutSession } from "./stripe";
+import { createCheckoutSession, getCheckoutSession, stripe } from "./stripe";
 import { supabase } from "./supabase";
+import {
+  PLANS,
+  createSubscriptionCheckout,
+  getUserSubscription,
+  getUserPlanLimits,
+  cancelSubscription,
+  createBillingPortalSession,
+  handleSubscriptionWebhook,
+} from "./subscription";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -571,9 +581,17 @@ export async function registerRoutes(
           .eq("is_visible", true)
           .order("order_index", { ascending: true });
 
+        // Check if page owner's plan shows branding
+        let showBranding = true; // Default to true for free users
+        if (page.user_id) {
+          const limits = await getUserPlanLimits(page.user_id);
+          showBranding = (limits as any).show_branding !== false;
+        }
+
         return res.json({
           ...page,
           components: components || [],
+          showBranding,
         });
       }
 
@@ -719,7 +737,7 @@ export async function registerRoutes(
         .single();
 
       if (existingPage) {
-        return res.status(400).json({ message: "Username already taken" });
+        return res.status(400).json({ error: "Username already taken" });
       }
 
       // Also check stores table for backwards compatibility
@@ -730,7 +748,7 @@ export async function registerRoutes(
         .single();
 
       if (existingStore) {
-        return res.status(400).json({ message: "Username already taken" });
+        return res.status(400).json({ error: "Username already taken" });
       }
 
       // Create page
@@ -1381,7 +1399,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       const deviceType = detectDevice(userAgent || '');
 
       // Insert view record
-      await supabase.from('page_views').insert({
+      await (supabase as any).from('page_views').insert({
         page_id: pageId,
         referrer: referrer || null,
         user_agent: userAgent || null,
@@ -1441,7 +1459,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       }
 
       // Insert click record
-      await supabase.from('component_clicks').insert({
+      await (supabase as any).from('component_clicks').insert({
         page_id: pageId,
         component_id: componentId || null,
         component_type: componentType,
@@ -1450,16 +1468,16 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       });
 
       // Also increment the clicks counter on pages table (for quick access)
-      const { data: page } = await supabase
+      const { data: page } = await (supabase as any)
         .from('pages')
         .select('clicks')
         .eq('id', pageId)
         .single();
 
       if (page) {
-        await supabase
+        await (supabase as any)
           .from('pages')
-          .update({ clicks: ((page as any).clicks || 0) + 1 })
+          .update({ clicks: (page.clicks || 0) + 1 })
           .eq('id', pageId);
       }
 
@@ -1489,7 +1507,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
 
       if (!user) return res.status(404).json({ error: 'User not found' });
 
-      const { data: page } = await supabase
+      const { data: page } = await (supabase as any)
         .from('pages')
         .select('id, user_id, views, clicks')
         .eq('id', pageId)
@@ -1499,7 +1517,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
 
       // Get views in period
-      const { data: views } = await supabase
+      const { data: views } = await (supabase as any)
         .from('page_views')
         .select('viewed_at, device_type, referrer')
         .eq('page_id', pageId)
@@ -1507,7 +1525,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
         .order('viewed_at', { ascending: true });
 
       // Get clicks in period
-      const { data: clicks } = await supabase
+      const { data: clicks } = await (supabase as any)
         .from('component_clicks')
         .select('clicked_at, component_type, component_label, target_url')
         .eq('page_id', pageId)
@@ -1579,6 +1597,327 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     } catch (error) {
       console.error("Error fetching analytics:", error);
       res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // ============ SUBSCRIPTIONS API ============
+
+  // Get available plans
+  app.get("/api/subscriptions/plans", async (req, res) => {
+    try {
+      res.json(PLANS);
+    } catch (error) {
+      console.error("Error fetching plans:", error);
+      res.status(500).json({ error: "Failed to fetch plans" });
+    }
+  });
+
+  // Get user's current subscription
+  app.get("/api/subscriptions/current", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-clerk-user-id"] as string;
+      if (!clerkId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const subscription = await getUserSubscription(clerkId);
+      const limits = await getUserPlanLimits(clerkId);
+
+      res.json({
+        subscription,
+        limits,
+        plan: subscription?.plan_id || 'free',
+      });
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Failed to fetch subscription" });
+    }
+  });
+
+  // Create subscription checkout session
+  app.post("/api/subscriptions/checkout", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-clerk-user-id"] as string;
+      if (!clerkId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { planId } = req.body;
+
+      if (!planId || !['starter', 'pro'].includes(planId)) {
+        return res.status(400).json({ error: "Invalid plan" });
+      }
+
+      // Get user email
+      const { data: user } = await supabase
+        .from("users")
+        .select("email")
+        .eq("clerk_id", clerkId)
+        .single();
+
+      if (!user?.email) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const origin = req.headers.origin || `http://localhost:${process.env.PORT || 5000}`;
+
+      const session = await createSubscriptionCheckout(
+        clerkId,
+        user.email,
+        planId as 'starter' | 'pro',
+        `${origin}/dashboard?subscription=success`,
+        `${origin}/pricing?subscription=canceled`
+      );
+
+      res.json({ sessionId: session.id, url: session.url });
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // Anonymous checkout - for users without account (goes to Stripe first)
+  app.post("/api/subscriptions/anonymous-checkout", async (req, res) => {
+    try {
+      const { planId } = req.body;
+
+      if (!planId || !['starter', 'pro'].includes(planId)) {
+        return res.status(400).json({ error: "Invalid plan" });
+      }
+
+      const plan = PLANS[planId as keyof typeof PLANS];
+      if (!plan || plan.price === 0) {
+        return res.status(400).json({ error: "Invalid plan for checkout" });
+      }
+
+      // Generate unique setup token
+      const setupToken = crypto.randomBytes(32).toString('hex');
+
+      // Get or create Stripe price
+      let priceId = plan.stripePriceId;
+      if (!priceId) {
+        const product = await stripe.products.create({
+          name: `BioLink ${plan.name}`,
+          metadata: { planId: plan.id },
+        });
+
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: plan.price,
+          currency: 'brl',
+          recurring: { interval: 'month' },
+        });
+
+        priceId = price.id;
+      }
+
+      const origin = req.headers.origin || `http://localhost:${process.env.PORT || 5000}`;
+
+      // Create Stripe checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card', 'boleto'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        success_url: `${origin}/setup-account?token=${setupToken}`,
+        cancel_url: `${origin}/#precos`,
+        locale: 'pt-BR',
+        metadata: {
+          planId: plan.id,
+          setupToken,
+        },
+        subscription_data: {
+          metadata: {
+            planId: plan.id,
+            setupToken,
+          },
+        },
+      });
+
+      // Save pending subscription
+      await (supabase as any).from('pending_subscriptions').insert({
+        email: '',
+        plan_id: planId,
+        stripe_session_id: session.id,
+        setup_token: setupToken,
+        status: 'pending',
+      });
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (error) {
+      console.error("Error creating anonymous checkout:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // Verify setup token and get pending subscription details
+  app.get("/api/subscriptions/verify-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      const { data: pending, error } = await (supabase as any)
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('setup_token', token)
+        .eq('status', 'pending')
+        .single();
+
+      if (error || !pending) {
+        return res.status(404).json({ error: "Token not found or expired" });
+      }
+
+      // Check if expired
+      if (new Date(pending.expires_at) < new Date()) {
+        return res.status(410).json({ error: "Token expired" });
+      }
+
+      res.json({
+        email: pending.email,
+        plan_id: pending.plan_id,
+        valid: true,
+      });
+    } catch (error) {
+      console.error("Error verifying token:", error);
+      res.status(500).json({ error: "Failed to verify token" });
+    }
+  });
+
+  // Complete setup after payment (called after Clerk login on setup page)
+  app.post("/api/subscriptions/complete-setup", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-clerk-user-id"] as string;
+      if (!clerkId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ error: "Token required" });
+      }
+
+      // Get pending subscription
+      const { data: pending, error: pendingError } = await (supabase as any)
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('setup_token', token)
+        .eq('status', 'pending')
+        .single();
+
+      if (pendingError || !pending) {
+        return res.status(404).json({ error: "Token not found or already used" });
+      }
+
+      if (new Date(pending.expires_at) < new Date()) {
+        return res.status(410).json({ error: "Token expired" });
+      }
+
+      // Get user email from Clerk or use pending email
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      const userEmail = existingUser?.email || pending.email;
+
+      // Create or update user
+      await (supabase as any).from('users').upsert({
+        clerk_id: clerkId,
+        email: userEmail,
+        plan: pending.plan_id,
+        stripe_customer_id: pending.stripe_customer_id,
+      }, { onConflict: 'clerk_id' });
+
+      // Create subscription record
+      await (supabase as any).from('subscriptions').upsert({
+        user_id: clerkId,
+        plan_id: pending.plan_id,
+        stripe_subscription_id: pending.stripe_subscription_id,
+        stripe_customer_id: pending.stripe_customer_id,
+        status: 'active',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+      // Mark pending as completed
+      await (supabase as any)
+        .from('pending_subscriptions')
+        .update({ status: 'completed' })
+        .eq('id', pending.id);
+
+      res.json({ success: true, plan: pending.plan_id });
+    } catch (error) {
+      console.error("Error completing setup:", error);
+      res.status(500).json({ error: "Failed to complete setup" });
+    }
+  });
+
+  // Cancel subscription
+  app.post("/api/subscriptions/cancel", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-clerk-user-id"] as string;
+      if (!clerkId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      await cancelSubscription(clerkId);
+      res.json({ success: true, message: "Subscription will be canceled at period end" });
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+      res.status(500).json({ error: "Failed to cancel subscription" });
+    }
+  });
+
+  // Create billing portal session
+  app.post("/api/subscriptions/portal", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-clerk-user-id"] as string;
+      if (!clerkId) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const origin = req.headers.origin || `http://localhost:${process.env.PORT || 5000}`;
+      const portalUrl = await createBillingPortalSession(clerkId, `${origin}/dashboard`);
+
+      res.json({ url: portalUrl });
+    } catch (error) {
+      console.error("Error creating portal session:", error);
+      res.status(500).json({ error: "Failed to create portal session" });
+    }
+  });
+
+  // Stripe webhook handler
+  // Uses rawBody saved by express.json verify callback in app.ts
+  app.post("/api/webhooks/stripe", async (req, res) => {
+    try {
+      const sig = req.headers["stripe-signature"] as string;
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+      if (!webhookSecret) {
+        console.error("Missing STRIPE_WEBHOOK_SECRET");
+        return res.status(500).json({ error: "Webhook not configured" });
+      }
+
+      // Use rawBody saved by the verify callback for signature verification
+      const rawBody = (req as any).rawBody;
+      if (!rawBody) {
+        console.error("Missing raw body for webhook verification");
+        return res.status(400).json({ error: "Missing raw body" });
+      }
+
+      let event;
+      try {
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+      } catch (err: any) {
+        console.error("Webhook signature verification failed:", err.message);
+        return res.status(400).json({ error: `Webhook Error: ${err.message}` });
+      }
+
+      // Handle the event
+      await handleSubscriptionWebhook(event);
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Webhook error:", error);
+      res.status(500).json({ error: "Webhook handler failed" });
     }
   });
 
