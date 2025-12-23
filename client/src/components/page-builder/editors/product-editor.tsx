@@ -3,7 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, LayoutGrid, ShoppingCart, CreditCard } from "lucide-react";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, LayoutGrid, ShoppingCart, CreditCard, CalendarIcon, Clock, X } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, addDays, addHours } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
@@ -32,6 +36,7 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [imageEditMode, setImageEditMode] = useState(false);
   const [discountLinksExpandedKitId, setDiscountLinksExpandedKitId] = useState<string | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Debounced config - local state for instant UI, saves after 500ms of no typing
   const [localConfig, updateField, updateFields] = useDebouncedConfig(config, onUpdate, 500);
@@ -302,27 +307,131 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
 
           {/* Discount */}
           {localConfig.discountPercent > 0 ? (
-            <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium text-orange-700">
-                  Desconto
-                </span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Percent className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm font-medium text-orange-700">
+                    Desconto
+                  </span>
+                </div>
+                <select
+                  value={localConfig.discountPercent}
+                  onChange={(e) => {
+                    const newValue = parseInt(e.target.value);
+                    if (newValue === 0) {
+                      // Clear discount end date when removing discount
+                      updateFields({ discountPercent: 0, discountEndDate: undefined });
+                    } else {
+                      updateField("discountPercent", newValue);
+                    }
+                  }}
+                  className="h-8 text-sm bg-white border rounded px-2"
+                >
+                  <option value="0">Sem desconto</option>
+                  <option value="10">10%</option>
+                  <option value="20">20%</option>
+                  <option value="30">30%</option>
+                  <option value="40">40%</option>
+                  <option value="50">50%</option>
+                </select>
               </div>
-              <select
-                value={localConfig.discountPercent}
-                onChange={(e) =>
-                  updateField("discountPercent", parseInt(e.target.value))
-                }
-                className="h-8 text-sm bg-white border rounded px-2"
-              >
-                <option value="0">Sem desconto</option>
-                <option value="10">10%</option>
-                <option value="20">20%</option>
-                <option value="30">30%</option>
-                <option value="40">40%</option>
-                <option value="50">50%</option>
-              </select>
+
+              {/* Discount Timer */}
+              <div className="flex items-center gap-2 p-2 bg-orange-50/50 rounded-lg">
+                <Clock className="h-4 w-4 text-orange-500" />
+                <span className="text-xs text-orange-600 flex-1">Termina em:</span>
+
+                {localConfig.discountEndDate ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-medium text-orange-700">
+                      {format(new Date(localConfig.discountEndDate), "dd/MM HH:mm", { locale: ptBR })}
+                    </span>
+                    <button
+                      onClick={() => updateField("discountEndDate", undefined)}
+                      className="p-1 hover:bg-orange-100 rounded"
+                    >
+                      <X className="h-3 w-3 text-orange-500" />
+                    </button>
+                  </div>
+                ) : (
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <button className="text-xs text-orange-600 hover:text-orange-700 underline">
+                        Definir prazo
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <div className="p-3 space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              updateField("discountEndDate", addHours(new Date(), 6).toISOString());
+                              setDatePickerOpen(false);
+                            }}
+                          >
+                            6 horas
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              updateField("discountEndDate", addDays(new Date(), 1).toISOString());
+                              setDatePickerOpen(false);
+                            }}
+                          >
+                            24 horas
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              updateField("discountEndDate", addDays(new Date(), 3).toISOString());
+                              setDatePickerOpen(false);
+                            }}
+                          >
+                            3 dias
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              updateField("discountEndDate", addDays(new Date(), 7).toISOString());
+                              setDatePickerOpen(false);
+                            }}
+                          >
+                            7 dias
+                          </Button>
+                        </div>
+                        <div className="border-t pt-3">
+                          <p className="text-xs text-gray-500 mb-2">Ou escolha uma data:</p>
+                          <Calendar
+                            mode="single"
+                            selected={localConfig.discountEndDate ? new Date(localConfig.discountEndDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                // Set to end of day
+                                date.setHours(23, 59, 59);
+                                updateField("discountEndDate", date.toISOString());
+                                setDatePickerOpen(false);
+                              }
+                            }}
+                            disabled={(date) => date < new Date()}
+                            locale={ptBR}
+                            className="rounded-md border"
+                          />
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex justify-end">

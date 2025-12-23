@@ -49,6 +49,7 @@ export interface ProductConfig {
   imagePositionX?: number; // 0-100, default 50 (center)
   imagePositionY?: number; // 0-100, default 50 (center)
   discountPercent: number;
+  discountEndDate?: string; // ISO 8601 date string for countdown timer
   kits: ProductKit[];
   // Display style options
   displayStyle?: 'card' | 'compact' | 'ecommerce'; // default: 'card'

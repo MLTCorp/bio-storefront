@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Flame, Sparkles } from "lucide-react";
 import { ShineBorderOverlay } from "@/components/magicui/shine-border";
+import { CountdownTimer, useDiscountValid } from "@/components/ui/countdown-timer";
 import type { ProductKit } from "@/lib/store";
 import type { Theme } from "@/lib/themes";
 
@@ -19,6 +20,7 @@ interface ShirtParallaxCardProps {
   imagePositionY?: number;
   kits: ProductKit[];
   discountPercent?: number;
+  discountEndDate?: string; // ISO 8601 date string for countdown timer
   className?: string;
   theme?: Theme;
   onKitClick?: (kitLabel: string, kitUrl: string) => void;
@@ -34,12 +36,17 @@ export function ShirtParallaxCard({
   imagePositionY = 50,
   kits,
   discountPercent = 0,
+  discountEndDate,
   className,
   theme,
   onKitClick,
 }: ShirtParallaxCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+
+  // Check if discount is still valid (not expired)
+  const isDiscountValid = useDiscountValid(discountEndDate);
+  const effectiveDiscountPercent = isDiscountValid ? discountPercent : 0;
 
   const xSpring = useSpring(x, { stiffness: 300, damping: 30 });
   const ySpring = useSpring(y, { stiffness: 300, damping: 30 });
@@ -64,9 +71,9 @@ export function ShirtParallaxCard({
     // Use discount-specific link if discount is active and link exists
     // But respect ignoreDiscount flag
     let link = kit.link;
-    const effectiveDiscount = kit.ignoreDiscount ? 0 : discountPercent;
-    if (effectiveDiscount > 0 && kit.discountLinks?.[effectiveDiscount]) {
-      link = kit.discountLinks[effectiveDiscount];
+    const kitDiscount = kit.ignoreDiscount ? 0 : effectiveDiscountPercent;
+    if (kitDiscount > 0 && kit.discountLinks?.[kitDiscount]) {
+      link = kit.discountLinks[kitDiscount];
     }
 
     if (link && link !== '#') {
@@ -107,7 +114,7 @@ export function ShirtParallaxCard({
         style={cardStyle}
       >
         {/* Shine Border for Discount Products - golden gradient for sales */}
-        {discountPercent > 0 && (
+        {effectiveDiscountPercent > 0 && (
           <ShineBorderOverlay
             borderRadius={16}
             borderWidth={2}
@@ -116,16 +123,22 @@ export function ShirtParallaxCard({
           />
         )}
 
-        {/* Discount Badge */}
-        {discountPercent > 0 && (
-          <div className="absolute top-3 right-3 z-20">
+        {/* Discount Badge with Countdown */}
+        {effectiveDiscountPercent > 0 && (
+          <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-1">
             <Badge
               variant="destructive"
               className="bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold px-2.5 py-1 text-xs shadow-lg animate-pulse"
             >
               <Flame className="w-3 h-3 mr-1" />
-              {discountPercent}% OFF
+              {effectiveDiscountPercent}% OFF
             </Badge>
+            {discountEndDate && (
+              <CountdownTimer
+                endDate={discountEndDate}
+                variant="badge"
+              />
+            )}
           </div>
         )}
 
@@ -160,7 +173,7 @@ export function ShirtParallaxCard({
                 >
                   {title}
                 </h3>
-                {discountPercent > 0 && (
+                {effectiveDiscountPercent > 0 && (
                   <Sparkles className="w-4 h-4 text-amber-500" />
                 )}
               </div>
@@ -180,9 +193,9 @@ export function ShirtParallaxCard({
                 .filter((kit) => kit.isVisible !== false)
                 .map((kit) => {
                 // Check if this kit should ignore the discount
-                const effectiveDiscount = kit.ignoreDiscount ? 0 : discountPercent;
-                const discountedPrice = kit.price * (1 - effectiveDiscount / 100);
-                const hasDiscount = effectiveDiscount > 0;
+                const kitDiscount = kit.ignoreDiscount ? 0 : effectiveDiscountPercent;
+                const discountedPrice = kit.price * (1 - kitDiscount / 100);
+                const hasDiscount = kitDiscount > 0;
 
                 // Button styles based on theme - all buttons equal
                 const buttonStyle: React.CSSProperties = {

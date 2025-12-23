@@ -6,6 +6,7 @@ import {
   Podcast, Video, Camera, Heart, Star, Zap, Gift, FileText, Download, Play
 } from "lucide-react";
 import { ShirtParallaxCard } from "@/components/ui/shirt-parallax-card";
+import { CountdownTimer, useDiscountValid } from "@/components/ui/countdown-timer";
 import { VideoPlayer } from "@/components/video-player";
 import { type Theme, themes } from "@/lib/themes";
 import type { PageComponent, ButtonConfig, TextConfig, ProductConfig, VideoConfig, SocialConfig, LinkConfig, CarouselConfig, CalendlyConfig, MapsConfig, PixConfig } from "@/types/database";
@@ -212,6 +213,7 @@ function ProductCardRenderer({ config, theme, componentId, pageId, clerkId }: { 
       imagePositionY={config.imagePositionY ?? 50}
       kits={config.kits}
       discountPercent={config.discountPercent || 0}
+      discountEndDate={config.discountEndDate}
       theme={theme}
       onKitClick={handleProductClick}
     />
@@ -223,6 +225,10 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
   const mainKit = visibleKits[0];
 
+  // Check if discount is still valid
+  const isDiscountValid = useDiscountValid(config.discountEndDate);
+  const effectiveDiscountPercent = isDiscountValid ? config.discountPercent : 0;
+
   const handleClick = () => {
     const url = config.ctaLink || mainKit?.link || '';
     trackClick(pageId, componentId || 0, 'product', `${config.title} - ${config.ctaText || 'CTA'}`, url, clerkId);
@@ -230,8 +236,8 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
   };
 
   const originalPrice = mainKit?.price || 0;
-  const discountedPrice = config.discountPercent > 0
-    ? originalPrice - (originalPrice * config.discountPercent / 100)
+  const discountedPrice = effectiveDiscountPercent > 0
+    ? originalPrice - (originalPrice * effectiveDiscountPercent / 100)
     : originalPrice;
 
   // Render stars
@@ -292,7 +298,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
               <span className="font-bold text-lg" style={{ color: theme.text.primary }}>
                 R$ {discountedPrice.toFixed(0)}
               </span>
-              {config.discountPercent > 0 && (
+              {effectiveDiscountPercent > 0 && (
                 <span className="text-sm line-through" style={{ color: theme.text.secondary }}>
                   R$ {originalPrice.toFixed(0)}
                 </span>
@@ -314,11 +320,16 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
               </div>
             )}
 
-            {/* Discount Badge */}
-            {config.discountPercent > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
-                {config.discountPercent}% OFF
-              </span>
+            {/* Discount Badge with Countdown */}
+            {effectiveDiscountPercent > 0 && (
+              <div className="flex flex-col gap-1">
+                <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                  {effectiveDiscountPercent}% OFF
+                </span>
+                {config.discountEndDate && (
+                  <CountdownTimer endDate={config.discountEndDate} variant="compact" className="text-orange-600" />
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -344,19 +355,23 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
 function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
 
+  // Check if discount is still valid
+  const isDiscountValid = useDiscountValid(config.discountEndDate);
+  const effectiveDiscountPercent = isDiscountValid ? config.discountPercent : 0;
+
   const handleKitClick = (kit: typeof config.kits[0]) => {
     // Get the appropriate link based on discount
     let url = kit.link;
-    if (config.discountPercent > 0 && kit.discountLinks?.[config.discountPercent]) {
-      url = kit.discountLinks[config.discountPercent];
+    if (effectiveDiscountPercent > 0 && kit.discountLinks?.[effectiveDiscountPercent]) {
+      url = kit.discountLinks[effectiveDiscountPercent];
     }
     trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kit.label}`, url, clerkId);
     if (url) window.open(url, '_blank');
   };
 
   const calculatePrice = (price: number, ignoreDiscount?: boolean) => {
-    if (ignoreDiscount || !config.discountPercent) return price;
-    return price - (price * config.discountPercent / 100);
+    if (ignoreDiscount || !effectiveDiscountPercent) return price;
+    return price - (price * effectiveDiscountPercent / 100);
   };
 
   return (
@@ -367,10 +382,15 @@ function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId 
         borderColor: theme.card.border,
       }}
     >
-      {/* Discount Badge */}
-      {config.discountPercent > 0 && (
-        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-lg">
-          {config.discountPercent}% OFF
+      {/* Discount Badge with Countdown */}
+      {effectiveDiscountPercent > 0 && (
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+          <div className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-white shadow-lg">
+            {effectiveDiscountPercent}% OFF
+          </div>
+          {config.discountEndDate && (
+            <CountdownTimer endDate={config.discountEndDate} variant="badge" />
+          )}
         </div>
       )}
 
@@ -422,7 +442,7 @@ function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId 
                   <div className="text-xs font-medium uppercase" style={{ color: theme.text.secondary }}>
                     {kit.label}
                   </div>
-                  {config.discountPercent > 0 && !kit.ignoreDiscount && (
+                  {effectiveDiscountPercent > 0 && !kit.ignoreDiscount && (
                     <div className="text-[10px] line-through" style={{ color: theme.text.secondary }}>
                       R$ {originalPrice.toFixed(0)}
                     </div>
