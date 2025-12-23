@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MessageCircle, ExternalLink, Instagram, Youtube, Facebook, Twitter,
   Calendar, MapPin, Copy, Check, ChevronLeft, ChevronRight,
@@ -11,6 +11,21 @@ import { VideoPlayer } from "@/components/video-player";
 import { type Theme, themes } from "@/lib/themes";
 import type { PageComponent, ButtonConfig, TextConfig, ProductConfig, VideoConfig, SocialConfig, LinkConfig, CarouselConfig, CalendlyConfig, MapsConfig, PixConfig } from "@/types/database";
 import useEmblaCarousel from "embla-carousel-react";
+
+// Hook to limit image scale on mobile to prevent excessive cropping
+function useResponsiveImageScale(imageScale: number): number {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // On mobile, limit max scale to 130% to prevent too much cropping
+  return isMobile ? Math.min(imageScale, 130) : imageScale;
+}
 
 interface ComponentRendererProps {
   component: PageComponent;
@@ -225,6 +240,9 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
   const mainKit = visibleKits[0];
 
+  // Responsive image scale - limit on mobile
+  const effectiveImageScale = useResponsiveImageScale(config.imageScale || 100);
+
   // Check if discount is still valid
   const isDiscountValid = useDiscountValid(config.discountEndDate);
   const effectiveDiscountPercent = isDiscountValid ? config.discountPercent : 0;
@@ -275,7 +293,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
               alt={config.title}
               className="w-full h-full object-cover"
               style={{
-                transform: `scale(${(config.imageScale || 100) / 100})`,
+                transform: `scale(${effectiveImageScale / 100})`,
                 objectPosition: `${config.imagePositionX ?? 50}% ${config.imagePositionY ?? 50}%`,
               }}
             />
@@ -355,6 +373,9 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
 function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
 
+  // Responsive image scale - limit on mobile
+  const effectiveImageScale = useResponsiveImageScale(config.imageScale || 100);
+
   // Check if discount is still valid
   const isDiscountValid = useDiscountValid(config.discountEndDate);
   const effectiveDiscountPercent = isDiscountValid ? config.discountPercent : 0;
@@ -403,7 +424,7 @@ function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId 
               alt={config.title}
               className="w-full h-full object-cover"
               style={{
-                transform: `scale(${(config.imageScale || 100) / 100})`,
+                transform: `scale(${effectiveImageScale / 100})`,
                 objectPosition: `${config.imagePositionX ?? 50}% ${config.imagePositionY ?? 50}%`,
               }}
             />

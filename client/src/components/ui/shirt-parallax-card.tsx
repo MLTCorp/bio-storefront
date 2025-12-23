@@ -44,6 +44,20 @@ export function ShirtParallaxCard({
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
+  // Responsive image scale - limit zoom on small screens to prevent excessive cropping
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // On mobile, limit max scale to 130% to prevent too much cropping
+  // This ensures the product image remains visible and not overly zoomed
+  const effectiveImageScale = isMobile ? Math.min(imageScale, 130) : imageScale;
+
   // Check if discount is still valid (not expired)
   const isDiscountValid = useDiscountValid(discountEndDate);
   const effectiveDiscountPercent = isDiscountValid ? discountPercent : 0;
@@ -152,10 +166,10 @@ export function ShirtParallaxCard({
               decoding="async"
               className="absolute object-cover"
               style={{
-                width: `${imageScale}%`,
-                height: `${imageScale}%`,
-                left: `${-((imageScale) - 100) * (imagePositionX / 100)}%`,
-                top: `${-((imageScale) - 100) * (imagePositionY / 100)}%`,
+                width: `${effectiveImageScale}%`,
+                height: `${effectiveImageScale}%`,
+                left: `${-((effectiveImageScale) - 100) * (imagePositionX / 100)}%`,
+                top: `${-((effectiveImageScale) - 100) * (imagePositionY / 100)}%`,
               }}
               whileHover={{ scale: 1.08 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
