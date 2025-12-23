@@ -5,6 +5,7 @@ import { Loader2, Settings } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 import { BackgroundEffect } from "@/components/background-effect";
 import { ComponentRenderer } from "@/components/page-builder/component-renderer";
+import { BrandingUpgradePopup } from "@/components/branding-upgrade-popup";
 import { getThemeIdFromBackground, getTheme, type Theme } from "@/lib/themes";
 import type { Page, PageComponent } from "@/types/database";
 
@@ -20,6 +21,7 @@ export default function StorePage() {
   const [page, setPage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false);
 
   useEffect(() => {
     if (!params?.username) return;
@@ -247,23 +249,27 @@ export default function StorePage() {
         </motion.footer>
       </motion.main>
 
-      {/* Branding badge for free plan users */}
+      {/* Branding badge for free plan users - click to see upgrade options */}
       {page.showBranding && (
-        <motion.a
-          href="/"
-          target="_blank"
-          rel="noopener noreferrer"
+        <motion.button
+          onClick={() => setShowUpgradePopup(true)}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:shadow-xl transition-shadow"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:shadow-xl hover:scale-105 transition-all cursor-pointer"
         >
           <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
             <span className="text-white text-[10px] font-bold">B</span>
           </div>
           <span>Feito com BioLink</span>
-        </motion.a>
+        </motion.button>
       )}
+
+      {/* Upgrade popup for branding removal */}
+      <BrandingUpgradePopup
+        open={showUpgradePopup}
+        onClose={() => setShowUpgradePopup(false)}
+      />
     </div>
   );
 }
