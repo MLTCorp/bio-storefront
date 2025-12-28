@@ -5,8 +5,9 @@ export interface Theme {
   id: string;
   name: string;
   background: {
-    type: 'color' | 'gradient';
+    type: 'color' | 'gradient' | 'image';
     value: string;
+    overlay?: string; // Overlay color for image backgrounds
   };
   card: {
     bg: string;
@@ -212,6 +213,42 @@ export const themes: Record<string, Theme> = {
       highlightText: '#ffffff'
     },
     avatarBorder: '#22c55e' // green accent for saude theme
+  },
+
+  glassmorphism: {
+    id: 'glassmorphism',
+    name: 'Glass',
+    background: {
+      type: 'image',
+      value: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1920&q=80',
+      overlay: 'rgba(0, 0, 0, 0.3)'
+    },
+    card: {
+      bg: 'rgba(255, 255, 255, 0.15)',
+      blur: 20,
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      shadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+    },
+    innerCard: {
+      bg: 'rgba(255, 255, 255, 0.12)',
+      blur: 15,
+      border: '1px solid rgba(255, 255, 255, 0.15)',
+      shadow: '0 4px 16px rgba(0, 0, 0, 0.1)'
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: 'rgba(255, 255, 255, 0.9)',
+      accent: '#ffffff'
+    },
+    button: {
+      primary: 'rgba(255, 255, 255, 0.2)',
+      primaryText: '#ffffff',
+      secondary: 'rgba(255, 255, 255, 0.1)',
+      secondaryText: '#ffffff',
+      highlight: 'rgba(255, 255, 255, 0.25)',
+      highlightText: '#ffffff'
+    },
+    avatarBorder: 'rgba(255, 255, 255, 0.3)'
   }
 };
 
@@ -234,6 +271,10 @@ export function getThemeIdFromBackground(backgroundValue: string | null | undefi
     }
     // Also check if it starts with the gradient (partial match for gradients)
     if (theme.background.type === 'gradient' && backgroundValue.includes(theme.background.value.slice(0, 30))) {
+      return id;
+    }
+    // Check for glassmorphism theme (image type)
+    if (theme.background.type === 'image' && backgroundValue === 'glassmorphism') {
       return id;
     }
   }

@@ -22,6 +22,15 @@ export default function StorePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile screen (< md breakpoint = 768px)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!params?.username) return;
@@ -63,15 +72,33 @@ export default function StorePage() {
 
   // Apply theme background to body to eliminate white line at top
   useEffect(() => {
-    document.body.style.background = theme.background.value;
+    // Handle glassmorphism theme with image background
+    if (theme.background.type === 'image') {
+      const bgImage = page?.background_image || theme.background.value;
+      const scale = page?.background_image_scale || 100;
+      const posX = page?.background_image_position_x ?? 50;
+      const posY = page?.background_image_position_y ?? 50;
+      document.body.style.backgroundImage = `url(${bgImage})`;
+      document.body.style.backgroundSize = `${scale}%`;
+      document.body.style.backgroundPosition = `${posX}% ${posY}%`;
+      document.body.style.backgroundAttachment = 'fixed';
+      document.body.style.backgroundRepeat = 'no-repeat';
+    } else {
+      document.body.style.background = theme.background.value;
+    }
     document.body.style.margin = '0';
     document.body.style.padding = '0';
     return () => {
       document.body.style.background = '';
+      document.body.style.backgroundImage = '';
+      document.body.style.backgroundSize = '';
+      document.body.style.backgroundPosition = '';
+      document.body.style.backgroundAttachment = '';
+      document.body.style.backgroundRepeat = '';
       document.body.style.margin = '';
       document.body.style.padding = '';
     };
-  }, [theme]);
+  }, [theme, page?.background_image, page?.background_image_scale, page?.background_image_position_x, page?.background_image_position_y]);
 
   if (loading) {
     return (
@@ -134,6 +161,19 @@ export default function StorePage() {
 
   // Get background style from theme
   const getBackgroundStyle = () => {
+    if (theme.background.type === 'image') {
+      const bgImage = page?.background_image || theme.background.value;
+      const scale = page?.background_image_scale || 100;
+      const posX = page?.background_image_position_x ?? 50;
+      const posY = page?.background_image_position_y ?? 50;
+      return {
+        backgroundImage: `url(${bgImage})`,
+        backgroundSize: `${scale}%`,
+        backgroundPosition: `${posX}% ${posY}%`,
+        backgroundAttachment: 'fixed',
+        backgroundRepeat: 'no-repeat',
+      };
+    }
     return { background: theme.background.value };
   };
 
@@ -149,22 +189,56 @@ export default function StorePage() {
     };
   };
 
+  // Check if glassmorphism theme (image background)
+  const isGlassmorphism = theme.background.type === 'image';
+
+  // Get glass card style for individual sections on mobile (glassmorphism only)
+  const getGlassCardStyle = () => {
+    return {
+      background: theme.card.bg,
+      backdropFilter: `blur(${theme.card.blur}px)`,
+      WebkitBackdropFilter: `blur(${theme.card.blur}px)`,
+      border: theme.card.border,
+      boxShadow: theme.card.shadow,
+      borderRadius: '24px',
+      padding: '24px',
+    };
+  };
+
   return (
     <div
       className="min-h-screen pb-12 transition-colors duration-500 relative"
       style={getBackgroundStyle()}
     >
+      {/* Dark overlay for glassmorphism */}
+      {theme.background.type === 'image' && theme.background.overlay && (
+        <div
+          className="fixed inset-0 z-0"
+          style={{ background: theme.background.overlay }}
+        />
+      )}
       <BackgroundEffect theme={theme} />
 
       <motion.main
-        className="max-w-[480px] mx-auto min-h-screen px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] relative overflow-hidden"
+        className="max-w-[480px] mx-auto min-h-screen px-4 py-8 md:my-8 md:rounded-[32px] md:min-h-[calc(100vh-4rem)] relative overflow-hidden z-10"
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        style={getContainerStyle()}
+        style={isGlassmorphism ? { fontFamily: page.font_family || 'inherit' } : getContainerStyle()}
       >
-        {/* Profile Header */}
-        <motion.div variants={itemVariants} className="text-center mb-6">
+        {/* Desktop glass container for glassmorphism theme */}
+        {isGlassmorphism && (
+          <div
+            className="hidden md:block absolute inset-0 rounded-[32px] -z-10"
+            style={getContainerStyle()}
+          />
+        )}
+        {/* Profile Header - glass card on mobile for glassmorphism */}
+        <motion.div
+          variants={itemVariants}
+          className="text-center mb-6"
+          style={isGlassmorphism && isMobile ? getGlassCardStyle() : {}}
+        >
           <div
             className="relative w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden shadow-lg"
             style={{ border: `4px solid #9ca3af40` }}
@@ -212,13 +286,17 @@ export default function StorePage() {
           )}
         </motion.div>
 
-        {/* Dynamic Components */}
+        {/* Dynamic Components - glass cards on mobile for glassmorphism */}
         {page.components && page.components.length > 0 && (
           <div className="space-y-4">
             {page.components
               .filter((c) => c.is_visible !== false)
               .map((component) => (
-                <motion.div key={component.id} variants={itemVariants}>
+                <motion.div
+                  key={component.id}
+                  variants={itemVariants}
+                  style={isGlassmorphism && isMobile ? getGlassCardStyle() : {}}
+                >
                   <ComponentRenderer component={component} theme={theme} pageId={page.id} clerkId={user?.id} />
                 </motion.div>
               ))}
