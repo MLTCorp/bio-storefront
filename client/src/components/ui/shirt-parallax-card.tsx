@@ -24,6 +24,7 @@ interface ShirtParallaxCardProps {
   className?: string;
   theme?: Theme;
   onKitClick?: (kitLabel: string, kitUrl: string) => void;
+  isGlassmorphismMobile?: boolean; // When true, use theme.card (glass) instead of theme.innerCard
 }
 
 export function ShirtParallaxCard({
@@ -40,6 +41,7 @@ export function ShirtParallaxCard({
   className,
   theme,
   onKitClick,
+  isGlassmorphismMobile = false,
 }: ShirtParallaxCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -97,13 +99,16 @@ export function ShirtParallaxCard({
     }
   };
 
-  // Build card styles based on theme - use innerCard for product cards
-  const cardStyle: React.CSSProperties = theme ? {
-    background: theme.innerCard.bg,
-    backdropFilter: theme.innerCard.blur > 0 ? `blur(${theme.innerCard.blur}px)` : 'none',
-    WebkitBackdropFilter: theme.innerCard.blur > 0 ? `blur(${theme.innerCard.blur}px)` : 'none',
-    border: theme.innerCard.border,
-    boxShadow: theme.innerCard.shadow,
+  // Build card styles based on theme
+  // When isGlassmorphismMobile is true, use theme.card (glass) instead of theme.innerCard
+  // This prevents the "card inside card" effect on mobile glassmorphism
+  const cardSource = isGlassmorphismMobile && theme ? theme.card : theme?.innerCard;
+  const cardStyle: React.CSSProperties = cardSource ? {
+    background: cardSource.bg,
+    backdropFilter: cardSource.blur > 0 ? `blur(${cardSource.blur}px)` : 'none',
+    WebkitBackdropFilter: cardSource.blur > 0 ? `blur(${cardSource.blur}px)` : 'none',
+    border: cardSource.border,
+    boxShadow: cardSource.shadow,
   } : {};
 
   // Check if it's a dark theme

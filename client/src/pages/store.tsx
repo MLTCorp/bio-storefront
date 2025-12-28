@@ -208,8 +208,19 @@ export default function StorePage() {
   return (
     <div
       className="min-h-screen pb-12 transition-colors duration-500 relative"
-      style={getBackgroundStyle()}
+      style={isGlassmorphism ? {} : getBackgroundStyle()}
     >
+      {/* Fixed background image for glassmorphism - works on mobile */}
+      {isGlassmorphism && (
+        <div
+          className="fixed inset-0 -z-20"
+          style={{
+            backgroundImage: `url(${page?.background_image || theme.background.value})`,
+            backgroundSize: 'cover',
+            backgroundPosition: `${page?.background_image_position_x ?? 50}% ${page?.background_image_position_y ?? 50}%`,
+          }}
+        />
+      )}
       {/* Dark overlay for glassmorphism */}
       {theme.background.type === 'image' && theme.background.overlay && (
         <div
@@ -291,15 +302,27 @@ export default function StorePage() {
           <div className="space-y-4">
             {page.components
               .filter((c) => c.is_visible !== false)
-              .map((component) => (
-                <motion.div
-                  key={component.id}
-                  variants={itemVariants}
-                  style={isGlassmorphism && isMobile ? getGlassCardStyle() : {}}
-                >
-                  <ComponentRenderer component={component} theme={theme} pageId={page.id} clerkId={user?.id} />
-                </motion.div>
-              ))}
+              .map((component) => {
+                // Products will have their own glass card - don't add wrapper
+                const isProduct = component.type === 'product';
+                const shouldApplyGlass = isGlassmorphism && isMobile && !isProduct;
+
+                return (
+                  <motion.div
+                    key={component.id}
+                    variants={itemVariants}
+                    style={shouldApplyGlass ? getGlassCardStyle() : {}}
+                  >
+                    <ComponentRenderer
+                      component={component}
+                      theme={theme}
+                      pageId={page.id}
+                      clerkId={user?.id}
+                      isGlassmorphismMobile={isGlassmorphism && isMobile}
+                    />
+                  </motion.div>
+                );
+              })}
           </div>
         )}
 

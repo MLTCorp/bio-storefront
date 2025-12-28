@@ -32,6 +32,7 @@ interface ComponentRendererProps {
   theme?: Theme;
   pageId?: number;
   clerkId?: string; // To exclude owner from analytics
+  isGlassmorphismMobile?: boolean; // For glassmorphism mobile styling
 }
 
 // Analytics tracking function
@@ -102,7 +103,7 @@ const linkIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   play: Play,
 };
 
-export function ComponentRenderer({ component, theme, pageId, clerkId }: ComponentRendererProps) {
+export function ComponentRenderer({ component, theme, pageId, clerkId, isGlassmorphismMobile }: ComponentRendererProps) {
   const currentTheme = theme || themes.light;
 
   switch (component.type) {
@@ -111,7 +112,7 @@ export function ComponentRenderer({ component, theme, pageId, clerkId }: Compone
     case "text":
       return <TextRenderer config={component.config as TextConfig} theme={currentTheme} />;
     case "product":
-      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
     case "video":
       return <VideoRenderer config={component.config as VideoConfig} />;
     case "social":
@@ -200,19 +201,19 @@ function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
 }
 
 // Product Renderer - Dispatches to different styles
-function ProductRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function ProductRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
   switch (config.displayStyle) {
     case 'compact':
-      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} />;
+      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
     case 'ecommerce':
-      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} />;
+      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
     default:
-      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} />;
+      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
   }
 }
 
 // Product Card Renderer - Original 3D parallax style
-function ProductCardRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function ProductCardRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
   const handleProductClick = (kitLabel: string, kitUrl: string) => {
     trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl, clerkId);
   };
@@ -231,12 +232,13 @@ function ProductCardRenderer({ config, theme, componentId, pageId, clerkId }: { 
       discountEndDate={config.discountEndDate}
       theme={theme}
       onKitClick={handleProductClick}
+      isGlassmorphismMobile={isGlassmorphismMobile}
     />
   );
 }
 
 // Product Compact Renderer - Rating + single CTA button style
-function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
   const mainKit = visibleKits[0];
 
@@ -276,13 +278,22 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
     return stars;
   };
 
+  // Use glass card styles when glassmorphism mobile
+  const cardStyle = isGlassmorphismMobile ? {
+    background: theme.card.bg,
+    backdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
+    WebkitBackdropFilter: theme.card.blur > 0 ? `blur(${theme.card.blur}px)` : 'none',
+    border: theme.card.border,
+    boxShadow: theme.card.shadow,
+  } : {
+    background: theme.card.bg,
+    borderColor: theme.card.border,
+  };
+
   return (
     <div
       className="rounded-2xl p-4 shadow-sm border"
-      style={{
-        background: theme.card.bg,
-        borderColor: theme.card.border,
-      }}
+      style={cardStyle}
     >
       <div className="flex gap-4">
         {/* Image */}
@@ -370,7 +381,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId }:
 }
 
 // Product E-commerce Renderer - Horizontal with kit selection
-function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
 
   // Responsive image scale - limit on mobile
