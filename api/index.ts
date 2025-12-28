@@ -1353,6 +1353,61 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       });
     }
 
+    // ============ SUBSCRIPTIONS API ============
+    if (path === '/api/subscriptions/current' && method === 'GET') {
+      const clerkId = req.headers['x-clerk-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      // Get user with plan
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, plan')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Get subscription if exists
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('user_id', clerkId)
+        .eq('status', 'active')
+        .single();
+
+      // Determine plan and limits
+      let plan = subscription?.plan_id || user.plan || 'free';
+      let limits = subscription?.subscription_plans?.limits;
+
+      // If no subscription limits, get from subscription_plans table
+      if (!limits && plan !== 'free') {
+        const { data: planData } = await supabase
+          .from('subscription_plans')
+          .select('limits')
+          .eq('id', plan)
+          .single();
+        limits = planData?.limits;
+      }
+
+      // Default free limits
+      if (!limits) {
+        limits = {
+          pages: 1,
+          products: 10,
+          components_per_page: -1,
+          ai_generations_per_day: 3,
+          analytics_days: 7,
+          show_branding: true
+        };
+      }
+
+      return res.json({
+        subscription,
+        limits,
+        plan
+      });
+    }
+
     // 404 for unmatched routes
     return res.status(404).json({ error: 'Not found' });
 
