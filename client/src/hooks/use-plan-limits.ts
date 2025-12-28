@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@clerk/clerk-react";
-import { apiRequest } from "@/lib/queryClient";
 
 export interface PlanLimits {
   pages: number;
@@ -30,18 +29,25 @@ const FREE_LIMITS: PlanLimits = {
 };
 
 export function usePlanLimits() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
 
   const { data, isLoading, error } = useQuery<PlanInfo>({
-    queryKey: ["plan-limits"],
+    queryKey: ["plan-limits", user?.id],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/subscriptions/current");
+      if (!user?.id) throw new Error("User not authenticated");
+
+      const response = await fetch("/api/subscriptions/current", {
+        headers: {
+          "x-clerk-user-id": user.id,
+        },
+      });
+
       if (!response.ok) {
         throw new Error("Failed to fetch plan limits");
       }
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
