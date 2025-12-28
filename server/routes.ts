@@ -1632,10 +1632,26 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       const subscription = await getUserSubscription(clerkId);
       const limits = await getUserPlanLimits(clerkId);
 
+      // Determinar o plano: primeiro da subscription, depois do users.plan
+      let plan = subscription?.plan_id || 'free';
+
+      if (!subscription) {
+        // Fallback: verificar users.plan diretamente
+        const { data: user } = await supabase
+          .from("users")
+          .select("plan")
+          .eq("clerk_id", clerkId)
+          .single();
+
+        if (user?.plan) {
+          plan = user.plan;
+        }
+      }
+
       res.json({
         subscription,
         limits,
-        plan: subscription?.plan_id || 'free',
+        plan,
       });
     } catch (error) {
       console.error("Error fetching subscription:", error);
