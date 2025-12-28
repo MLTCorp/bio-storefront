@@ -135,26 +135,45 @@ export async function getUserSubscription(userId: string) {
   return data;
 }
 
+// Default free plan limits
+const FREE_PLAN_LIMITS = {
+  pages: 1,
+  components_per_page: 10,
+  products: 3,
+  ai_generations_per_day: 0,
+};
+
 // Get user's plan limits
 export async function getUserPlanLimits(userId: string) {
+  // Primeiro tenta buscar subscription ativa
   const subscription = await getUserSubscription(userId);
 
-  if (!subscription) {
-    // Return free plan limits
-    return {
-      pages: 1,
-      components_per_page: 10,
-      products: 3,
-      ai_generations_per_day: 0,
-    };
+  if (subscription?.subscription_plans?.limits) {
+    return subscription.subscription_plans.limits;
   }
 
-  return subscription.subscription_plans?.limits || {
-    pages: 1,
-    components_per_page: 10,
-    products: 3,
-    ai_generations_per_day: 0,
-  };
+  // Fallback: verificar users.plan diretamente
+  const { data: user } = await (supabase as any)
+    .from('users')
+    .select('plan')
+    .eq('clerk_id', userId)
+    .single();
+
+  if (user?.plan && user.plan !== 'free') {
+    // Buscar limites do plano na tabela subscription_plans
+    const { data: planData } = await (supabase as any)
+      .from('subscription_plans')
+      .select('limits')
+      .eq('id', user.plan)
+      .single();
+
+    if (planData?.limits) {
+      return planData.limits;
+    }
+  }
+
+  // Retorna limites free como último fallback
+  return FREE_PLAN_LIMITS;
 }
 
 // Check if user can perform an action based on their plan

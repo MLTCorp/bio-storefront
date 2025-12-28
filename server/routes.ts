@@ -719,14 +719,23 @@ export async function registerRoutes(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Check page limit (max 3)
+      // Check page limit based on user's plan
       const { count } = await supabase
         .from("pages")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
 
-      if (count && count >= 3) {
-        return res.status(400).json({ error: "Maximum pages limit reached (3)" });
+      const limits = await getUserPlanLimits(clerkId);
+      const pageLimit = limits.pages as number;
+
+      // -1 significa ilimitado
+      if (pageLimit !== -1 && count && count >= pageLimit) {
+        return res.status(400).json({
+          error: `Limite de páginas atingido (${pageLimit})`,
+          limit: pageLimit,
+          current: count,
+          upgrade_url: '/#precos'
+        });
       }
 
       // Check username availability
