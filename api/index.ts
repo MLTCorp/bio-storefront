@@ -455,14 +455,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (!user) return res.status(404).json({ error: 'User not found' });
 
-      // Check page limit (max 3)
+      // Check page limit (max 20 - Pro users have unlimited via subscription check)
       const { count } = await supabase
         .from('pages')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-      if (count && count >= 3) {
-        return res.status(400).json({ error: 'Maximum pages limit reached (3)' });
+      if (count && count >= 20) {
+        return res.status(400).json({ error: 'Maximum pages limit reached (20)' });
       }
 
       // Check username availability
