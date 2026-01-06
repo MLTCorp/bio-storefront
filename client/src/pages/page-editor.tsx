@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { useUser, SignedIn, SignedOut, RedirectToSignIn, UserButton } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
+import { ProtectedRoute } from "@/components/protected-route";
+import { UserMenu } from "@/components/user-menu";
 import { useLocation, useParams } from "wouter";
 import {
   DndContext,
@@ -81,7 +83,7 @@ import { ComponentRenderer } from "@/components/page-builder/component-renderer"
 import { BackgroundEffect } from "@/components/background-effect";
 
 export default function PageEditorPage() {
-  const { user, isLoaded } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const params = useParams<{ pageId: string }>();
   const { toast } = useToast();
@@ -136,13 +138,13 @@ export default function PageEditorPage() {
 
   // Fetch page data
   useEffect(() => {
-    if (!isLoaded || !user || !params.pageId) return;
+    if (authLoading || !user || !params.pageId) return;
 
     const fetchPage = async () => {
       try {
         const response = await fetch(`/api/pages/${params.pageId}`, {
           headers: {
-            "x-clerk-user-id": user.id,
+            "x-supabase-user-id": user.id,
           },
         });
 
@@ -169,7 +171,7 @@ export default function PageEditorPage() {
     };
 
     fetchPage();
-  }, [isLoaded, user, params.pageId]);
+  }, [authLoading, user, params.pageId]);
 
   // Save page
   const handleSave = async (): Promise<boolean> => {
@@ -184,7 +186,7 @@ export default function PageEditorPage() {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            "x-clerk-user-id": user.id,
+            "x-supabase-user-id": user.id,
           },
           body: JSON.stringify({
             profile_name: page.profile_name,
@@ -204,7 +206,7 @@ export default function PageEditorPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-clerk-user-id": user.id,
+            "x-supabase-user-id": user.id,
           },
           body: JSON.stringify({
             componentIds: components.map((c) => c.id),
@@ -348,7 +350,7 @@ export default function PageEditorPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify({
           type,
@@ -381,7 +383,7 @@ export default function PageEditorPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify({ config }),
       });
@@ -405,7 +407,7 @@ export default function PageEditorPage() {
       await fetch(`/api/components/${componentId}`, {
         method: "DELETE",
         headers: {
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
       });
 
@@ -436,7 +438,7 @@ export default function PageEditorPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify({ is_visible: newVisibility }),
       });
@@ -485,26 +487,8 @@ export default function PageEditorPage() {
     }
   };
 
-  // Show loading only while Clerk is initializing
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  // If not signed in, redirect to sign in
-  if (!user) {
-    return (
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    );
-  }
-
-  // Show loading while fetching page data
-  if (loading) {
+  // Show loading while auth is initializing or fetching page data
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -517,12 +501,8 @@ export default function PageEditorPage() {
   }
 
   return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-        <div className="min-h-screen" style={{ background: currentTheme.background.value }}>
+    <ProtectedRoute>
+      <div className="min-h-screen" style={{ background: currentTheme.background.value }}>
           {/* Header */}
           <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
             <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -578,7 +558,7 @@ export default function PageEditorPage() {
                   )}
                   <span className="hidden sm:inline ml-1">Salvar</span>
                 </Button>
-                <UserButton afterSignOutUrl="/" />
+                <UserMenu />
               </div>
             </div>
           </header>
@@ -977,7 +957,6 @@ export default function PageEditorPage() {
               : 0
           }
         />
-      </SignedIn>
-    </>
+    </ProtectedRoute>
   );
 }

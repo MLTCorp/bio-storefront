@@ -3,7 +3,8 @@
 import { motion } from 'framer-motion';
 import { Check, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SignInButton, useAuth } from '@clerk/clerk-react';
+import { useAuth } from '@/contexts/auth-context';
+import { Link } from 'wouter';
 import { BlurFade } from '../ui/blur-fade';
 import { useState } from 'react';
 
@@ -72,7 +73,8 @@ const plans = [
 ];
 
 export function PricingSection() {
-  const { isSignedIn } = useAuth();
+  const { session } = useAuth();
+  const isSignedIn = !!session;
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   // Checkout anonimo para planos pagos - vai direto pro Stripe
@@ -210,11 +212,11 @@ export function PricingSection() {
                     {plan.cta}
                   </Button>
                 ) : (
-                  <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+                  <Link href="/signup">
                     <Button className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold rounded-xl bg-gray-100 text-black hover:bg-gray-200">
                       {plan.cta}
                     </Button>
-                  </SignInButton>
+                  </Link>
                 )
               ) : (
                 // Planos pagos: vai direto pro Stripe (checkout anonimo)

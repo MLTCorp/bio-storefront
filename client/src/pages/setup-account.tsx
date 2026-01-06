@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
-import { useUser, SignInButton, SignUpButton } from "@clerk/clerk-react";
+import { useLocation, Link } from "wouter";
+import { useAuth } from "@/contexts/auth-context";
 import { CheckCircle, Loader2, AlertCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,8 @@ const PLAN_NAMES: Record<string, string> = {
 
 export default function SetupAccountPage() {
   const [, navigate] = useLocation();
-  const { isSignedIn, user, isLoaded } = useUser();
+  const { session, user, loading: authLoading } = useAuth();
+  const isSignedIn = !!session;
   const [pending, setPending] = useState<PendingSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,10 +43,10 @@ export default function SetupAccountPage() {
 
   // Complete setup when user signs in
   useEffect(() => {
-    if (isLoaded && isSignedIn && pending && pending.status === "pending") {
+    if (!authLoading && isSignedIn && pending && pending.status === "pending") {
       completeSetup();
     }
-  }, [isLoaded, isSignedIn, pending]);
+  }, [authLoading, isSignedIn, pending]);
 
   const verifyToken = async () => {
     try {
@@ -73,9 +74,9 @@ export default function SetupAccountPage() {
     try {
       const response = await apiRequest("POST", "/api/subscriptions/complete-setup", {
         setupToken: token,
-        clerkId: user?.id,
-        email: user?.primaryEmailAddress?.emailAddress,
-        name: user?.fullName || user?.firstName || '',
+        supabaseId: user?.id,
+        email: user?.email,
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
       });
 
       const data = await response.json();
@@ -95,7 +96,7 @@ export default function SetupAccountPage() {
   };
 
   // Loading state
-  if (loading || !isLoaded) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <Card className="w-full max-w-md mx-4 bg-gray-800/50 border-gray-700">
@@ -174,17 +175,17 @@ export default function SetupAccountPage() {
 
             {/* Sign up / Sign in buttons */}
             <div className="space-y-3">
-              <SignUpButton mode="modal" forceRedirectUrl={`/setup-account?token=${token}`}>
+              <Link href={`/signup?redirect=/setup-account?token=${token}`}>
                 <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                   Criar minha conta
                 </Button>
-              </SignUpButton>
+              </Link>
 
-              <SignInButton mode="modal" forceRedirectUrl={`/setup-account?token=${token}`}>
+              <Link href={`/login?redirect=/setup-account?token=${token}`}>
                 <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:bg-gray-700">
                   Ja tenho uma conta
                 </Button>
-              </SignInButton>
+              </Link>
             </div>
           </div>
 

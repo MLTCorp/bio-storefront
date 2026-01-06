@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { useUser, SignedIn, SignedOut, RedirectToSignIn, UserButton } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
+import { ProtectedRoute } from "@/components/protected-route";
+import { UserMenu } from "@/components/user-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +28,7 @@ interface User {
 }
 
 export default function PageAdminPage() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [pages, setPages] = useState<PageWithOwner[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -75,7 +77,7 @@ export default function PageAdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify({
           email: currentUserEmail,
@@ -108,15 +110,11 @@ export default function PageAdminPage() {
     }
   };
 
-  const currentUserEmail = user?.emailAddresses?.[0]?.emailAddress;
+  const currentUserEmail = user?.email;
 
   return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-        <div className="min-h-screen bg-gray-50/50 p-4 pb-24 md:p-8">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50/50 p-4 pb-24 md:p-8">
           <div className="max-w-4xl mx-auto space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between sticky top-0 bg-gray-50/95 backdrop-blur z-10 py-4 border-b border-gray-200">
@@ -136,7 +134,7 @@ export default function PageAdminPage() {
                   <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                   Atualizar
                 </Button>
-                <UserButton afterSignOutUrl="/" />
+                <UserMenu />
               </div>
             </div>
 
@@ -270,7 +268,6 @@ export default function PageAdminPage() {
             </Card>
           </div>
         </div>
-      </SignedIn>
-    </>
+    </ProtectedRoute>
   );
 }

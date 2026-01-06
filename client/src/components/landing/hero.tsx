@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { SignInButton } from "@clerk/clerk-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { PhoneMockup } from "./phone-mockup";
 
@@ -81,7 +81,7 @@ export function HeroSection() {
             animate="animate"
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <SignInButton mode="modal">
+            <Link href="/signup">
               <Button
                 size="lg"
                 className="h-14 px-8 text-lg font-semibold gap-2 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 shadow-lg shadow-pink-500/30"
@@ -89,7 +89,7 @@ export function HeroSection() {
                 Criar Minha Loja
                 <ArrowRight className="w-5 h-5" />
               </Button>
-            </SignInButton>
+            </Link>
             <Button
               variant="outline"
               size="lg"

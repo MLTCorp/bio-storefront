@@ -31,12 +31,12 @@ interface ComponentRendererProps {
   component: PageComponent;
   theme?: Theme;
   pageId?: number;
-  clerkId?: string; // To exclude owner from analytics
+  ownerId?: string; // To exclude owner from analytics (supports both ownerId and supabaseId)
   isGlassmorphismMobile?: boolean; // For glassmorphism mobile styling
 }
 
 // Analytics tracking function
-const trackClick = (pageId: number | undefined, componentId: number, componentType: string, componentLabel: string, targetUrl: string, clerkId?: string) => {
+const trackClick = (pageId: number | undefined, componentId: number, componentType: string, componentLabel: string, targetUrl: string, ownerId?: string) => {
   if (!pageId) return;
   fetch('/api/analytics/click', {
     method: 'POST',
@@ -47,7 +47,7 @@ const trackClick = (pageId: number | undefined, componentId: number, componentTy
       componentType,
       componentLabel,
       targetUrl,
-      clerkId: clerkId || null // Pass clerkId to exclude owner
+      ownerId: ownerId || null // Pass ownerId to exclude owner
     })
   }).catch(() => {}); // Silently fail
 };
@@ -103,36 +103,36 @@ const linkIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   play: Play,
 };
 
-export function ComponentRenderer({ component, theme, pageId, clerkId, isGlassmorphismMobile }: ComponentRendererProps) {
+export function ComponentRenderer({ component, theme, pageId, ownerId, isGlassmorphismMobile }: ComponentRendererProps) {
   const currentTheme = theme || themes.light;
 
   switch (component.type) {
     case "button":
-      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <ButtonRenderer config={component.config as ButtonConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "text":
       return <TextRenderer config={component.config as TextConfig} theme={currentTheme} />;
     case "product":
-      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
     case "video":
       return <VideoRenderer config={component.config as VideoConfig} />;
     case "social":
-      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <SocialRenderer config={component.config as SocialConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "link":
-      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <LinkRenderer config={component.config as LinkConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "carousel":
-      return <CarouselRenderer config={component.config as CarouselConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <CarouselRenderer config={component.config as CarouselConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "calendly":
-      return <CalendlyRenderer config={component.config as CalendlyConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <CalendlyRenderer config={component.config as CalendlyConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "maps":
-      return <MapsRenderer config={component.config as MapsConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <MapsRenderer config={component.config as MapsConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "pix":
-      return <PixRenderer config={component.config as PixConfig} theme={currentTheme} componentId={component.id} pageId={pageId} clerkId={clerkId} />;
+      return <PixRenderer config={component.config as PixConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     default:
       return null;
   }
 }
 
-function ButtonRenderer({ config, theme, componentId, pageId, clerkId }: { config: ButtonConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function ButtonRenderer({ config, theme, componentId, pageId, ownerId }: { config: ButtonConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const isWhatsApp = config.type === "whatsapp";
 
   const handleClick = () => {
@@ -147,7 +147,7 @@ function ButtonRenderer({ config, theme, componentId, pageId, clerkId }: { confi
     }
 
     // Track click (exclude owner)
-    trackClick(pageId, componentId || 0, isWhatsApp ? 'whatsapp' : 'button', config.text, targetUrl, clerkId);
+    trackClick(pageId, componentId || 0, isWhatsApp ? 'whatsapp' : 'button', config.text, targetUrl, ownerId);
   };
 
   const buttonStyle = isWhatsApp
@@ -201,21 +201,21 @@ function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
 }
 
 // Product Renderer - Dispatches to different styles
-function ProductRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
   switch (config.displayStyle) {
     case 'compact':
-      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
     case 'ecommerce':
-      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
     default:
-      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} clerkId={clerkId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
   }
 }
 
 // Product Card Renderer - Original 3D parallax style
-function ProductCardRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductCardRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
   const handleProductClick = (kitLabel: string, kitUrl: string) => {
-    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl, clerkId);
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl, ownerId);
   };
 
   return (
@@ -238,7 +238,7 @@ function ProductCardRenderer({ config, theme, componentId, pageId, clerkId, isGl
 }
 
 // Product Compact Renderer - Rating + single CTA button style
-function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductCompactRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
   const mainKit = visibleKits[0];
 
@@ -251,7 +251,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId, i
 
   const handleClick = () => {
     const url = config.ctaLink || mainKit?.link || '';
-    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${config.ctaText || 'CTA'}`, url, clerkId);
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${config.ctaText || 'CTA'}`, url, ownerId);
     if (url) window.open(url, '_blank');
   };
 
@@ -381,7 +381,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, clerkId, i
 }
 
 // Product E-commerce Renderer - Horizontal with kit selection
-function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductEcommerceRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
 
   // Responsive image scale - limit on mobile
@@ -397,7 +397,7 @@ function ProductEcommerceRenderer({ config, theme, componentId, pageId, clerkId,
     if (effectiveDiscountPercent > 0 && kit.discountLinks?.[effectiveDiscountPercent]) {
       url = kit.discountLinks[effectiveDiscountPercent];
     }
-    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kit.label}`, url, clerkId);
+    trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kit.label}`, url, ownerId);
     if (url) window.open(url, '_blank');
   };
 
@@ -504,9 +504,9 @@ function VideoRenderer({ config }: { config: VideoConfig }) {
   );
 }
 
-function SocialRenderer({ config, theme, componentId, pageId, clerkId }: { config: SocialConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function SocialRenderer({ config, theme, componentId, pageId, ownerId }: { config: SocialConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const handleSocialClick = (platform: string, url: string) => {
-    trackClick(pageId, componentId || 0, 'social', platform, url, clerkId);
+    trackClick(pageId, componentId || 0, 'social', platform, url, ownerId);
   };
 
   return (
@@ -529,9 +529,9 @@ function SocialRenderer({ config, theme, componentId, pageId, clerkId }: { confi
   );
 }
 
-function LinkRenderer({ config, theme, componentId, pageId, clerkId }: { config: LinkConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function LinkRenderer({ config, theme, componentId, pageId, ownerId }: { config: LinkConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const handleLinkClick = () => {
-    trackClick(pageId, componentId || 0, 'link', config.text, config.url || '', clerkId);
+    trackClick(pageId, componentId || 0, 'link', config.text, config.url || '', ownerId);
   };
 
   // Advanced styling
@@ -603,7 +603,7 @@ function LinkRenderer({ config, theme, componentId, pageId, clerkId }: { config:
 }
 
 // Carousel Renderer
-function CarouselRenderer({ config, theme, componentId, pageId, clerkId }: { config: CarouselConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function CarouselRenderer({ config, theme, componentId, pageId, ownerId }: { config: CarouselConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -624,7 +624,7 @@ function CarouselRenderer({ config, theme, componentId, pageId, clerkId }: { con
 
   const handleImageClick = (image: typeof images[0]) => {
     if (image.link) {
-      trackClick(pageId, componentId || 0, 'carousel', `Image ${image.id}`, image.link, clerkId);
+      trackClick(pageId, componentId || 0, 'carousel', `Image ${image.id}`, image.link, ownerId);
       window.open(image.link, '_blank');
     }
   };
@@ -698,9 +698,9 @@ function CarouselRenderer({ config, theme, componentId, pageId, clerkId }: { con
 }
 
 // Calendly Renderer
-function CalendlyRenderer({ config, theme, componentId, pageId, clerkId }: { config: CalendlyConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function CalendlyRenderer({ config, theme, componentId, pageId, ownerId }: { config: CalendlyConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const handleCalendlyClick = () => {
-    trackClick(pageId, componentId || 0, 'calendly', config.buttonText || 'Agendar', config.url, clerkId);
+    trackClick(pageId, componentId || 0, 'calendly', config.buttonText || 'Agendar', config.url, ownerId);
     if (config.embedType === 'button') {
       window.open(config.url, '_blank');
     }
@@ -746,12 +746,12 @@ function CalendlyRenderer({ config, theme, componentId, pageId, clerkId }: { con
 }
 
 // Maps Renderer
-function MapsRenderer({ config, theme, componentId, pageId, clerkId }: { config: MapsConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function MapsRenderer({ config, theme, componentId, pageId, ownerId }: { config: MapsConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const handleOpenMaps = () => {
     const mapsUrl = config.embedUrl
       ? config.embedUrl.replace('/embed?', '/place?')
       : `https://www.google.com/maps/search/${encodeURIComponent(config.address || '')}`;
-    trackClick(pageId, componentId || 0, 'maps', config.address || 'Mapa', mapsUrl, clerkId);
+    trackClick(pageId, componentId || 0, 'maps', config.address || 'Mapa', mapsUrl, ownerId);
     window.open(mapsUrl, '_blank');
   };
 
@@ -806,14 +806,14 @@ function MapsRenderer({ config, theme, componentId, pageId, clerkId }: { config:
 }
 
 // PIX Renderer
-function PixRenderer({ config, theme, componentId, pageId, clerkId }: { config: PixConfig; theme: Theme; componentId?: number; pageId?: number; clerkId?: string }) {
+function PixRenderer({ config, theme, componentId, pageId, ownerId }: { config: PixConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     if (config.pixCode) {
       await navigator.clipboard.writeText(config.pixCode);
       setCopied(true);
-      trackClick(pageId, componentId || 0, 'pix', 'Copiar codigo PIX', '', clerkId);
+      trackClick(pageId, componentId || 0, 'pix', 'Copiar codigo PIX', '', ownerId);
       setTimeout(() => setCopied(false), 2000);
     }
   };

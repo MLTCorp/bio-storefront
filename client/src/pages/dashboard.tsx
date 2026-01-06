@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { useUser, UserButton, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
+import { ProtectedRoute } from "@/components/protected-route";
+import { UserMenu } from "@/components/user-menu";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +69,7 @@ interface StoreData {
 }
 
 export default function DashboardPage() {
-  const { user, isLoaded } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [store, setStore] = useState<StoreData | null>(null);
@@ -98,16 +100,16 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (authLoading) return;
     if (!user) return;
 
     fetchStore();
-  }, [isLoaded, user]);
+  }, [authLoading, user]);
 
   const fetchStore = async () => {
     try {
       const res = await fetch("/api/user/store", {
-        headers: { "x-clerk-user-id": user!.id },
+        headers: { "x-supabase-user-id": user!.id },
       });
 
       if (!res.ok) {
@@ -137,7 +139,7 @@ export default function DashboardPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify(store),
       });
@@ -324,7 +326,7 @@ export default function DashboardPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!isLoaded || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -333,18 +335,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-        {store && (
+    <ProtectedRoute>
+      {store && (
           <div className="min-h-screen bg-gray-50/50 p-4 pb-24 md:p-8">
             <div className="max-w-2xl mx-auto space-y-8">
               {/* Header */}
               <div className="flex items-center justify-between sticky top-0 bg-gray-50/95 backdrop-blur z-10 py-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <UserButton afterSignOutUrl="/" />
+                  <UserMenu />
                   <div>
                     <h1 className="text-xl font-bold text-foreground">Minha Página</h1>
                     <p className="text-xs text-muted-foreground">/{store.username}</p>
@@ -958,7 +956,6 @@ export default function DashboardPage() {
             onSave={saveKitLinks}
           />
         )}
-      </SignedIn>
-    </>
+    </ProtectedRoute>
   );
 }

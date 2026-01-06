@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
 import {
   Dialog,
   DialogContent,
@@ -131,7 +131,7 @@ export function AIImageModal({
   type,
   onImageGenerated,
 }: AIImageModalProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [step, setStep] = useState<"configure" | "result">("configure");
   const [prompt, setPrompt] = useState("");
   // Foto de referência principal (produto para product/thumbnail, pessoa para profile)
@@ -187,7 +187,7 @@ export function AIImageModal({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify({ prompt, type }),
       });
@@ -217,7 +217,7 @@ export function AIImageModal({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
         body: JSON.stringify({
           type,

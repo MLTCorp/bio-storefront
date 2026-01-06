@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ interface Template {
 }
 
 export default function OnboardingPage() {
-  const { user, isLoaded } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
@@ -29,10 +29,10 @@ export default function OnboardingPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (isLoaded && !user) {
-      setLocation("/sign-in");
+    if (!authLoading && !user) {
+      setLocation("/login");
     }
-  }, [isLoaded, user, setLocation]);
+  }, [authLoading, user, setLocation]);
 
   useEffect(() => {
     fetch("/api/templates")
@@ -73,9 +73,9 @@ export default function OnboardingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clerkId: user.id,
-          email: user.primaryEmailAddress?.emailAddress,
-          name: user.fullName || user.firstName,
+          supabaseId: user.id,
+          email: user.email,
+          name: user.user_metadata?.full_name || user.email?.split("@")[0],
           username,
           templateId: selectedTemplate,
         }),
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
     }
   };
 
-  if (!isLoaded) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

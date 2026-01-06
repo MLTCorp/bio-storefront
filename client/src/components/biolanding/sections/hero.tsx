@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SignInButton } from '@clerk/clerk-react';
+import { Link } from 'wouter';
 import { AnimatedGroup } from '../ui/animated-group';
 import { GradientOrbsBackground } from '../ui/gradient-orb';
 import { HeroPhoneMockup } from '../hero-phone-mockup';
@@ -133,7 +133,7 @@ export function HeroSection() {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4 mb-10 sm:mb-12">
-                  <SignInButton mode="modal">
+                  <Link href="/signup">
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Button
                         size="lg"
@@ -149,7 +149,7 @@ export function HeroSection() {
                         <ArrowRight className="w-5 h-5" />
                       </Button>
                     </motion.div>
-                  </SignInButton>
+                  </Link>
 
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button

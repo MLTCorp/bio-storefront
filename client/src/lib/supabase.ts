@@ -29,21 +29,29 @@ export async function getBioConfig(): Promise<BioConfig | null> {
 }
 
 // Upload image to Supabase Storage
-export async function uploadImage(file: File, folder: 'profile' | 'products' = 'products'): Promise<string | null> {
+export async function uploadImage(file: File, folder: 'profile' | 'products' | 'backgrounds' = 'products'): Promise<string | null> {
   try {
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    // Generate unique filename with lowercase extension
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    // Use 'products' folder for backgrounds as workaround for RLS issue
+    const actualFolder = folder === 'backgrounds' ? 'products' : folder;
+    const fileName = `${actualFolder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+    // Determine content type
+    const contentType = file.type || `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`;
+
+    console.log('Uploading image:', { fileName, contentType, size: file.size });
 
     const { data, error } = await supabase.storage
       .from('images')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false,
+        upsert: true,
+        contentType: contentType,
       });
 
     if (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading image:', error.message, error);
       return null;
     }
 
@@ -52,6 +60,7 @@ export async function uploadImage(file: File, folder: 'profile' | 'products' = '
       .from('images')
       .getPublicUrl(data.path);
 
+    console.log('Upload successful:', urlData.publicUrl);
     return urlData.publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);

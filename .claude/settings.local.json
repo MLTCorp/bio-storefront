@@ -83,7 +83,20 @@
       "Bash(cd:*)",
       "Bash(git reset:*)",
       "Bash(del:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(nslookup:*)",
+      "Bash(git restore:*)",
+      "Bash(npx @magicuidesign/cli@latest install:*)",
+      "Bash(timeout /T 10 /NOBREAK)",
+      "Bash(powershell -Command \"[System.IO.File]::WriteAllText(''temp_whatsapp.json'', ''{\"\"number\"\":\"\"120363406229077165@g.us\"\",\"\"text\"\":\"\"Sessao Encerrada\\n\\nProjeto: Bio-Storefront\\nData: 24/12/2024\\n\\nO que foi feito:\\n- Popup de upgrade para usuarios free (Starter R$29,90 / Pro R$97)\\n- Limite de zoom em mobile (max 130%)\\n- 3 estilos de produto (Card 3D, Compacto, E-commerce)\\n- Countdown timer de desconto com date picker\\n- Sistema de assinaturas documentado\\n\\nProximos passos:\\n- Implementar limites reais por plano\\n- Testar checkout Stripe completo\\n- Adicionar testimonials na BioLanding\\n\\nProgresso: 95%\\n\\nCommit: b748e12\"\"}'', [System.Text.Encoding]::UTF8)\")",
+      "mcp__supabase__get_logs",
+      "Bash(git fetch:*)",
+      "WebFetch(domain:bio-storefront.vercel.app)",
+      "Bash(timeout /T 30 /NOBREAK)",
+      "Bash(timeout /T 60 /NOBREAK)",
+      "Bash(git stash:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

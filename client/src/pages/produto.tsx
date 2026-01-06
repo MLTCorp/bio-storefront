@@ -16,12 +16,14 @@ import {
   Loader2,
   MessageCircle
 } from "lucide-react";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
+import { UserMenu } from "@/components/user-menu";
 import { BackgroundEffect } from "@/components/background-effect";
 
 export default function ProdutoPage() {
   const [, params] = useRoute("/produto/:id");
   const { config, isLoading } = useConfig();
+  const { session } = useAuth();
   const { checkout, loading: checkoutLoading } = useCheckout();
   const [selectedKit, setSelectedKit] = useState<string | null>(null);
 
@@ -90,14 +92,13 @@ export default function ProdutoPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <SignedIn>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-            <SignedOut>
-              <SignInButton mode="modal">
+            {session ? (
+              <UserMenu />
+            ) : (
+              <Link href="/login">
                 <Button variant="outline" size="sm">Entrar</Button>
-              </SignInButton>
-            </SignedOut>
+              </Link>
+            )}
           </div>
         </div>
       </header>

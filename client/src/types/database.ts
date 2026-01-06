@@ -163,6 +163,10 @@ export interface Page {
   whatsapp_message: string | null;
   background_type: string | null;
   background_value: string | null;
+  background_image: string | null;
+  background_image_scale: number | null;
+  background_image_position_x: number | null;
+  background_image_position_y: number | null;
   font_family: string | null;
   views: number | null;
   is_active: boolean | null;
@@ -202,6 +206,10 @@ export interface UpdatePageInput {
   whatsapp_message?: string;
   background_type?: string;
   background_value?: string;
+  background_image?: string;
+  background_image_scale?: number;
+  background_image_position_x?: number;
+  background_image_position_y?: number;
   font_family?: string;
 }
 

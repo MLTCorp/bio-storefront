@@ -5,7 +5,7 @@ import { motion, useScroll } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { SignInButton } from '@clerk/clerk-react';
+import { Link } from 'wouter';
 
 const menuItems = [
   { name: 'Recursos', href: '#recursos' },
@@ -134,15 +134,15 @@ export function Navbar() {
               </div>
 
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <SignInButton mode="modal">
-                  <Button variant="outline" size="sm" className="rounded-xl border-gray-200">
+                <Link href="/login">
+                  <Button variant="outline" size="sm" className="rounded-xl border-gray-200 w-full">
                     <span>Login</span>
                   </Button>
-                </SignInButton>
-                <SignInButton mode="modal">
+                </Link>
+                <Link href="/signup">
                   <Button
                     size="sm"
-                    className="rounded-xl text-white"
+                    className="rounded-xl text-white w-full"
                     style={{
                       background:
                         'radial-gradient(41.3% 114.84% at 50% 54.35%, #B090FF 0%, #7F4AFF 100%)',
@@ -150,7 +150,7 @@ export function Navbar() {
                   >
                     <span>Criar Conta</span>
                   </Button>
-                </SignInButton>
+                </Link>
               </div>
             </div>
           </div>

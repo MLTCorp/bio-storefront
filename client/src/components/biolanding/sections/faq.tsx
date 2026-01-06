@@ -12,16 +12,6 @@ const faqs = [
       'Nao! O BioLanding foi criado para ser super simples. Voce consegue criar sua pagina em minutos usando nossa interface de arrastar e soltar, sem nenhum conhecimento tecnico.',
   },
   {
-    question: 'Como funciona o pagamento?',
-    answer:
-      'Integramos com PIX, cartao de credito e boleto atraves do Stripe e Mercado Pago. Voce recebe os pagamentos diretamente na sua conta, sem intermediarios.',
-  },
-  {
-    question: 'Posso usar meu proprio dominio?',
-    answer:
-      'Sim! No plano Pro voce pode conectar seu dominio personalizado (ex: links.seusite.com.br) para ter uma URL mais profissional.',
-  },
-  {
     question: 'O plano gratuito tem alguma limitacao?',
     answer:
       'O plano gratuito permite 1 pagina com ate 5 produtos, integracao com WhatsApp e temas basicos. E perfeito para comecar e testar a plataforma.',

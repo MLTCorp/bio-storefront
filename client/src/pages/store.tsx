@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRoute, Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Loader2, Settings } from "lucide-react";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
 import { BackgroundEffect } from "@/components/background-effect";
 import { ComponentRenderer } from "@/components/page-builder/component-renderer";
 import { BrandingUpgradePopup } from "@/components/branding-upgrade-popup";
@@ -17,7 +17,7 @@ interface PageData extends Page {
 export default function StorePage() {
   const [, params] = useRoute("/:username");
   const [, navigate] = useLocation();
-  const { user } = useUser();
+  const { user } = useAuth();
   const [page, setPage] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -53,7 +53,7 @@ export default function StorePage() {
               pageId: data.id,
               referrer: document.referrer || null,
               userAgent: navigator.userAgent,
-              clerkId: user?.id || null // Pass clerkId to exclude owner
+              ownerId: user?.id || null // Pass ownerId to exclude owner
             })
           }).catch(() => {}); // Silently fail - don't affect UX
         }
@@ -317,7 +317,7 @@ export default function StorePage() {
                       component={component}
                       theme={theme}
                       pageId={page.id}
-                      clerkId={user?.id}
+                      ownerId={user?.id}
                       isGlassmorphismMobile={isGlassmorphism && isMobile}
                     />
                   </motion.div>

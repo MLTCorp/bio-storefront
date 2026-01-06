@@ -11,7 +11,8 @@ import { ArrowLeft, Save, Upload, Link as LinkIcon, Percent, Flame, Loader2 } fr
 import { Switch } from "@/components/ui/switch";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { SignedIn, SignedOut, RedirectToSignIn, UserButton } from "@clerk/clerk-react";
+import { ProtectedRoute } from "@/components/protected-route";
+import { UserMenu } from "@/components/user-menu";
 import type { ChangeEvent } from "react";
 
 export default function AdminPage() {
@@ -83,12 +84,8 @@ export default function AdminPage() {
   };
 
   return (
-    <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-    <div className="min-h-screen bg-gray-50/50 p-4 pb-24 md:p-8">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50/50 p-4 pb-24 md:p-8">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="flex items-center justify-between sticky top-0 bg-gray-50/95 backdrop-blur z-10 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
@@ -103,7 +100,7 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <UserButton afterSignOutUrl="/" />
+            <UserMenu />
             <Button onClick={handleSave} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Save className="w-4 h-4 mr-2" />
               Salvar
@@ -342,7 +339,6 @@ export default function AdminPage() {
 
       </div>
     </div>
-      </SignedIn>
-    </>
+    </ProtectedRoute>
   );
 }

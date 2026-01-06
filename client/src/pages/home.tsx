@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
 import { Redirect } from "wouter";
 import { Navbar } from "@/components/biolanding/sections/navbar";
 import { HeroSection } from "@/components/biolanding/sections/hero";
@@ -11,10 +11,10 @@ import { CTAFinalSection } from "@/components/biolanding/sections/cta-final";
 import { Footer } from "@/components/biolanding/sections/footer";
 
 export default function Home() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { session, loading } = useAuth();
 
-  // Show loading while Clerk loads
-  if (!isLoaded) {
+  // Show loading while auth loads
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-white">
         <div className="text-center space-y-2">
@@ -26,7 +26,7 @@ export default function Home() {
   }
 
   // Redirect logged-in users to dashboard
-  if (isSignedIn) {
+  if (session) {
     return <Redirect to="/dashboard" />;
   }
 

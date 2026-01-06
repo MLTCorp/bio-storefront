@@ -1,50 +1,63 @@
 # Onde Paramos - Bio-Storefront
 
-## Ultimo Commit: `aac451b`
+## Ultimo Commit: `b748e12`
 
-## Data: 16/12/2024
+## Data: 24/12/2024
 
 ## O que foi feito:
 
-### Funcionalidades Principais:
-1. **Toggle de visibilidade para kits** - Agora pode ocultar kits sem deletar
-2. **Destaque especial com shine-border** - Botao "Ativar Destaque" para kits especiais com borda animada roxa/rosa
-3. **Borda dourada para produtos em promocao** - Gradient ambar/dourado para cards com desconto ativo
-4. **Sistema de temas completo** - 5 temas (Light, Dark, Rosa, Saude, Cyber)
-5. **Seletor visual de temas** - Substituiu o color picker por cards visuais com preview
-6. **Toggle de visibilidade para componentes** - Ocultar/mostrar componentes da pagina
-7. **Download de imagens** - Botao para baixar fotos de produtos e thumbnails de video
-8. **Inputs debounced** - Corrigido lag ao digitar nos campos
-9. **Editor de produto melhorado** - Secoes colapsaveis e melhor UX
-10. **Menu "Adicionar" colapsavel** - Interface mais limpa
-11. **APIs admin** - Listagem de todas as paginas para admin
-12. **Controle de posicao de imagem** - Ajustar zoom e posicao de fotos de perfil e produtos
-13. **Opcao "Ignorar Desconto" por kit** - Flag `ignoreDiscount` para desativar desconto em kits especificos
-14. **Design V1 "A Melhorado" dos botoes** - Labels maiores, precos em negrito, melhor espacamento
-15. **Bordas de avatar neutras** - Light, Dark e Cyber tem bordas cinza; Rosa e Saude mantem cores
+### Popup de Upgrade para Usuarios Free:
+- Criado `branding-upgrade-popup.tsx` com planos Starter (R$29,90) e Pro (R$97)
+- Cabecalho "Muito mais IA!" destacando geracao de imagens
+- Plano Pro destacado como "RECOMENDADO"
+- Checkout direto via Stripe ao clicar em "Assinar"
 
-### Correcoes:
-- BackgroundEffect theme-aware (faixa rosa corrigida em temas escuros)
-- Preview Modal com tema completo aplicado
-- Erro React useMemo #310 corrigido
-- Tema passado corretamente ao ComponentRenderer no editor
-- Animacao @keyframes shine movida para escopo global CSS
+### Limite de Zoom em Mobile:
+- Criado hook `useResponsiveImageScale` para limitar zoom maximo em 130% em telas < 640px
+- Aplicado em Card 3D, Compacto e E-commerce
+- Evita imagens cortadas demais em telas pequenas
+
+### Estilos de Exibicao de Produto:
+- 3 estilos: Card 3D (parallax), Compacto (rating + CTA), E-commerce (seletor de kits)
+- Dropdown simplificado no editor de produto
+
+### Countdown Timer de Desconto:
+- Date picker para definir data de expiracao do desconto
+- Timer visual com dias/horas/minutos/segundos
+- Presets rapidos (24h, 48h, 7 dias)
+- Desconto desativa automaticamente ao expirar
+
+### Sistema de Assinaturas:
+- Documentacao de planos (Free, Starter, Pro)
+- Limites configurados (paginas, produtos, IA, analytics)
+- Fix de UX mobile (drag-and-drop, botoes visiveis)
+
+## Commits desde ultima sessao (63e22a7):
+- `b748e12` - feat: add branding upgrade popup for free plan users
+- `4bc99da` - fix: limit product image zoom on mobile screens
+- `f5f0571` - refactor: simplify product display style selector to dropdown
+- `e5ce214` - feat: add discount countdown timer with date picker
+- `c421f90` - feat: add subscription system and fix mobile UX issues
+- `f0c6138` - docs: add subscription plans documentation
+- `3ef04f9` - feat: add product display styles (card, compact, ecommerce)
+- `27ef47f` - feat: add new page builder elements and enhance link customization
 
 ## Arquivos Principais Modificados:
-- `client/src/components/ui/shirt-parallax-card.tsx` - Card de produto com shine-border e ignoreDiscount
-- `client/src/components/page-builder/editors/product-editor.tsx` - Editor com toggle visibilidade/destaque/ignorar desconto
-- `client/src/components/magicui/shine-border.tsx` - Componente de borda animada
-- `client/src/lib/themes.ts` - Sistema de temas com avatarBorder
-- `client/src/lib/store.tsx` - Interface ProductKit com isVisible/isSpecial/ignoreDiscount
-- `client/src/index.css` - Keyframes shine no escopo global
+- `client/src/components/branding-upgrade-popup.tsx` (novo)
+- `client/src/components/ui/shirt-parallax-card.tsx`
+- `client/src/components/page-builder/component-renderer.tsx`
+- `client/src/components/page-builder/editors/product-editor.tsx`
+- `client/src/components/ui/countdown-timer.tsx`
+- `client/src/pages/store.tsx`
+- `server/routes.ts`
 
 ## Proximos Passos:
-- **Remover negrito dos precos** (prioridade)
-- Implementar analytics de visualizacoes
-- Adicionar mais opcoes de animacao
-- Melhorar responsividade mobile
+- Implementar limites reais baseado no plano do usuario
+- Testar fluxo completo de checkout Stripe
+- Adicionar secao de testimonials na BioLanding
+- Melhorar feedback visual ao atingir limites
 
-## Progresso Estimado: 88%
+## Progresso Estimado: 95%
 
 ## Deploy: Vercel (auto-deploy via git push)
 - URL: https://bio-storefront.vercel.app

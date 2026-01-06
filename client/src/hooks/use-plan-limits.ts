@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export interface PlanLimits {
   pages: number;
@@ -20,7 +20,7 @@ export interface PlanInfo {
 }
 
 const FREE_LIMITS: PlanLimits = {
-  pages: 1,
+  pages: 3,
   products: 3,
   components_per_page: 10,
   ai_generations_per_day: 0,
@@ -29,7 +29,7 @@ const FREE_LIMITS: PlanLimits = {
 };
 
 export function usePlanLimits() {
-  const { isSignedIn, user } = useUser();
+  const { session, user } = useAuth();
 
   const { data, isLoading, error } = useQuery<PlanInfo>({
     queryKey: ["plan-limits", user?.id],
@@ -38,7 +38,7 @@ export function usePlanLimits() {
 
       const response = await fetch("/api/subscriptions/current", {
         headers: {
-          "x-clerk-user-id": user.id,
+          "x-supabase-user-id": user.id,
         },
       });
 
@@ -47,7 +47,7 @@ export function usePlanLimits() {
       }
       return response.json();
     },
-    enabled: isSignedIn && !!user?.id,
+    enabled: !!session && !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

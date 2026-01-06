@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Check } from "lucide-react";
-import { SignInButton } from "@clerk/clerk-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
 const benefits = [
@@ -79,7 +79,7 @@ export function CTASection() {
           </div>
 
           {/* CTA Button */}
-          <SignInButton mode="modal">
+          <Link href="/signup">
             <Button
               size="lg"
               className="h-16 px-10 text-lg font-bold gap-3 bg-white text-pink-600 hover:bg-pink-50 shadow-2xl shadow-black/20 hover:scale-105 transition-transform"
@@ -87,7 +87,7 @@ export function CTASection() {
               Criar Minha Loja Grátis
               <ArrowRight className="w-5 h-5" />
             </Button>
-          </SignInButton>
+          </Link>
 
           <p className="mt-4 text-white/60 text-sm">
             Nenhum cartão de crédito necessário

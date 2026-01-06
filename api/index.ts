@@ -16,7 +16,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-clerk-user-id',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-supabase-user-id',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -180,7 +180,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ============ USER ROUTES ============
     if (path === '/api/user/store' && method === 'GET') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { data: user } = await supabase
@@ -202,7 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (path === '/api/user/store' && method === 'PATCH') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { data: user } = await supabase
@@ -366,7 +366,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const transferMatch = path.match(/^\/api\/admin\/transfer-page\/(\d+)$/);
     if (transferMatch && method === 'POST') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       const { email } = req.body || {};
 
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
@@ -415,7 +415,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ============ PAGES API (New Page Builder) ============
     if (path === '/api/pages' && method === 'GET') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       // Find user by clerk_id
@@ -440,7 +440,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (path === '/api/pages' && method === 'POST') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { username, profile_name } = req.body;
@@ -492,7 +492,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get single page by ID
     const pageIdMatch = path.match(/^\/api\/pages\/(\d+)$/);
     if (pageIdMatch && method === 'GET') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       const pageId = parseInt(pageIdMatch[1]);
 
       const { data: page, error: pageError } = await supabase
@@ -528,7 +528,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Update page by ID
     if (pageIdMatch && method === 'PATCH') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const pageId = parseInt(pageIdMatch[1]);
@@ -555,7 +555,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Delete page by ID
     if (pageIdMatch && method === 'DELETE') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const pageId = parseInt(pageIdMatch[1]);
@@ -686,7 +686,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ============ PAGE COMPONENTS API ============
     const componentsMatch = path.match(/^\/api\/pages\/(\d+)\/components$/);
     if (componentsMatch && method === 'POST') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const pageId = parseInt(componentsMatch[1]);
@@ -740,7 +740,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Reorder components
     const reorderMatch = path.match(/^\/api\/pages\/(\d+)\/reorder$/);
     if (reorderMatch && method === 'POST') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const pageId = parseInt(reorderMatch[1]);
@@ -767,7 +767,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Update component
     const componentMatch = path.match(/^\/api\/components\/(\d+)$/);
     if (componentMatch && method === 'PATCH') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const componentId = parseInt(componentMatch[1]);
@@ -785,7 +785,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Delete component
     if (componentMatch && method === 'DELETE') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const componentId = parseInt(componentMatch[1]);
@@ -848,7 +848,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ============ AI ROUTES ============
     if (path === '/api/ai/generate-image' && method === 'POST') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { type, prompt, referenceImage, personImage } = req.body;
@@ -1056,7 +1056,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (path === '/api/ai/improve-prompt' && method === 'POST') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { prompt, type } = req.body;
@@ -1222,7 +1222,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     // GET /api/analytics/:pageId - Get detailed analytics
     const analyticsMatch = path.match(/^\/api\/analytics\/(\d+)$/);
     if (analyticsMatch && method === 'GET') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const pageId = parseInt(analyticsMatch[1]);
@@ -1472,9 +1472,10 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
 
     // Complete account setup after payment
     if (path === '/api/subscriptions/complete-setup' && method === 'POST') {
-      const { setupToken, clerkId, email, name } = req.body;
+      const { setupToken, clerkId, supabaseId, email, name } = req.body;
+      const userId = supabaseId || clerkId; // Support both field names
 
-      if (!setupToken || !clerkId) {
+      if (!setupToken || !userId) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -1494,7 +1495,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       const { data: user, error: userError } = await supabase
         .from('users')
         .upsert({
-          clerk_id: clerkId,
+          clerk_id: userId,
           email: email || pending.email,
           name,
           plan: pending.plan_id,
@@ -1510,7 +1511,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       // Create subscription record
       if (pending.stripe_subscription_id) {
         await supabase.from('subscriptions').upsert({
-          user_id: clerkId,
+          user_id: userId,
           plan_id: pending.plan_id,
           stripe_subscription_id: pending.stripe_subscription_id,
           stripe_customer_id: pending.stripe_customer_id,
@@ -1520,7 +1521,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
         // Update Stripe subscription metadata with userId
         if (stripe && pending.stripe_subscription_id) {
           await stripe.subscriptions.update(pending.stripe_subscription_id, {
-            metadata: { userId: clerkId, planId: pending.plan_id },
+            metadata: { userId: userId, planId: pending.plan_id },
           });
         }
       }
@@ -1542,7 +1543,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     if (path === '/api/subscriptions/create-checkout' && method === 'POST') {
       if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
 
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { planId } = req.body;
@@ -1636,7 +1637,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     if (path === '/api/subscriptions/billing-portal' && method === 'POST') {
       if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
 
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { data: user } = await supabase
@@ -1660,7 +1661,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     }
 
     if (path === '/api/subscriptions/current' && method === 'GET') {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       // Get user with plan

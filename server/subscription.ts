@@ -137,7 +137,7 @@ export async function getUserSubscription(userId: string) {
 
 // Default free plan limits
 const FREE_PLAN_LIMITS = {
-  pages: 1,
+  pages: 3,
   components_per_page: 10,
   products: 3,
   ai_generations_per_day: 0,

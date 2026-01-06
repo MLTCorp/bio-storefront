@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
-import { useAuth, useUser, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/auth-context";
+import { ProtectedRoute } from "@/components/protected-route";
 import { ArrowLeft, Eye, MousePointer, TrendingUp, Smartphone, Monitor, Tablet, Loader2, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,8 +28,7 @@ interface AnalyticsData {
 
 export default function AnalyticsPage() {
   const [, params] = useRoute("/analytics/:pageId");
-  const { getToken } = useAuth();
-  const { user, isLoaded } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("7d");
@@ -40,10 +40,9 @@ export default function AnalyticsPage() {
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        const token = await getToken();
         const response = await fetch(`/api/analytics/${params.pageId}?period=${period}`, {
           headers: {
-            "x-clerk-user-id": user.id,
+            "x-supabase-user-id": user.id,
           },
         });
 
@@ -55,7 +54,7 @@ export default function AnalyticsPage() {
         // Also fetch page name
         const pageResponse = await fetch(`/api/pages/${params.pageId}`, {
           headers: {
-            "x-clerk-user-id": user.id,
+            "x-supabase-user-id": user.id,
           },
         });
 
@@ -71,7 +70,7 @@ export default function AnalyticsPage() {
     };
 
     fetchAnalytics();
-  }, [params?.pageId, user, period, getToken]);
+  }, [params?.pageId, user, period]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -106,26 +105,8 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Show loading while Clerk is initializing
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  // Redirect to sign in if not authenticated
-  if (!user) {
-    return (
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-    );
-  }
-
-  // Show loading while fetching data
-  if (loading) {
+  // Show loading while auth is initializing or fetching data
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -148,6 +129,7 @@ export default function AnalyticsPage() {
   }
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
@@ -365,5 +347,6 @@ export default function AnalyticsPage() {
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   );
 }

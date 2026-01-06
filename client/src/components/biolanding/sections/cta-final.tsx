@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { SignInButton } from '@clerk/clerk-react';
+import { Link } from 'wouter';
 import { GradientOrb } from '../ui/gradient-orb';
 
 const benefits = [
@@ -107,7 +107,7 @@ export function CTAFinalSection() {
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
         >
-          <SignInButton mode="modal">
+          <Link href="/signup">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 size="lg"
@@ -117,7 +117,7 @@ export function CTAFinalSection() {
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </motion.div>
-          </SignInButton>
+          </Link>
 
           <p className="mt-4 text-white/60 text-sm">
             Nenhum cartao de credito necessario
