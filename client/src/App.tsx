@@ -8,8 +8,8 @@ import Home from "@/pages/home";
 import AdminPage from "@/pages/admin";
 import PageAdminPage from "@/pages/page-admin";
 import NotFound from "@/pages/not-found";
-import SignInPage from "@/pages/sign-in";
-import SignUpPage from "@/pages/sign-up";
+import LoginPage from "@/pages/login";
+import SignupPage from "@/pages/signup";
 import CheckoutSuccessPage from "@/pages/checkout-success";
 import CheckoutCancelPage from "@/pages/checkout-cancel";
 import ProdutoPage from "@/pages/produto";
@@ -32,8 +32,11 @@ function Router() {
       <Route path="/dashboard-old" component={DashboardPage} />
       <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/produto/:id" component={ProdutoPage} />
-      <Route path="/sign-in" component={SignInPage} />
-      <Route path="/sign-up" component={SignUpPage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/signup" component={SignupPage} />
+      {/* Legacy routes redirect */}
+      <Route path="/sign-in" component={LoginPage} />
+      <Route path="/sign-up" component={SignupPage} />
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel" component={CheckoutCancelPage} />
       <Route path="/analytics/:pageId" component={AnalyticsPage} />
