@@ -1,6 +1,5 @@
 import { Navbar } from '@/components/biolanding/sections/navbar';
 import { HeroSection } from '@/components/biolanding/sections/hero';
-import { LogoCloud } from '@/components/biolanding/sections/logo-cloud';
 import { FeaturesSection } from '@/components/biolanding/sections/features';
 import { TestimonialsSection } from '@/components/biolanding/sections/testimonials';
 import { HowItWorksSection } from '@/components/biolanding/sections/how-it-works';
@@ -19,9 +18,6 @@ export default function BioLandingPreview() {
       <main>
         {/* Hero Section - Award-winning design */}
         <HeroSection />
-
-        {/* Logo Cloud - Social proof */}
-        <LogoCloud />
 
         {/* Features with mockups */}
         <FeaturesSection />
