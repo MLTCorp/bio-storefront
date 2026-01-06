@@ -1354,6 +1354,311 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     }
 
     // ============ SUBSCRIPTIONS API ============
+
+    // Anonymous checkout - for users without account (goes to Stripe first)
+    if (path === '/api/subscriptions/anonymous-checkout' && method === 'POST') {
+      if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
+
+      const { planId } = req.body;
+
+      if (!planId || !['starter', 'pro'].includes(planId)) {
+        return res.status(400).json({ error: 'Invalid plan' });
+      }
+
+      // Get plan from database
+      const { data: plan } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('id', planId)
+        .single();
+
+      if (!plan || plan.price_monthly === 0) {
+        return res.status(400).json({ error: 'Invalid plan for checkout' });
+      }
+
+      // Generate unique setup token
+      const setupToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+
+      // Get or create Stripe price
+      let priceId = plan.stripe_price_id_monthly;
+
+      if (!priceId) {
+        // Create product and price on-the-fly (for development/first use)
+        const product = await stripe.products.create({
+          name: `BioLink ${plan.name}`,
+          metadata: { planId: plan.id },
+        });
+
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: plan.price_monthly,
+          currency: 'brl',
+          recurring: { interval: 'month' },
+        });
+
+        priceId = price.id;
+
+        // Update database with the new price ID
+        await supabase
+          .from('subscription_plans')
+          .update({ stripe_price_id_monthly: priceId })
+          .eq('id', planId);
+      }
+
+      const origin = req.headers.origin || req.headers.referer?.replace(/\/$/, '') || 'https://bio-storefront.vercel.app';
+
+      // Create Stripe checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card', 'boleto'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        success_url: `${origin}/setup-account?token=${setupToken}`,
+        cancel_url: `${origin}/#precos`,
+        locale: 'pt-BR',
+        metadata: {
+          planId: plan.id,
+          setupToken,
+        },
+        subscription_data: {
+          metadata: {
+            planId: plan.id,
+            setupToken,
+          },
+        },
+      });
+
+      // Save pending subscription
+      await supabase.from('pending_subscriptions').insert({
+        email: '',
+        plan_id: planId,
+        stripe_session_id: session.id,
+        setup_token: setupToken,
+        status: 'pending',
+      });
+
+      return res.json({ url: session.url, sessionId: session.id });
+    }
+
+    // Verify setup token and get pending subscription details
+    const verifyTokenMatch = path.match(/^\/api\/subscriptions\/verify-token\/([^/]+)$/);
+    if (verifyTokenMatch && method === 'GET') {
+      const token = verifyTokenMatch[1];
+
+      const { data: pending, error } = await supabase
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('setup_token', token)
+        .eq('status', 'pending')
+        .single();
+
+      if (error || !pending) {
+        return res.status(404).json({ error: 'Token not found or expired' });
+      }
+
+      // Check if expired (24 hours)
+      if (new Date(pending.expires_at) < new Date()) {
+        return res.status(410).json({ error: 'Token expired' });
+      }
+
+      return res.json({
+        email: pending.email,
+        plan_id: pending.plan_id,
+        planId: pending.plan_id, // alias for compatibility
+        stripeCustomerId: pending.stripe_customer_id,
+        stripeSubscriptionId: pending.stripe_subscription_id,
+        status: pending.status,
+      });
+    }
+
+    // Complete account setup after payment
+    if (path === '/api/subscriptions/complete-setup' && method === 'POST') {
+      const { setupToken, clerkId, email, name } = req.body;
+
+      if (!setupToken || !clerkId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Get pending subscription
+      const { data: pending, error: pendingError } = await supabase
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('setup_token', setupToken)
+        .eq('status', 'pending')
+        .single();
+
+      if (pendingError || !pending) {
+        return res.status(404).json({ error: 'Pending subscription not found' });
+      }
+
+      // Create or update user
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .upsert({
+          clerk_id: clerkId,
+          email: email || pending.email,
+          name,
+          plan: pending.plan_id,
+          stripe_customer_id: pending.stripe_customer_id,
+        }, { onConflict: 'clerk_id' })
+        .select()
+        .single();
+
+      if (userError) {
+        return res.status(500).json({ error: 'Failed to create user' });
+      }
+
+      // Create subscription record
+      if (pending.stripe_subscription_id) {
+        await supabase.from('subscriptions').upsert({
+          user_id: clerkId,
+          plan_id: pending.plan_id,
+          stripe_subscription_id: pending.stripe_subscription_id,
+          stripe_customer_id: pending.stripe_customer_id,
+          status: 'active',
+        }, { onConflict: 'user_id' });
+
+        // Update Stripe subscription metadata with userId
+        if (stripe && pending.stripe_subscription_id) {
+          await stripe.subscriptions.update(pending.stripe_subscription_id, {
+            metadata: { userId: clerkId, planId: pending.plan_id },
+          });
+        }
+      }
+
+      // Mark pending subscription as completed
+      await supabase
+        .from('pending_subscriptions')
+        .update({ status: 'completed' })
+        .eq('id', pending.id);
+
+      return res.json({
+        success: true,
+        user,
+        planId: pending.plan_id,
+      });
+    }
+
+    // Create checkout for logged in users
+    if (path === '/api/subscriptions/create-checkout' && method === 'POST') {
+      if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
+
+      const clerkId = req.headers['x-clerk-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { planId } = req.body;
+
+      if (!planId || !['starter', 'pro'].includes(planId)) {
+        return res.status(400).json({ error: 'Invalid plan' });
+      }
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id, email, stripe_customer_id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Get plan
+      const { data: plan } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('id', planId)
+        .single();
+
+      if (!plan) return res.status(404).json({ error: 'Plan not found' });
+
+      // Get or create Stripe customer
+      let customerId = user.stripe_customer_id;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: { userId: clerkId },
+        });
+        customerId = customer.id;
+
+        await supabase
+          .from('users')
+          .update({ stripe_customer_id: customerId })
+          .eq('clerk_id', clerkId);
+      }
+
+      // Get or create price
+      let priceId = plan.stripe_price_id_monthly;
+      if (!priceId) {
+        const product = await stripe.products.create({
+          name: `BioLink ${plan.name}`,
+          metadata: { planId: plan.id },
+        });
+
+        const price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: plan.price_monthly,
+          currency: 'brl',
+          recurring: { interval: 'month' },
+        });
+
+        priceId = price.id;
+
+        await supabase
+          .from('subscription_plans')
+          .update({ stripe_price_id_monthly: priceId })
+          .eq('id', planId);
+      }
+
+      const origin = req.headers.origin || 'https://bio-storefront.vercel.app';
+
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card', 'boleto'],
+        line_items: [{ price: priceId, quantity: 1 }],
+        mode: 'subscription',
+        success_url: `${origin}/dashboard?subscription=success`,
+        cancel_url: `${origin}/#precos`,
+        locale: 'pt-BR',
+        metadata: {
+          userId: clerkId,
+          planId: plan.id,
+        },
+        subscription_data: {
+          metadata: {
+            userId: clerkId,
+            planId: plan.id,
+          },
+        },
+      });
+
+      return res.json({ url: session.url, sessionId: session.id });
+    }
+
+    // Billing portal for managing subscription
+    if (path === '/api/subscriptions/billing-portal' && method === 'POST') {
+      if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
+
+      const clerkId = req.headers['x-clerk-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { data: user } = await supabase
+        .from('users')
+        .select('stripe_customer_id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user?.stripe_customer_id) {
+        return res.status(404).json({ error: 'No Stripe customer found' });
+      }
+
+      const origin = req.headers.origin || 'https://bio-storefront.vercel.app';
+
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripe_customer_id,
+        return_url: `${origin}/dashboard`,
+      });
+
+      return res.json({ url: session.url });
+    }
+
     if (path === '/api/subscriptions/current' && method === 'GET') {
       const clerkId = req.headers['x-clerk-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
@@ -1392,7 +1697,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       // Default free limits
       if (!limits) {
         limits = {
-          pages: 1,
+          pages: 3,
           products: 10,
           components_per_page: -1,
           ai_generations_per_day: 3,

@@ -72,7 +72,10 @@ export default function SetupAccountPage() {
     setCompleting(true);
     try {
       const response = await apiRequest("POST", "/api/subscriptions/complete-setup", {
-        token,
+        setupToken: token,
+        clerkId: user?.id,
+        email: user?.primaryEmailAddress?.emailAddress,
+        name: user?.fullName || user?.firstName || '',
       });
 
       const data = await response.json();
