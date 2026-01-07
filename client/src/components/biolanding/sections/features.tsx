@@ -2,16 +2,16 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
-import { Sparkles, Zap, CreditCard, ArrowRight } from 'lucide-react';
+import { Sparkles, ShoppingBag, Calendar, ArrowRight } from 'lucide-react';
 import { BlurFade } from '../ui/blur-fade';
 import { FeaturePhoneMockup } from '../feature-phone-mockup';
 
 const features = [
   {
-    title: 'Integracoes Poderosas',
+    title: 'Vitrine de Produtos',
     description:
-      'Conecte Instagram, WhatsApp, Stripe, Hotmart e mais. Tudo sincronizado automaticamente.',
-    icon: Zap,
+      'Mostre seus produtos de forma profissional. Fotos, precos e descricoes organizadas para seus seguidores.',
+    icon: ShoppingBag,
     color: '#F59E0B',
     gradient: 'from-amber-500/20 to-orange-500/20',
     ugcImage: '/images/features/elegant-influencer.png',
@@ -19,10 +19,10 @@ const features = [
     mockupLeft: true,
   },
   {
-    title: 'Checkout Simplificado',
+    title: 'Agendamento Integrado',
     description:
-      'Seus seguidores compram com 1 toque. PIX, cartao e boleto integrados. Conversao maxima.',
-    icon: CreditCard,
+      'Seus clientes agendam direto pelo seu perfil. Calendario integrado com horarios disponiveis.',
+    icon: Calendar,
     color: '#10B981',
     gradient: 'from-emerald-500/20 to-teal-500/20',
     ugcImage: '/images/features/fitness-influencer.png',
