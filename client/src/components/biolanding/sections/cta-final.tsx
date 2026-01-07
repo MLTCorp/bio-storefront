@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
 import { GradientOrb } from '../ui/gradient-orb';
 
 const benefits = [
@@ -107,17 +106,20 @@ export function CTAFinalSection() {
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
         >
-          <Link href="/signup">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                size="lg"
-                className="h-16 px-10 text-lg font-bold gap-3 bg-white text-[#7F4AFF] hover:bg-white/90 shadow-2xl shadow-black/20 rounded-2xl"
-              >
-                Criar meu site pessoal de links na bio
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </motion.div>
-          </Link>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              size="lg"
+              className="h-16 px-10 text-lg font-bold gap-3 bg-white text-[#7F4AFF] hover:bg-white/90 shadow-2xl shadow-black/20 rounded-2xl"
+              onClick={() => {
+                document
+                  .getElementById('precos')
+                  ?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              Criar meu site pessoal de links na bio
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </motion.div>
 
           <p className="mt-4 text-white/60 text-sm">
             Nenhum cartao de credito necessario

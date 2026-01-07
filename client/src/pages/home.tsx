@@ -2,7 +2,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { Redirect } from "wouter";
 import { Navbar } from "@/components/biolanding/sections/navbar";
 import { HeroSection } from "@/components/biolanding/sections/hero";
-import { LogoCloud } from "@/components/biolanding/sections/logo-cloud";
 import { FeaturesSection } from "@/components/biolanding/sections/features";
 import { HowItWorksSection } from "@/components/biolanding/sections/how-it-works";
 import { PricingSection } from "@/components/biolanding/sections/pricing";
@@ -36,7 +35,6 @@ export default function Home() {
       <Navbar />
       <main>
         <HeroSection />
-        <LogoCloud />
         <FeaturesSection />
         <HowItWorksSection />
         <PricingSection />

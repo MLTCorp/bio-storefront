@@ -169,7 +169,7 @@ export function HeroPhoneMockup() {
       {/* Circular Floating Elements - Left side */}
       <CircleFloating
         icon={<Calendar className="w-6 h-6 text-blue-600" />}
-        label="Calendar"
+        label="Agenda"
         bgColor="linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%)"
         iconBg="white"
         position="-left-28 top-8"
@@ -190,7 +190,7 @@ export function HeroPhoneMockup() {
       {/* Circular Floating Elements - Right side */}
       <CircleFloating
         icon={<GraduationCap className="w-6 h-6 text-indigo-600" />}
-        label="Courses"
+        label="Cursos"
         bgColor="linear-gradient(135deg, #DDD6FE 0%, #C4B5FD 100%)"
         iconBg="white"
         position="-right-20 top-16"
@@ -283,9 +283,9 @@ export function HeroPhoneMockup() {
                     <div className="w-6 h-6 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-800">My Creator Course</p>
+                    <p className="text-sm font-bold text-gray-800">Meu Curso de Criador</p>
                     <p className="text-[10px] text-gray-500 line-clamp-1">
-                      Everything you need to know about making money online!
+                      Tudo que voce precisa saber para ganhar dinheiro online!
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-sm font-bold text-gray-800">R$ 129</span>
@@ -310,7 +310,7 @@ export function HeroPhoneMockup() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <span>Get Started</span>
+                  <span>Comecar</span>
                   <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </motion.div>
@@ -327,7 +327,7 @@ export function HeroPhoneMockup() {
                     <Calendar className="w-4 h-4 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-gray-800">1:1 Coaching Session</p>
+                    <p className="text-xs font-semibold text-gray-800">Mentoria Individual</p>
                   </div>
                   <span className="text-xs font-bold text-gray-600">R$ 149</span>
                 </div>
@@ -337,7 +337,7 @@ export function HeroPhoneMockup() {
                     <FileText className="w-4 h-4 text-red-500" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-gray-800">Download My Guide</p>
+                    <p className="text-xs font-semibold text-gray-800">Baixar Meu Guia</p>
                   </div>
                   <span className="text-xs font-bold text-gray-600">R$ 29</span>
                 </div>
@@ -351,7 +351,7 @@ export function HeroPhoneMockup() {
                 transition={{ delay: 1 }}
               >
                 <button className="w-full py-2.5 rounded-xl text-white text-sm font-semibold flex items-center justify-between px-4 bg-gradient-to-r from-indigo-500 to-purple-600">
-                  <span>Book a Time</span>
+                  <span>Agendar Horario</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </motion.div>

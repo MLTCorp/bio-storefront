@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
 import { AnimatedGroup } from '../ui/animated-group';
 import { GradientOrbsBackground } from '../ui/gradient-orb';
 import { HeroPhoneMockup } from '../hero-phone-mockup';
@@ -133,23 +132,26 @@ export function HeroSection() {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4 mb-10 sm:mb-12">
-                  <Link href="/signup">
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        size="lg"
-                        className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-semibold rounded-2xl text-white shadow-xl gap-2 w-full sm:w-auto"
-                        style={{
-                          background:
-                            'radial-gradient(41.3% 114.84% at 50% 54.35%, #B090FF 0%, #7F4AFF 100%)',
-                          boxShadow: '0 20px 50px rgba(127, 74, 255, 0.3)',
-                        }}
-                      >
-                        <span className="sm:hidden">Comecar Agora</span>
-                        <span className="hidden sm:inline">Criar meu site de links</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </Button>
-                    </motion.div>
-                  </Link>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      size="lg"
+                      className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-semibold rounded-2xl text-white shadow-xl gap-2 w-full sm:w-auto"
+                      style={{
+                        background:
+                          'radial-gradient(41.3% 114.84% at 50% 54.35%, #B090FF 0%, #7F4AFF 100%)',
+                        boxShadow: '0 20px 50px rgba(127, 74, 255, 0.3)',
+                      }}
+                      onClick={() => {
+                        document
+                          .getElementById('precos')
+                          ?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      <span className="sm:hidden">Comecar Agora</span>
+                      <span className="hidden sm:inline">Criar meu site de links</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </motion.div>
 
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
