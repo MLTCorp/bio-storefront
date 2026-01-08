@@ -102,6 +102,7 @@ function PagesListContent() {
         body: JSON.stringify({
           username: newPageUsername.toLowerCase(),
           profile_name: newPageName || "Minha Página",
+          email: user!.email, // Send email to auto-create user if needed
         }),
       });
 

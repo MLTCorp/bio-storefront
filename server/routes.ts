@@ -15,6 +15,53 @@ import {
   handleSubscriptionWebhook,
 } from "./subscription";
 
+// Helper: Get or create user by Supabase Auth ID
+// Uses clerk_id column to store Supabase Auth user ID (for backward compatibility)
+async function getOrCreateUser(supabaseUserId: string, email?: string): Promise<{ id: number; email: string } | null> {
+  // Try to find existing user
+  const { data: user } = await (supabase as any)
+    .from("users")
+    .select("id, email")
+    .eq("clerk_id", supabaseUserId)
+    .single();
+
+  if (user) return user as { id: number; email: string };
+
+  // User not found - create new user if we have email
+  if (!email) {
+    // Try to get email from Supabase Auth admin API (if service role key is configured)
+    try {
+      const { data: authData } = await supabase.auth.admin.getUserById(supabaseUserId);
+      email = authData?.user?.email;
+    } catch (e) {
+      console.log("[getOrCreateUser] Could not get email from auth admin API");
+    }
+  }
+
+  if (!email) return null;
+
+  // Create user
+  const { data: newUser, error } = await (supabase as any)
+    .from("users")
+    .insert({
+      clerk_id: supabaseUserId,
+      email,
+      username: email.split('@')[0] + '_' + Date.now(),
+      password: 'supabase_auth_managed',
+      plan: 'free',
+    })
+    .select("id, email")
+    .single();
+
+  if (error) {
+    console.error("[getOrCreateUser] Error creating user:", error);
+    return null;
+  }
+
+  console.log(`[getOrCreateUser] Created new user: ${email} (auth_id: ${supabaseUserId})`);
+  return newUser as { id: number; email: string };
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -144,7 +191,7 @@ export async function registerRoutes(
   // Get user's store by clerk_id
   app.get("/api/user/store", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -256,7 +303,7 @@ export async function registerRoutes(
   // Update user's store
   app.patch("/api/user/store", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -344,7 +391,7 @@ export async function registerRoutes(
   // Admin: Transfer page ownership to current user
   app.post("/api/admin/transfer-page/:pageId", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       const { email } = req.body || {};
 
       if (!clerkId) {
@@ -469,30 +516,30 @@ export async function registerRoutes(
   // Get all user's pages
   app.get("/api/pages", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
-      console.log(`[GET /api/pages] clerk_id: ${clerkId}`);
+      const authId = req.headers["x-supabase-user-id"] as string;
+      console.log(`[GET /api/pages] auth_id: ${authId}`);
 
-      if (!clerkId) {
+      if (!authId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      // Find user by clerk_id
+      // Find user by Supabase Auth ID (stored in clerk_id column for backward compatibility)
       let { data: user } = await supabase
         .from("users")
         .select("id, email")
-        .eq("clerk_id", clerkId)
+        .eq("clerk_id", authId)
         .single();
 
-      // If user doesn't exist, return empty array (user just needs to create their first page)
+      // If user doesn't exist, return empty array (user will be created when they create their first page)
       if (!user) {
-        console.log(`[GET /api/pages] User not found for clerk_id: ${clerkId} - returning empty array`);
+        console.log(`[GET /api/pages] User not found for auth_id: ${authId} - returning empty array`);
         return res.json([]);
       }
 
       console.log(`[GET /api/pages] Found user: ${user.email} (${user.id})`);
 
       // Get user's pages
-      const { data: pages, error } = await supabase
+      const { data: pages, error } = await (supabase as any)
         .from("pages")
         .select("*")
         .eq("user_id", user.id)
@@ -511,7 +558,7 @@ export async function registerRoutes(
   // Get single page with components
   app.get("/api/pages/:pageId", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       const pageId = parseInt(req.params.pageId);
 
       // Get page
@@ -697,35 +744,31 @@ export async function registerRoutes(
   // Create new page
   app.post("/api/pages", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
-      if (!clerkId) {
+      const authId = req.headers["x-supabase-user-id"] as string;
+      if (!authId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { username, profile_name } = req.body;
+      const { username, profile_name, email } = req.body;
 
       if (!username) {
         return res.status(400).json({ error: "Username is required" });
       }
 
-      // Find user
-      const { data: user } = await supabase
-        .from("users")
-        .select("id")
-        .eq("clerk_id", clerkId)
-        .single();
+      // Find or create user (auto-creates if doesn't exist)
+      const user = await getOrCreateUser(authId, email);
 
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ error: "User not found and could not be created" });
       }
 
       // Check page limit based on user's plan
       const { count } = await supabase
         .from("pages")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", user.id as any);
 
-      const limits = await getUserPlanLimits(clerkId);
+      const limits = await getUserPlanLimits(authId);
       const pageLimit = limits.pages as number;
 
       // -1 significa ilimitado
@@ -761,7 +804,7 @@ export async function registerRoutes(
       }
 
       // Create page
-      const { data: page, error } = await supabase
+      const { data: page, error } = await (supabase as any)
         .from("pages")
         .insert({
           user_id: user.id,
@@ -782,7 +825,7 @@ export async function registerRoutes(
   // Update page
   app.patch("/api/pages/:pageId", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -823,7 +866,7 @@ export async function registerRoutes(
   // Delete page
   app.delete("/api/pages/:pageId", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -861,7 +904,7 @@ export async function registerRoutes(
   // Add component to page
   app.post("/api/pages/:pageId/components", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -925,7 +968,7 @@ export async function registerRoutes(
   // Update component
   app.patch("/api/components/:componentId", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -954,7 +997,7 @@ export async function registerRoutes(
   // Delete component
   app.delete("/api/components/:componentId", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -977,7 +1020,7 @@ export async function registerRoutes(
   // Reorder components
   app.post("/api/pages/:pageId/reorder", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1010,7 +1053,7 @@ export async function registerRoutes(
   // Generate image with AI
   app.post("/api/ai/generate-image", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1236,7 +1279,7 @@ export async function registerRoutes(
   // Improve prompt with AI
   app.post("/api/ai/improve-prompt", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1307,7 +1350,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // Get remaining AI generations for today
   app.get("/api/ai/remaining", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1500,7 +1543,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // GET /api/analytics/:pageId - Get detailed analytics
   app.get("/api/analytics/:pageId", async (req, res) => {
     try {
-      const clerkId = req.headers['x-clerk-user-id'] as string;
+      const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
 
       const pageId = parseInt(req.params.pageId);
@@ -1624,7 +1667,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // Get user's current subscription
   app.get("/api/subscriptions/current", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1662,7 +1705,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // Create subscription checkout session
   app.post("/api/subscriptions/checkout", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1809,7 +1852,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // Complete setup after payment (called after Clerk login on setup page)
   app.post("/api/subscriptions/complete-setup", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1878,7 +1921,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // Cancel subscription
   app.post("/api/subscriptions/cancel", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -1894,7 +1937,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
   // Create billing portal session
   app.post("/api/subscriptions/portal", async (req, res) => {
     try {
-      const clerkId = req.headers["x-clerk-user-id"] as string;
+      const clerkId = req.headers["x-supabase-user-id"] as string;
       if (!clerkId) {
         return res.status(401).json({ error: "Unauthorized" });
       }

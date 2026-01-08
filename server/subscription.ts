@@ -301,7 +301,7 @@ async function getCurrentCount(userId: string, limitType: LimitType): Promise<nu
 
 export function checkPlanLimitMiddleware(limitType: LimitType) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const clerkId = req.headers['x-clerk-user-id'] as string;
+    const clerkId = req.headers['x-supabase-user-id'] as string;
     if (!clerkId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
