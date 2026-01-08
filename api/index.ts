@@ -108,6 +108,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.send(html);
     }
 
+    // ============ PUBLIC STATS (for landing page) ============
+    if (path === '/api/public/stats' && method === 'GET') {
+      // Get total pages count
+      const { count: pagesCount } = await supabase
+        .from('pages')
+        .select('*', { count: 'exact', head: true });
+
+      // Get total views and clicks (sum from all pages)
+      const { data: statsData } = await supabase
+        .from('pages')
+        .select('views, clicks');
+
+      let totalViews = 0;
+      let totalClicks = 0;
+
+      if (statsData) {
+        statsData.forEach((page: any) => {
+          totalViews += page.views || 0;
+          totalClicks += page.clicks || 0;
+        });
+      }
+
+      return res.json({
+        pages: pagesCount || 0,
+        views: totalViews,
+        clicks: totalClicks,
+      });
+    }
+
     // ============ CONFIG ROUTES ============
     if (path === '/api/config' && method === 'GET') {
       const { data, error } = await supabase
@@ -225,9 +254,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (path === '/api/user/onboard' && method === 'POST') {
-      const { clerkId, email, name, username, templateId } = req.body;
+      const { clerkId, supabaseId, email, name, username, templateId } = req.body;
+      const userId = supabaseId || clerkId; // Accept both for compatibility
 
-      if (!clerkId || !username) {
+      if (!userId || !username) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -246,11 +276,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data: user, error: userError } = await supabase
         .from('users')
         .upsert({
-          clerk_id: clerkId,
+          clerk_id: userId,
           email,
           name,
           username: username.toLowerCase(),
-          password: 'clerk_managed',
+          password: 'supabase_managed',
         }, { onConflict: 'clerk_id' })
         .select()
         .single();

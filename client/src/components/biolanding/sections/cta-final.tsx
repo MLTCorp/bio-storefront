@@ -62,8 +62,8 @@ export function CTAFinalSection() {
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
         >
-          Pronto para criar seu{' '}
-          <span className="text-white/80">site pessoal</span>?
+          Pronto para criar sua{' '}
+          <span className="text-white/80">pagina de vendas</span>?
         </motion.h2>
 
         <motion.p
@@ -116,7 +116,7 @@ export function CTAFinalSection() {
                   ?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
-              Criar meu site pessoal de links na bio
+              Criar minha pagina de vendas
               <ArrowRight className="w-5 h-5" />
             </Button>
           </motion.div>

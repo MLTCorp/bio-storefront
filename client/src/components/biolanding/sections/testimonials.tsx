@@ -9,7 +9,7 @@ const testimonials = [
       'Fiz R$5.000 na primeira semana usando o BioLanding. A facilidade de criar a pagina e conectar com o WhatsApp fez toda a diferenca!',
     name: 'Ana Carolina',
     role: 'Coach de Negocios',
-    image: 'AC',
+    image: 'https://randomuser.me/api/portraits/women/44.jpg',
     color: '#7F4AFF',
     size: 'large',
   },
@@ -17,7 +17,7 @@ const testimonials = [
     quote: 'Muito mais profissional que o Linktree. Meus clientes elogiam demais.',
     name: 'Pedro Silva',
     role: 'Personal Trainer',
-    image: 'PS',
+    image: 'https://randomuser.me/api/portraits/men/32.jpg',
     color: '#3B82F6',
     size: 'small',
   },
@@ -26,7 +26,7 @@ const testimonials = [
       'A integracao com PIX e incrivel. Recebo pagamentos instantaneamente e o checkout e super rapido.',
     name: 'Julia Santos',
     role: 'Designer',
-    image: 'JS',
+    image: 'https://randomuser.me/api/portraits/women/68.jpg',
     color: '#111111',
     size: 'medium',
   },
@@ -34,7 +34,7 @@ const testimonials = [
     quote: 'Triplicou minhas vendas em 2 meses!',
     name: 'Lucas Oliveira',
     role: 'Marketing Digital',
-    image: 'LO',
+    image: 'https://randomuser.me/api/portraits/men/75.jpg',
     color: '#10B981',
     size: 'small',
   },
@@ -43,7 +43,7 @@ const testimonials = [
       'A melhor ferramenta para criadores de conteudo. Simples, bonita e funcional. Nao troco por nada.',
     name: 'Mariana Costa',
     role: 'Influenciadora',
-    image: 'MC',
+    image: 'https://randomuser.me/api/portraits/women/89.jpg',
     color: '#7F4AFF',
     size: 'medium',
   },
@@ -51,7 +51,7 @@ const testimonials = [
     quote: 'Suporte incrivel e a plataforma e muito estavel. Recomendo!',
     name: 'Rafael Lima',
     role: 'Empreendedor',
-    image: 'RL',
+    image: 'https://randomuser.me/api/portraits/men/22.jpg',
     color: '#3B82F6',
     size: 'small',
   },
@@ -108,12 +108,11 @@ function TestimonialCard({ testimonial, index }: TestimonialCardProps) {
 
         {/* Author */}
         <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold"
-            style={{ background: testimonial.color }}
-          >
-            {testimonial.image}
-          </div>
+          <img
+            src={testimonial.image}
+            alt={testimonial.name}
+            className="w-12 h-12 rounded-xl object-cover"
+          />
           <div>
             <p
               className="font-semibold"

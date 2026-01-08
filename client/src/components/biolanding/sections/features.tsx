@@ -1,10 +1,18 @@
 'use client';
 
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Sparkles, ShoppingBag, Calendar, ArrowRight } from 'lucide-react';
 import { BlurFade } from '../ui/blur-fade';
 import { FeaturePhoneMockup } from '../feature-phone-mockup';
+
+// Fotos para os avatares de social proof
+const avatarPhotos = [
+  'https://randomuser.me/api/portraits/women/12.jpg',
+  'https://randomuser.me/api/portraits/men/15.jpg',
+  'https://randomuser.me/api/portraits/women/28.jpg',
+  'https://randomuser.me/api/portraits/men/42.jpg',
+];
 
 const features = [
   {
@@ -17,6 +25,8 @@ const features = [
     ugcImage: '/images/features/elegant-influencer.png',
     variant: 'store' as const,
     mockupLeft: true,
+    statKey: 'pages' as const,
+    statLabel: 'paginas criadas',
   },
   {
     title: 'Agendamento Integrado',
@@ -28,6 +38,8 @@ const features = [
     ugcImage: '/images/features/fitness-influencer.png',
     variant: 'video' as const,
     mockupLeft: false,
+    statKey: 'views' as const,
+    statLabel: 'visitas rastreadas',
   },
   {
     title: 'Sem Codigo Necessario',
@@ -39,15 +51,24 @@ const features = [
     ugcImage: '/images/features/nail-designer.png',
     variant: 'links' as const,
     mockupLeft: true,
+    statKey: 'clicks' as const,
+    statLabel: 'cliques em produtos',
   },
 ];
+
+interface Stats {
+  pages: number;
+  views: number;
+  clicks: number;
+}
 
 interface FeatureShowcaseProps {
   feature: (typeof features)[0];
   index: number;
+  stats: Stats;
 }
 
-function FeatureShowcase({ feature, index }: FeatureShowcaseProps) {
+function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
   const mockupLeft = feature.mockupLeft;
   const ref = useRef(null);
 
@@ -191,13 +212,12 @@ function FeatureShowcase({ feature, index }: FeatureShowcaseProps) {
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6">
             <div className="flex items-center gap-3">
               <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <motion.div
+                {avatarPhotos.map((photo, i) => (
+                  <motion.img
                     key={i}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white shadow-lg"
-                    style={{
-                      background: `linear-gradient(135deg, ${feature.color}40 0%, ${feature.color}20 100%)`,
-                    }}
+                    src={photo}
+                    alt={`Usuario ${i + 1}`}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white shadow-lg object-cover"
                     initial={{ x: -10, opacity: 0 }}
                     whileInView={{ x: 0, opacity: 1 }}
                     viewport={{ once: true }}
@@ -205,7 +225,9 @@ function FeatureShowcase({ feature, index }: FeatureShowcaseProps) {
                   />
                 ))}
               </div>
-              <span className="text-xs sm:text-sm font-medium text-gray-600">+2.000 usuarios</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-600">
+                +{stats[feature.statKey].toLocaleString('pt-BR')} {feature.statLabel}
+              </span>
             </div>
 
             <motion.button
@@ -224,6 +246,26 @@ function FeatureShowcase({ feature, index }: FeatureShowcaseProps) {
 }
 
 export function FeaturesSection() {
+  const [stats, setStats] = useState<Stats>({ pages: 100, views: 500, clicks: 250 });
+
+  useEffect(() => {
+    // Fetch real stats from API
+    fetch('/api/public/stats')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.pages !== undefined) {
+          setStats({
+            pages: Math.max(data.pages, 100), // Minimum values for display
+            views: Math.max(data.views, 500),
+            clicks: Math.max(data.clicks, 250),
+          });
+        }
+      })
+      .catch(() => {
+        // Keep default values on error
+      });
+  }, []);
+
   return (
     <section id="recursos" className="py-16 sm:py-20 lg:py-32 bg-gradient-to-b from-white via-gray-50/50 to-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -264,7 +306,7 @@ export function FeaturesSection() {
 
         {/* Features */}
         {features.map((feature, index) => (
-          <FeatureShowcase key={index} feature={feature} index={index} />
+          <FeatureShowcase key={index} feature={feature} index={index} stats={stats} />
         ))}
       </div>
 
