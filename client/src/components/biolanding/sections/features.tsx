@@ -6,13 +6,27 @@ import { Sparkles, ShoppingBag, Calendar, ArrowRight } from 'lucide-react';
 import { BlurFade } from '../ui/blur-fade';
 import { FeaturePhoneMockup } from '../feature-phone-mockup';
 
-// Fotos para os avatares de social proof
-const avatarPhotos = [
-  'https://randomuser.me/api/portraits/women/12.jpg',
-  'https://randomuser.me/api/portraits/men/15.jpg',
-  'https://randomuser.me/api/portraits/women/28.jpg',
-  'https://randomuser.me/api/portraits/men/42.jpg',
-];
+// Avatares para cada seção (diferentes para não repetir)
+const avatarsByFeature = {
+  pages: [
+    'https://randomuser.me/api/portraits/women/12.jpg',
+    'https://randomuser.me/api/portraits/men/15.jpg',
+    'https://randomuser.me/api/portraits/women/28.jpg',
+    'https://randomuser.me/api/portraits/men/42.jpg',
+  ],
+  views: [
+    'https://randomuser.me/api/portraits/women/65.jpg',
+    'https://randomuser.me/api/portraits/men/78.jpg',
+    'https://randomuser.me/api/portraits/women/33.jpg',
+    'https://randomuser.me/api/portraits/men/54.jpg',
+  ],
+  clicks: [
+    'https://randomuser.me/api/portraits/men/91.jpg',
+    'https://randomuser.me/api/portraits/women/47.jpg',
+    'https://randomuser.me/api/portraits/men/23.jpg',
+    'https://randomuser.me/api/portraits/women/81.jpg',
+  ],
+};
 
 const features = [
   {
@@ -212,7 +226,7 @@ function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-6">
             <div className="flex items-center gap-3">
               <div className="flex -space-x-3">
-                {avatarPhotos.map((photo, i) => (
+                {avatarsByFeature[feature.statKey].map((photo, i) => (
                   <motion.img
                     key={i}
                     src={photo}
@@ -246,7 +260,7 @@ function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
 }
 
 export function FeaturesSection() {
-  const [stats, setStats] = useState<Stats>({ pages: 100, views: 500, clicks: 250 });
+  const [stats, setStats] = useState<Stats>({ pages: 0, views: 0, clicks: 0 });
 
   useEffect(() => {
     // Fetch real stats from API
@@ -255,9 +269,9 @@ export function FeaturesSection() {
       .then((data) => {
         if (data.pages !== undefined) {
           setStats({
-            pages: Math.max(data.pages, 100), // Minimum values for display
-            views: Math.max(data.views, 500),
-            clicks: Math.max(data.clicks, 250),
+            pages: data.pages || 0,
+            views: data.views || 0,
+            clicks: data.clicks || 0,
           });
         }
       })
