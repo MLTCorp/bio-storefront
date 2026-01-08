@@ -19,6 +19,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-supabase-user-id',
 };
 
+// Helper: Get or create user by Supabase Auth ID
+// Uses clerk_id column to store Supabase Auth user ID (for backward compatibility)
+async function getOrCreateUser(supabaseUserId: string, email?: string): Promise<{ id: number; email: string } | null> {
+  // Try to find existing user
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, email')
+    .eq('clerk_id', supabaseUserId)
+    .single();
+
+  if (user) return user as { id: number; email: string };
+
+  // User not found - need email to create
+  if (!email) {
+    console.log('[getOrCreateUser] User not found and no email provided');
+    return null;
+  }
+
+  // Create user
+  const { data: newUser, error } = await supabase
+    .from('users')
+    .insert({
+      clerk_id: supabaseUserId,
+      email,
+      username: email.split('@')[0] + '_' + Date.now(),
+      password: 'supabase_auth_managed',
+      plan: 'free',
+    } as any)
+    .select('id, email')
+    .single();
+
+  if (error) {
+    console.error('[getOrCreateUser] Error creating user:', error);
+    return null;
+  }
+
+  console.log(`[getOrCreateUser] Created new user: ${email} (auth_id: ${supabaseUserId})`);
+  return newUser as { id: number; email: string };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -470,20 +510,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (path === '/api/pages' && method === 'POST') {
-      const clerkId = req.headers['x-supabase-user-id'] as string;
-      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+      const authId = req.headers['x-supabase-user-id'] as string;
+      if (!authId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const { username, profile_name } = req.body;
+      const { username, profile_name, email } = req.body;
       if (!username) return res.status(400).json({ error: 'Username is required' });
 
-      // Find user
-      const { data: user } = await supabase
-        .from('users')
-        .select('id')
-        .eq('clerk_id', clerkId)
-        .single();
+      // Get or create user (auto-creates if doesn't exist)
+      const user = await getOrCreateUser(authId, email);
 
-      if (!user) return res.status(404).json({ error: 'User not found' });
+      if (!user) {
+        return res.status(400).json({
+          error: 'User not found. Please provide email to create account.',
+          code: 'USER_NOT_FOUND'
+        });
+      }
 
       // Check page limit (max 20 - Pro users have unlimited via subscription check)
       const { count } = await supabase
