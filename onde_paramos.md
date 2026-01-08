@@ -1,63 +1,105 @@
 # Onde Paramos - Bio-Storefront
 
-## Ultimo Commit: `b748e12`
+## Ultimo Commit: `9534bba`
 
-## Data: 24/12/2024
+## Data: 08/01/2025
 
-## O que foi feito:
+## Informacoes de Deploy (IMPORTANTE)
 
-### Popup de Upgrade para Usuarios Free:
-- Criado `branding-upgrade-popup.tsx` com planos Starter (R$29,90) e Pro (R$97)
-- Cabecalho "Muito mais IA!" destacando geracao de imagens
-- Plano Pro destacado como "RECOMENDADO"
-- Checkout direto via Stripe ao clicar em "Assinar"
+### Vercel Project
+- **Project Name**: bio-storefront
+- **Team**: sincron-team
+- **Project ID**: prj_TJHJrkaUnREkfdYimWY6l6mVIaHY
 
-### Limite de Zoom em Mobile:
-- Criado hook `useResponsiveImageScale` para limitar zoom maximo em 130% em telas < 640px
-- Aplicado em Card 3D, Compacto e E-commerce
-- Evita imagens cortadas demais em telas pequenas
+### URLs de Producao
+- **Dominio Principal**: https://biolanding.com
+- **Dominio Vercel**: https://biolanding.vercel.app
+- **Preview URLs**: https://bio-storefront-[hash]-sincron-team.vercel.app
 
-### Estilos de Exibicao de Produto:
-- 3 estilos: Card 3D (parallax), Compacto (rating + CTA), E-commerce (seletor de kits)
-- Dropdown simplificado no editor de produto
+### ATENCAO
+- NAO usar `bio-storefront.vercel.app` - este dominio pertence a outro projeto!
+- Para testar a API: `curl https://biolanding.vercel.app/api/debug/pages`
+- Deploy automatico via git push para branch main
 
-### Countdown Timer de Desconto:
-- Date picker para definir data de expiracao do desconto
-- Timer visual com dias/horas/minutos/segundos
-- Presets rapidos (24h, 48h, 7 dias)
-- Desconto desativa automaticamente ao expirar
+---
 
-### Sistema de Assinaturas:
-- Documentacao de planos (Free, Starter, Pro)
-- Limites configurados (paginas, produtos, IA, analytics)
-- Fix de UX mobile (drag-and-drop, botoes visiveis)
+## O que foi feito nesta sessao:
 
-## Commits desde ultima sessao (63e22a7):
-- `b748e12` - feat: add branding upgrade popup for free plan users
-- `4bc99da` - fix: limit product image zoom on mobile screens
-- `f5f0571` - refactor: simplify product display style selector to dropdown
-- `e5ce214` - feat: add discount countdown timer with date picker
-- `c421f90` - feat: add subscription system and fix mobile UX issues
-- `f0c6138` - docs: add subscription plans documentation
-- `3ef04f9` - feat: add product display styles (card, compact, ecommerce)
-- `27ef47f` - feat: add new page builder elements and enhance link customization
+### Correcao Critica - Supabase Auth Integration (08/01/2025):
+O sistema foi migrado de Clerk Auth para Supabase Auth, mas a API serverless da Vercel (`api/index.ts`) nao foi atualizada, causando erro ao criar paginas.
 
-## Arquivos Principais Modificados:
-- `client/src/components/branding-upgrade-popup.tsx` (novo)
-- `client/src/components/ui/shirt-parallax-card.tsx`
-- `client/src/components/page-builder/component-renderer.tsx`
-- `client/src/components/page-builder/editors/product-editor.tsx`
-- `client/src/components/ui/countdown-timer.tsx`
-- `client/src/pages/store.tsx`
-- `server/routes.ts`
+**Problema**: Usuarios novos com Supabase Auth nao conseguiam criar paginas porque:
+1. O frontend enviava `x-supabase-user-id` corretamente
+2. A API tentava buscar usuario na tabela `users` pelo campo `clerk_id`
+3. Como o usuario nao existia na tabela `users`, retornava erro 404
 
-## Proximos Passos:
-- Implementar limites reais baseado no plano do usuario
-- Testar fluxo completo de checkout Stripe
-- Adicionar secao de testimonials na BioLanding
-- Melhorar feedback visual ao atingir limites
+**Solucao aplicada**:
+1. Adicionada funcao `getOrCreateUser()` em `api/index.ts`
+2. Atualizado POST `/api/pages` para aceitar `email` e auto-criar usuario
+3. Sistema agora cria automaticamente registro na tabela `users` quando usuario tenta criar primeira pagina
 
-## Progresso Estimado: 95%
+### Arquivos modificados:
+- `api/index.ts` - Adicionada funcao getOrCreateUser + atualizacao POST /api/pages
+- `server/routes.ts` - Mesma correcao para desenvolvimento local
+- `client/src/pages/pages-list.tsx` - Frontend envia email ao criar pagina
 
-## Deploy: Vercel (auto-deploy via git push)
-- URL: https://bio-storefront.vercel.app
+### Commits:
+- `9534bba` - fix: add user auto-creation to Vercel serverless API
+- `acef365` - fix: use x-supabase-user-id header for Supabase Auth
+- `c7e00b7` - feat: upgrade modal improvements
+
+---
+
+## Sessao Anterior (06/01/2025):
+
+### Melhorias na Landing Page:
+- Removida secao LogoCloud (icones de integracoes)
+- Mockup do Hero traduzido para portugues (Agenda, Cursos, Mentoria Individual, etc)
+- Botoes CTA atualizados para scroll ate secao de precos (em vez de /signup direto)
+- Feature "Integracoes Poderosas" -> "Vitrine de Produtos"
+- Feature "Checkout Simplificado" -> "Agendamento Integrado"
+
+---
+
+## Dados dos Usuarios:
+
+### Michelle (Admin):
+- Email: michelle.faustino.b@gmail.com
+- Supabase Auth ID: 45a8652d-f87e-4b5a-97ea-e86743313115
+- Plano: pro
+- Paginas: michellebarbosa, daianeorcioli, ameninalongbeauty
+
+### Usuario Pro (Teste Stripe):
+- Email: oitaua@hotmail.com
+- Plano: pro (comprado via Stripe)
+- Status: Precisa criar primeira pagina para auto-criar registro em `users`
+
+---
+
+## Arquitetura Auth (Pos-Migracao)
+
+### Frontend:
+- Usa `@supabase/supabase-js` para auth
+- Contexto em `client/src/contexts/auth-context.tsx`
+- Envia `x-supabase-user-id` header com `user.id` do Supabase Auth
+
+### Backend:
+- Coluna `clerk_id` na tabela `users` agora armazena Supabase Auth User ID
+- Funcao `getOrCreateUser()` busca/cria usuario automaticamente
+- Compativel com usuarios antigos (Clerk) e novos (Supabase Auth)
+
+### Fluxo de Criacao de Pagina:
+1. Usuario faz login (Supabase Auth)
+2. Frontend envia POST /api/pages com `x-supabase-user-id` e `email`
+3. Backend chama `getOrCreateUser(authId, email)`
+4. Se usuario nao existe em `users`, cria automaticamente
+5. Pagina e criada vinculada ao `user.id`
+
+---
+
+## Proximos passos:
+- Testar criacao de paginas com usuario oitaua@hotmail.com
+- Verificar se limites de plano Pro estao sendo aplicados corretamente
+- Considerar renomear coluna `clerk_id` para `auth_id` (opcional, breaking change)
+
+## Progresso Estimado: 100%
