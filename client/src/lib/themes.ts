@@ -165,15 +165,15 @@ export const themes: Record<string, Theme> = {
       shadow: 'none'
     },
     text: {
-      primary: '#831843',
-      secondary: '#9d174d',
+      primary: '#374151',
+      secondary: '#6b7280',
       accent: '#ec4899'
     },
     button: {
       primary: 'linear-gradient(135deg, #ec4899, #f472b6)',
       primaryText: '#ffffff',
       secondary: 'rgba(255, 255, 255, 0.8)',
-      secondaryText: '#831843',
+      secondaryText: '#374151',
       highlight: 'linear-gradient(135deg, #ec4899, #f472b6)',
       highlightText: '#ffffff'
     },
