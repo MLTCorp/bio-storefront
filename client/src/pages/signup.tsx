@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,36 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp, session } = useAuth();
+  const { signUp, session, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if already logged in
+  // Get redirect param from URL (for payment flow)
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+
+  // Redirect if already logged in (using useEffect to avoid setState during render)
+  useEffect(() => {
+    if (!authLoading && session) {
+      setLocation(redirect || '/dashboard');
+    }
+  }, [session, authLoading, redirect, setLocation]);
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-pink-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+
+  // Don't render signup form if already logged in (redirect is happening)
   if (session) {
-    setLocation('/dashboard');
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-pink-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,8 +72,8 @@ export default function SignupPage() {
       }
       setLoading(false);
     } else {
-      // Redirect to onboarding after signup
-      setLocation('/onboarding');
+      // Redirect to specified URL or onboarding after signup
+      setLocation(redirect || '/onboarding');
     }
   };
 

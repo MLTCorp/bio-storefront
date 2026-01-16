@@ -39,15 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // If successful, update state immediately (don't wait for onAuthStateChange)
+    if (!error && data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
+
     return { error };
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -55,6 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: undefined,
       },
     });
+
+    // If successful and session exists (auto-confirm), update state immediately
+    if (!error && data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
+
     return { error };
   };
 

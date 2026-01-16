@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,36 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, session } = useAuth();
+  const { signIn, session, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if already logged in
+  // Get redirect param from URL (for payment flow)
+  const params = new URLSearchParams(window.location.search);
+  const redirect = params.get('redirect');
+
+  // Redirect if already logged in (using useEffect to avoid setState during render)
+  useEffect(() => {
+    if (!authLoading && session) {
+      setLocation(redirect || '/dashboard');
+    }
+  }, [session, authLoading, redirect, setLocation]);
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-pink-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
+  }
+
+  // Don't render login form if already logged in (redirect is happening)
   if (session) {
-    setLocation('/dashboard');
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-pink-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,7 +58,8 @@ export default function LoginPage() {
         : error.message);
       setLoading(false);
     } else {
-      setLocation('/dashboard');
+      // Redirect to specified URL or dashboard after login
+      setLocation(redirect || '/dashboard');
     }
   };
 
