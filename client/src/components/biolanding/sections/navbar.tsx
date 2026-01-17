@@ -43,7 +43,7 @@ export function Navbar() {
 
   React.useEffect(() => {
     const unsubscribe = scrollYProgress.on('change', (latest) => {
-      setScrolled(latest > 0.02);
+      setScrolled(latest > 0);
     });
     return () => unsubscribe();
   }, [scrollYProgress]);

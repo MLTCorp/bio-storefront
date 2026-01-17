@@ -37,7 +37,7 @@ const stats = [
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen overflow-hidden">
+    <section className="relative min-h-[85vh] lg:min-h-screen overflow-hidden">
       {/* Background with gradient orbs */}
       <div className="absolute inset-0 bg-[#F9FAFB]">
         <GradientOrbsBackground />
@@ -66,7 +66,7 @@ export function HeroSection() {
       />
 
       {/* Content */}
-      <div className="relative z-10 pt-32 pb-20 px-6">
+      <div className="relative z-10 pt-24 lg:pt-32 pb-8 lg:pb-20 px-6">
         <div className="mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left side - Text content */}
@@ -130,8 +130,8 @@ export function HeroSection() {
                   pagamentos e conecte com seus seguidores.
                 </p>
 
-                {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-3 sm:gap-4 mb-10 sm:mb-12">
+                {/* CTA Button */}
+                <div className="mb-6 lg:mb-12">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
                       size="lg"
@@ -152,25 +152,10 @@ export function HeroSection() {
                       <ArrowRight className="w-5 h-5" />
                     </Button>
                   </motion.div>
-
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-semibold rounded-2xl border-2 border-gray-200 hover:bg-gray-50 w-full sm:w-auto"
-                      onClick={() => {
-                        document
-                          .getElementById('como-funciona')
-                          ?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                    >
-                      Ver Demo
-                    </Button>
-                  </motion.div>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-4">
+                <div className="hidden lg:grid lg:grid-cols-4 gap-6">
                   {stats.map((stat, index) => (
                     <motion.div
                       key={index}
