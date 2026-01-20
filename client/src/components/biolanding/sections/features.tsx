@@ -1,31 +1,31 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import { Sparkles, ShoppingBag, Calendar, ArrowRight } from 'lucide-react';
 import { BlurFade } from '../ui/blur-fade';
 import { FeaturePhoneMockup } from '../feature-phone-mockup';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
-// Avatares para cada seção (diferentes para não repetir)
+// Avatares para cada seção (UI Avatars API - SVG, muito mais leve que randomuser.me)
 const avatarsByFeature = {
   pages: [
-    'https://randomuser.me/api/portraits/women/12.jpg',
-    'https://randomuser.me/api/portraits/men/15.jpg',
-    'https://randomuser.me/api/portraits/women/28.jpg',
-    'https://randomuser.me/api/portraits/men/42.jpg',
+    'https://ui-avatars.com/api/?name=Maria+Silva&size=64&background=7F4AFF&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Carlos+Santos&size=64&background=7F4AFF&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Ana+Costa&size=64&background=7F4AFF&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Pedro+Gomes&size=64&background=7F4AFF&color=fff&font-size=0.4&bold=true',
   ],
   views: [
-    'https://randomuser.me/api/portraits/women/65.jpg',
-    'https://randomuser.me/api/portraits/men/78.jpg',
-    'https://randomuser.me/api/portraits/women/33.jpg',
-    'https://randomuser.me/api/portraits/men/54.jpg',
+    'https://ui-avatars.com/api/?name=Julia+Ferreira&size=64&background=10B981&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Lucas+Oliveira&size=64&background=10B981&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Sofia+Martins&size=64&background=10B981&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Felipe+Rocha&size=64&background=10B981&color=fff&font-size=0.4&bold=true',
   ],
   clicks: [
-    'https://randomuser.me/api/portraits/men/91.jpg',
-    'https://randomuser.me/api/portraits/women/47.jpg',
-    'https://randomuser.me/api/portraits/men/23.jpg',
-    'https://randomuser.me/api/portraits/women/81.jpg',
+    'https://ui-avatars.com/api/?name=Isabella+Lima&size=64&background=F59E0B&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Gabriel+Silva&size=64&background=F59E0B&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Beatriz+Tavares&size=64&background=F59E0B&color=fff&font-size=0.4&bold=true',
+    'https://ui-avatars.com/api/?name=Rafael+Mendes&size=64&background=F59E0B&color=fff&font-size=0.4&bold=true',
   ],
 };
 
@@ -87,15 +87,29 @@ interface FeatureShowcaseProps {
 function FeatureShowcase({ feature, index, stats, reduceMotion }: FeatureShowcaseProps) {
   const mockupLeft = feature.mockupLeft;
   const ref = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Only use scroll animations on desktop (when not reducing motion)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
+  // Use IntersectionObserver instead of scroll listener (no forced reflows)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
 
-  const y = useTransform(scrollYProgress, [0, 1], reduceMotion ? [0, 0] : [50, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], reduceMotion ? [1, 1, 1, 1] : [0, 1, 1, 0]);
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current);
+      }
+    };
+  }, []);
 
   return (
     <motion.div
@@ -103,14 +117,15 @@ function FeatureShowcase({ feature, index, stats, reduceMotion }: FeatureShowcas
       className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center py-12 sm:py-16 lg:py-24 ${
         index !== 0 ? 'border-t border-gray-100' : ''
       }`}
-      style={reduceMotion ? undefined : { opacity }}
+      initial={{ opacity: reduceMotion ? 1 : 0 }}
+      animate={isVisible ? { opacity: 1 } : { opacity: reduceMotion ? 1 : 0 }}
+      transition={{ duration: 0.6 }}
     >
       {/* Visual showcase - Phone Mockup + UGC Image */}
       {/* On mobile: show only phone mockup centered */}
       {/* On desktop: show both with overlap */}
       <motion.div
         className={`relative flex items-center justify-center ${mockupLeft ? 'lg:order-1' : 'lg:order-2'}`}
-        style={{ y: mockupLeft ? y : undefined }}
       >
         {/* Mobile: Only show phone mockup */}
         <div className="lg:hidden">

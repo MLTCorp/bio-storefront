@@ -42,20 +42,28 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Core vendor libraries
-          vendor: ['react', 'react-dom', 'wouter'],
-          // UI components
-          ui: [
+          // Core React (essential for app start)
+          'vendor-react': ['react', 'react-dom'],
+          // Router (deferred)
+          'vendor-router': ['wouter'],
+          // UI components (radix - used throughout app)
+          'ui-radix': [
             '@radix-ui/react-dialog',
             '@radix-ui/react-dropdown-menu',
             '@radix-ui/react-tabs',
             '@radix-ui/react-tooltip',
           ],
-          // Animation library (heavy)
-          animations: ['framer-motion'],
+          // Animation library (heavy, used in sections)
+          'animations': ['framer-motion'],
+          // Icons (used throughout)
+          'icons': ['lucide-react'],
         },
       },
     },
+    // Optimize CSS size
+    cssCodeSplit: true,
+    // Use esbuild for minification (faster, built-in)
+    minify: 'esbuild',
   },
   server: {
     host: "0.0.0.0",

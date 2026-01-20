@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 
 /**
+ * Debounce function to reduce event handler calls
+ */
+function debounce<T extends (...args: any[]) => void>(func: T, wait: number): T {
+  let timeout: NodeJS.Timeout;
+  return ((...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as T;
+}
+
+/**
  * Hook to detect if user prefers reduced motion or is on mobile device.
  * Used to disable heavy animations for better performance.
  */
@@ -23,10 +34,10 @@ export function useReducedMotion(): boolean {
 
     mediaQuery.addEventListener('change', handleChange);
 
-    // Also listen for resize to detect mobile
-    const handleResize = () => {
+    // Debounce resize listener to reduce main thread work
+    const handleResize = debounce(() => {
       setShouldReduceMotion(mediaQuery.matches || window.innerWidth < 768);
-    };
+    }, 150);
 
     window.addEventListener('resize', handleResize);
 
