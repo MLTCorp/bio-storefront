@@ -187,12 +187,12 @@ export function PricingSection() {
                       {feature.included ? (
                         <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                       ) : (
-                        <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
+                        <X className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-500" />
                       )}
                     </div>
                     <span
                       className={`text-xs sm:text-sm ${
-                        feature.included ? 'text-gray-600' : 'text-gray-400'
+                        feature.included ? 'text-gray-600' : 'text-gray-500'
                       }`}
                     >
                       {feature.text}

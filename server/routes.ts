@@ -901,6 +901,48 @@ export async function registerRoutes(
 
   // ============ PAGE COMPONENTS API ============
 
+  // Get page components
+  app.get("/api/pages/:pageId/components", async (req, res) => {
+    try {
+      const clerkId = req.headers["x-supabase-user-id"] as string;
+      const pageId = parseInt(req.params.pageId);
+
+      // Verify ownership if authenticated
+      if (clerkId) {
+        const { data: user } = await supabase
+          .from("users")
+          .select("id")
+          .eq("clerk_id", clerkId)
+          .single();
+
+        if (user) {
+          const { data: page } = await supabase
+            .from("pages")
+            .select("id, user_id")
+            .eq("id", pageId)
+            .single();
+
+          if (page && page.user_id !== user.id) {
+            return res.status(403).json({ error: "Access denied" });
+          }
+        }
+      }
+
+      // Get components
+      const { data: components, error } = await supabase
+        .from("page_components")
+        .select("*")
+        .eq("page_id", pageId)
+        .order("order_index", { ascending: true });
+
+      if (error) throw error;
+      res.json(components || []);
+    } catch (error) {
+      console.error("Error fetching components:", error);
+      res.status(500).json({ error: "Failed to fetch components" });
+    }
+  });
+
   // Add component to page
   app.post("/api/pages/:pageId/components", async (req, res) => {
     try {
@@ -1649,6 +1691,262 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
     } catch (error) {
       console.error("Error fetching analytics:", error);
       res.status(500).json({ error: "Failed to fetch analytics" });
+    }
+  });
+
+  // ============ SALES API ============
+
+  // POST /api/sales - Create a new sale (manual entry)
+  app.post("/api/sales", async (req, res) => {
+    try {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const {
+        page_id,
+        product_id,
+        product_title,
+        product_image,
+        kit_id,
+        kit_label,
+        product_price,
+        commission_amount,
+        sale_date,
+      } = req.body;
+
+      if (!page_id || !product_id || !kit_id || !product_price || !commission_amount || !sale_date) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Verify ownership
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id')
+        .eq('id', page_id)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Create sale
+      const { data: sale, error } = await (supabase as any)
+        .from('sales')
+        .insert({
+          page_id,
+          user_id: user.id.toString(),
+          product_id,
+          product_title,
+          product_image: product_image || null,
+          kit_id,
+          kit_label,
+          product_price,
+          commission_amount,
+          source: 'manual',
+          sale_date: new Date(sale_date).toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating sale:', error);
+        return res.status(500).json({ error: 'Failed to create sale' });
+      }
+
+      res.json(sale);
+    } catch (error) {
+      console.error("Error creating sale:", error);
+      res.status(500).json({ error: "Failed to create sale" });
+    }
+  });
+
+  // GET /api/sales/:pageId - Get sales for a page
+  app.get("/api/sales/:pageId", async (req, res) => {
+    try {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const pageId = parseInt(req.params.pageId);
+      const period = (req.query.period as string) || '30d';
+      const startDate = getStartDate(period);
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Verify ownership
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id')
+        .eq('id', pageId)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Get sales
+      const { data: sales } = await (supabase as any)
+        .from('sales')
+        .select('*')
+        .eq('page_id', pageId)
+        .gte('sale_date', startDate)
+        .order('sale_date', { ascending: false });
+
+      res.json(sales || []);
+    } catch (error) {
+      console.error("Error fetching sales:", error);
+      res.status(500).json({ error: "Failed to fetch sales" });
+    }
+  });
+
+  // GET /api/sales/:pageId/summary - Get aggregated sales metrics
+  app.get("/api/sales/:pageId/summary", async (req, res) => {
+    try {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const pageId = parseInt(req.params.pageId);
+      const period = (req.query.period as string) || '30d';
+      const startDate = getStartDate(period);
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Verify ownership
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id')
+        .eq('id', pageId)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Get sales
+      const { data: sales } = await (supabase as any)
+        .from('sales')
+        .select('*')
+        .eq('page_id', pageId)
+        .gte('sale_date', startDate)
+        .order('sale_date', { ascending: true });
+
+      const salesList = sales || [];
+
+      // Calculate totals
+      const totalSales = salesList.length;
+      const totalRevenue = salesList.reduce((sum: number, s: any) => sum + parseFloat(s.product_price || 0), 0);
+      const totalCommission = salesList.reduce((sum: number, s: any) => sum + parseFloat(s.commission_amount || 0), 0);
+
+      // Sales by day
+      const salesByDayMap: Record<string, { count: number; revenue: number; commission: number }> = {};
+      const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
+
+      // Initialize all days
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        salesByDayMap[dateStr] = { count: 0, revenue: 0, commission: 0 };
+      }
+
+      // Aggregate sales
+      salesList.forEach((sale: any) => {
+        const dateStr = new Date(sale.sale_date).toISOString().split('T')[0];
+        if (salesByDayMap[dateStr]) {
+          salesByDayMap[dateStr].count++;
+          salesByDayMap[dateStr].revenue += parseFloat(sale.product_price || 0);
+          salesByDayMap[dateStr].commission += parseFloat(sale.commission_amount || 0);
+        }
+      });
+
+      const salesByDay = Object.entries(salesByDayMap).map(([date, data]) => ({
+        date,
+        ...data,
+      }));
+
+      // Top products
+      const productMap: Record<string, { productTitle: string; count: number; revenue: number }> = {};
+      salesList.forEach((sale: any) => {
+        if (!productMap[sale.product_id]) {
+          productMap[sale.product_id] = { productTitle: sale.product_title, count: 0, revenue: 0 };
+        }
+        productMap[sale.product_id].count++;
+        productMap[sale.product_id].revenue += parseFloat(sale.product_price || 0);
+      });
+
+      const topProducts = Object.values(productMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      res.json({
+        totalSales,
+        totalRevenue,
+        totalCommission,
+        salesByDay,
+        topProducts,
+        period,
+      });
+    } catch (error) {
+      console.error("Error fetching sales summary:", error);
+      res.status(500).json({ error: "Failed to fetch sales summary" });
+    }
+  });
+
+  // DELETE /api/sales/sale/:saleId - Delete a sale
+  app.delete("/api/sales/sale/:saleId", async (req, res) => {
+    try {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const saleId = parseInt(req.params.saleId);
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Get sale and verify ownership via page
+      const { data: sale } = await (supabase as any)
+        .from('sales')
+        .select('*, pages!inner(user_id)')
+        .eq('id', saleId)
+        .single();
+
+      if (!sale) return res.status(404).json({ error: 'Sale not found' });
+      if ((sale as any).pages?.user_id !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Delete
+      await (supabase as any).from('sales').delete().eq('id', saleId);
+
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error deleting sale:", error);
+      res.status(500).json({ error: "Failed to delete sale" });
     }
   });
 

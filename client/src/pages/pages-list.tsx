@@ -18,7 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { usePlanLimits } from "@/hooks/use-plan-limits";
 import { UpgradeModal } from "@/components/upgrade-modal";
-import { Plus, ExternalLink, Edit, Eye, Loader2, Copy, Check, Trash2, BarChart2, MousePointer, Lock, Crown } from "lucide-react";
+import { Plus, ExternalLink, Edit, Eye, Loader2, Copy, Check, Trash2, BarChart2, MousePointer, Lock, Crown, DollarSign } from "lucide-react";
 import type { Page } from "@/types/database";
 
 function PagesListContent() {
@@ -254,7 +254,7 @@ function PagesListContent() {
                   </Button>
 
                   {/* Secondary actions */}
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-5 gap-1.5">
                     <Button
                       variant="outline"
                       size="sm"
@@ -272,6 +272,15 @@ function PagesListContent() {
                       className="hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200"
                     >
                       <BarChart2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/sales/${page.id}`)}
+                      title="Ver vendas"
+                      className="hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                    >
+                      <DollarSign className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"

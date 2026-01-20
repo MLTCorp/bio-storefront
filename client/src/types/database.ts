@@ -225,3 +225,41 @@ export interface UpdateComponentInput {
   config?: ComponentConfig;
   is_visible?: boolean;
 }
+
+// Sale types
+export interface Sale {
+  id: number;
+  page_id: number | null;
+  user_id: string;
+  product_id: string;
+  product_title: string;
+  product_image: string | null;
+  kit_id: string;
+  kit_label: string;
+  product_price: number;
+  commission_amount: number;
+  source: 'manual' | 'webhook' | 'hotmart' | 'kiwify' | 'monetizze';
+  external_order_id: string | null;
+  sale_date: string;
+  created_at: string | null;
+}
+
+export interface SaleFormData {
+  product_id: string;
+  product_title: string;
+  product_image?: string | null;
+  kit_id: string;
+  kit_label: string;
+  product_price: number;
+  commission_amount: number;
+  sale_date: Date;
+}
+
+export interface SalesSummary {
+  totalSales: number;
+  totalRevenue: number;
+  totalCommission: number;
+  salesByDay: Array<{ date: string; count: number; revenue: number; commission: number }>;
+  topProducts: Array<{ productTitle: string; count: number; revenue: number }>;
+  period: string;
+}

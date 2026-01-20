@@ -48,10 +48,11 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: FAQItemProps) {
       <button
         onClick={onToggle}
         className="w-full py-4 sm:py-6 flex items-center justify-between text-left group"
+        aria-expanded={isOpen}
       >
-        <span className="text-base sm:text-lg font-medium text-black group-hover:text-[#7F4AFF] transition-colors pr-4 sm:pr-8">
+        <h3 className="text-base sm:text-lg font-medium text-black group-hover:text-[#7F4AFF] transition-colors pr-4 sm:pr-8">
           {question}
-        </span>
+        </h3>
         <motion.div
           className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
           style={{
@@ -77,7 +78,7 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: FAQItemProps) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <p className="pb-4 sm:pb-6 text-sm sm:text-base text-gray-500 leading-relaxed pr-8 sm:pr-16">{answer}</p>
+            <p className="pb-4 sm:pb-6 text-sm sm:text-base text-gray-600 leading-relaxed pr-8 sm:pr-16">{answer}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -114,7 +115,7 @@ export function FAQSection() {
               frequentes
             </span>
           </h2>
-          <p className="text-base sm:text-lg text-gray-500">
+          <p className="text-base sm:text-lg text-gray-600">
             Tudo que voce precisa saber sobre o BioLanding.
           </p>
         </BlurFade>

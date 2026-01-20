@@ -1424,6 +1424,239 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       });
     }
 
+    // ============ SALES API ============
+
+    // POST /api/sales - Create a new sale (manual entry)
+    if (path === '/api/sales' && method === 'POST') {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const {
+        page_id,
+        product_id,
+        product_title,
+        product_image,
+        kit_id,
+        kit_label,
+        product_price,
+        commission_amount,
+        sale_date
+      } = req.body;
+
+      // Validate required fields
+      if (!page_id || !product_id || !kit_id || product_price === undefined || commission_amount === undefined || !sale_date) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Get user from clerk_id
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Verify page ownership
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id')
+        .eq('id', page_id)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Insert sale
+      const { data: sale, error } = await supabase
+        .from('sales')
+        .insert({
+          page_id,
+          user_id: user.id,
+          product_id,
+          product_title,
+          product_image: product_image || null,
+          kit_id,
+          kit_label,
+          product_price,
+          commission_amount,
+          source: 'manual',
+          sale_date,
+        })
+        .select()
+        .single();
+
+      if (error) return res.status(500).json({ error: error.message });
+
+      return res.json(sale);
+    }
+
+    // GET /api/sales/:pageId - Get sales for a page
+    const salesListMatch = path.match(/^\/api\/sales\/(\d+)$/);
+    if (salesListMatch && method === 'GET') {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const pageId = parseInt(salesListMatch[1]);
+      const period = (req.query?.period as string) || '30d';
+      const startDate = getStartDate(period);
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Verify ownership
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id')
+        .eq('id', pageId)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Get sales
+      const { data: sales } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('page_id', pageId)
+        .gte('sale_date', startDate)
+        .order('sale_date', { ascending: false });
+
+      return res.json(sales || []);
+    }
+
+    // GET /api/sales/:pageId/summary - Get aggregated sales metrics
+    const salesSummaryMatch = path.match(/^\/api\/sales\/(\d+)\/summary$/);
+    if (salesSummaryMatch && method === 'GET') {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const pageId = parseInt(salesSummaryMatch[1]);
+      const period = (req.query?.period as string) || '30d';
+      const startDate = getStartDate(period);
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Verify ownership
+      const { data: page } = await supabase
+        .from('pages')
+        .select('id, user_id')
+        .eq('id', pageId)
+        .single();
+
+      if (!page) return res.status(404).json({ error: 'Page not found' });
+      if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
+
+      // Get sales in period
+      const { data: sales } = await supabase
+        .from('sales')
+        .select('*')
+        .eq('page_id', pageId)
+        .gte('sale_date', startDate)
+        .order('sale_date', { ascending: true });
+
+      const salesList = sales || [];
+
+      // Aggregate by day
+      const salesByDay: Record<string, { count: number; revenue: number; commission: number }> = {};
+      salesList.forEach((s: any) => {
+        const day = s.sale_date.split('T')[0];
+        if (!salesByDay[day]) {
+          salesByDay[day] = { count: 0, revenue: 0, commission: 0 };
+        }
+        salesByDay[day].count++;
+        salesByDay[day].revenue += parseFloat(s.product_price);
+        salesByDay[day].commission += parseFloat(s.commission_amount);
+      });
+
+      // Top products
+      const productStats: Record<string, { count: number; revenue: number; title: string }> = {};
+      salesList.forEach((s: any) => {
+        if (!productStats[s.product_id]) {
+          productStats[s.product_id] = { count: 0, revenue: 0, title: s.product_title };
+        }
+        productStats[s.product_id].count++;
+        productStats[s.product_id].revenue += parseFloat(s.product_price);
+      });
+
+      const topProducts = Object.values(productStats)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+        .map(p => ({ productTitle: p.title, count: p.count, revenue: p.revenue }));
+
+      // Generate chart data
+      const days = period === '1d' ? 1 : period === '7d' ? 7 : 30;
+      const chartData = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayData = salesByDay[dateStr] || { count: 0, revenue: 0, commission: 0 };
+        chartData.push({ date: dateStr, ...dayData });
+      }
+
+      const totalSales = salesList.length;
+      const totalRevenue = salesList.reduce((sum: number, s: any) => sum + parseFloat(s.product_price), 0);
+      const totalCommission = salesList.reduce((sum: number, s: any) => sum + parseFloat(s.commission_amount), 0);
+
+      return res.json({
+        totalSales,
+        totalRevenue,
+        totalCommission,
+        salesByDay: chartData,
+        topProducts,
+        period,
+      });
+    }
+
+    // DELETE /api/sales/sale/:saleId - Delete a sale
+    const saleDeleteMatch = path.match(/^\/api\/sales\/sale\/(\d+)$/);
+    if (saleDeleteMatch && method === 'DELETE') {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const saleId = parseInt(saleDeleteMatch[1]);
+
+      // Get user
+      const { data: user } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', clerkId)
+        .single();
+
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      // Get sale and verify ownership
+      const { data: sale } = await supabase
+        .from('sales')
+        .select('*, pages!inner(user_id)')
+        .eq('id', saleId)
+        .single();
+
+      if (!sale) return res.status(404).json({ error: 'Sale not found' });
+      if ((sale as any).pages?.user_id !== user.id) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      // Delete
+      await supabase.from('sales').delete().eq('id', saleId);
+
+      return res.json({ ok: true });
+    }
+
     // ============ SUBSCRIPTIONS API ============
 
     // Anonymous checkout - for users without account (goes to Stripe first)

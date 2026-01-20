@@ -125,7 +125,7 @@ export function HeroSection() {
                 </h1>
 
                 {/* Subtitle */}
-                <p className="text-xl md:text-2xl text-gray-500 mb-10 leading-relaxed max-w-xl">
+                <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed max-w-xl">
                   Transforme seu perfil em uma vitrine profissional. Mostre produtos, receba
                   pagamentos e conecte com seus seguidores.
                 </p>

@@ -96,7 +96,16 @@
       "Bash(timeout /T 60 /NOBREAK)",
       "Bash(git stash:*)",
       "Bash(git remote set-url:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(ping:*)",
+      "Bash(timeout:*)",
+      "Bash(timeout /t 8 /nobreak)",
+      "mcp__playwright__browser_type",
+      "mcp__filesystem__read_multiple_files",
+      "Bash(dir:*)",
+      "Bash(bun add:*)",
+      "Skill(ship)",
+      "Skill(ship:*)"
     ],
     "deny": [],
     "ask": []

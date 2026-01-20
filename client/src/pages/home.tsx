@@ -1,13 +1,30 @@
 import { useAuth } from "@/contexts/auth-context";
 import { Redirect } from "wouter";
+import { lazy, Suspense } from "react";
+
+// Above the fold - load immediately
 import { Navbar } from "@/components/biolanding/sections/navbar";
 import { HeroSection } from "@/components/biolanding/sections/hero";
-import { FeaturesSection } from "@/components/biolanding/sections/features";
-import { HowItWorksSection } from "@/components/biolanding/sections/how-it-works";
-import { PricingSection } from "@/components/biolanding/sections/pricing";
-import { FAQSection } from "@/components/biolanding/sections/faq";
-import { CTAFinalSection } from "@/components/biolanding/sections/cta-final";
-import { Footer } from "@/components/biolanding/sections/footer";
+
+// Below the fold - lazy load
+const FeaturesSection = lazy(() =>
+  import("@/components/biolanding/sections/features").then(m => ({ default: m.FeaturesSection }))
+);
+const HowItWorksSection = lazy(() =>
+  import("@/components/biolanding/sections/how-it-works").then(m => ({ default: m.HowItWorksSection }))
+);
+const PricingSection = lazy(() =>
+  import("@/components/biolanding/sections/pricing").then(m => ({ default: m.PricingSection }))
+);
+const FAQSection = lazy(() =>
+  import("@/components/biolanding/sections/faq").then(m => ({ default: m.FAQSection }))
+);
+const CTAFinalSection = lazy(() =>
+  import("@/components/biolanding/sections/cta-final").then(m => ({ default: m.CTAFinalSection }))
+);
+const Footer = lazy(() =>
+  import("@/components/biolanding/sections/footer").then(m => ({ default: m.Footer }))
+);
 
 export default function Home() {
   const { session, loading } = useAuth();
@@ -29,19 +46,38 @@ export default function Home() {
     return <Redirect to="/dashboard" />;
   }
 
+  // Section loading fallback
+  const SectionFallback = () => (
+    <div className="min-h-[400px] flex items-center justify-center">
+      <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
   // BioLanding page for non-logged-in users
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
       <main>
         <HeroSection />
-        <FeaturesSection />
-        <HowItWorksSection />
-        <PricingSection />
-        <FAQSection />
-        <CTAFinalSection />
+        <Suspense fallback={<SectionFallback />}>
+          <FeaturesSection />
+        </Suspense>
+        <Suspense fallback={<SectionFallback />}>
+          <HowItWorksSection />
+        </Suspense>
+        <Suspense fallback={<SectionFallback />}>
+          <PricingSection />
+        </Suspense>
+        <Suspense fallback={<SectionFallback />}>
+          <FAQSection />
+        </Suspense>
+        <Suspense fallback={<SectionFallback />}>
+          <CTAFinalSection />
+        </Suspense>
       </main>
-      <Footer />
+      <Suspense fallback={<SectionFallback />}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }

@@ -240,6 +240,68 @@ export type Database = {
           },
         ]
       }
+      sales: {
+        Row: {
+          id: number
+          page_id: number | null
+          user_id: string
+          product_id: string
+          product_title: string
+          product_image: string | null
+          kit_id: string
+          kit_label: string
+          product_price: number
+          commission_amount: number
+          source: string
+          external_order_id: string | null
+          external_payload: Json | null
+          sale_date: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          page_id?: number | null
+          user_id: string
+          product_id: string
+          product_title: string
+          product_image?: string | null
+          kit_id: string
+          kit_label: string
+          product_price: number
+          commission_amount: number
+          source?: string
+          external_order_id?: string | null
+          external_payload?: Json | null
+          sale_date: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          page_id?: number | null
+          user_id?: string
+          product_id?: string
+          product_title?: string
+          product_image?: string | null
+          kit_id?: string
+          kit_label?: string
+          product_price?: number
+          commission_amount?: number
+          source?: string
+          external_order_id?: string | null
+          external_payload?: Json | null
+          sale_date?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           background_type: string | null
@@ -774,4 +836,19 @@ export interface SubscriptionWithPlan extends Tables<'subscriptions'> {
   subscription_plans?: Tables<'subscription_plans'> & {
     limits: PlanLimits
   }
+}
+
+// Sale types
+export type Sale = Tables<'sales'>
+export type SaleInsert = TablesInsert<'sales'>
+export type SaleUpdate = TablesUpdate<'sales'>
+
+// Sales summary for analytics
+export interface SalesSummary {
+  totalSales: number
+  totalRevenue: number
+  totalCommission: number
+  salesByDay: Array<{ date: string; count: number; revenue: number; commission: number }>
+  topProducts: Array<{ productTitle: string; count: number; revenue: number }>
+  period: string
 }

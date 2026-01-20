@@ -5,6 +5,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Sparkles, ShoppingBag, Calendar, ArrowRight } from 'lucide-react';
 import { BlurFade } from '../ui/blur-fade';
 import { FeaturePhoneMockup } from '../feature-phone-mockup';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
 
 // Avatares para cada seção (diferentes para não repetir)
 const avatarsByFeature = {
@@ -36,7 +37,7 @@ const features = [
     icon: ShoppingBag,
     color: '#F59E0B',
     gradient: 'from-amber-500/20 to-orange-500/20',
-    ugcImage: '/images/features/elegant-influencer.png',
+    ugcImage: '/images/features/elegant-influencer.webp',
     variant: 'store' as const,
     mockupLeft: true,
     statKey: 'pages' as const,
@@ -49,7 +50,7 @@ const features = [
     icon: Calendar,
     color: '#10B981',
     gradient: 'from-emerald-500/20 to-teal-500/20',
-    ugcImage: '/images/features/fitness-influencer.png',
+    ugcImage: '/images/features/fitness-influencer.webp',
     variant: 'video' as const,
     mockupLeft: false,
     statKey: 'views' as const,
@@ -62,7 +63,7 @@ const features = [
     icon: Sparkles,
     color: '#7F4AFF',
     gradient: 'from-purple-500/20 to-violet-500/20',
-    ugcImage: '/images/features/nail-designer.png',
+    ugcImage: '/images/features/nail-designer.webp',
     variant: 'links' as const,
     mockupLeft: true,
     statKey: 'clicks' as const,
@@ -80,19 +81,21 @@ interface FeatureShowcaseProps {
   feature: (typeof features)[0];
   index: number;
   stats: Stats;
+  reduceMotion: boolean;
 }
 
-function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
+function FeatureShowcase({ feature, index, stats, reduceMotion }: FeatureShowcaseProps) {
   const mockupLeft = feature.mockupLeft;
   const ref = useRef(null);
 
+  // Only use scroll animations on desktop (when not reducing motion)
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start end', 'end start'],
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], reduceMotion ? [0, 0] : [50, -50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], reduceMotion ? [1, 1, 1, 1] : [0, 1, 1, 0]);
 
   return (
     <motion.div
@@ -100,7 +103,7 @@ function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
       className={`grid lg:grid-cols-2 gap-8 lg:gap-16 items-center py-12 sm:py-16 lg:py-24 ${
         index !== 0 ? 'border-t border-gray-100' : ''
       }`}
-      style={{ opacity }}
+      style={reduceMotion ? undefined : { opacity }}
     >
       {/* Visual showcase - Phone Mockup + UGC Image */}
       {/* On mobile: show only phone mockup centered */}
@@ -161,6 +164,10 @@ function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
               <img
                 src={feature.ugcImage}
                 alt={feature.title}
+                width={300}
+                height={400}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
               {/* Subtle gradient overlay */}
@@ -217,7 +224,7 @@ function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
         </BlurFade>
 
         <BlurFade delay={0.3} inView>
-          <p className="text-base sm:text-lg md:text-xl text-gray-500 leading-relaxed max-w-lg mx-auto lg:mx-0 mb-6 sm:mb-8">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed max-w-lg mx-auto lg:mx-0 mb-6 sm:mb-8">
             {feature.description}
           </p>
         </BlurFade>
@@ -261,6 +268,7 @@ function FeatureShowcase({ feature, index, stats }: FeatureShowcaseProps) {
 
 export function FeaturesSection() {
   const [stats, setStats] = useState<Stats>({ pages: 0, views: 0, clicks: 0 });
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     // Fetch real stats from API
@@ -313,14 +321,14 @@ export function FeaturesSection() {
             </span>
           </h2>
 
-          <p className="text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto px-2">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto px-2">
             Ferramentas profissionais para transformar seu link da bio em uma maquina de vendas.
           </p>
         </BlurFade>
 
         {/* Features */}
         {features.map((feature, index) => (
-          <FeatureShowcase key={index} feature={feature} index={index} stats={stats} />
+          <FeatureShowcase key={index} feature={feature} index={index} stats={stats} reduceMotion={reduceMotion} />
         ))}
       </div>
 

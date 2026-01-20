@@ -18,6 +18,7 @@ import DashboardPage from "@/pages/dashboard";
 import PagesListPage from "@/pages/pages-list";
 import PageEditorPage from "@/pages/page-editor";
 import AnalyticsPage from "@/pages/analytics";
+import SalesPage from "@/pages/sales";
 import StorePage from "@/pages/store";
 import SetupAccountPage from "@/pages/setup-account";
 
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/checkout/success" component={CheckoutSuccessPage} />
       <Route path="/checkout/cancel" component={CheckoutCancelPage} />
       <Route path="/analytics/:pageId" component={AnalyticsPage} />
+      <Route path="/sales/:pageId" component={SalesPage} />
       <Route path="/setup-account" component={SetupAccountPage} />
       <Route path="/:username" component={StorePage} />
       <Route component={NotFound} />
