@@ -123,7 +123,7 @@ export function Navbar() {
               {/* Mobile menu items */}
               <div className="lg:hidden">
                 <div className="mb-6">
-                  <div className="text-sm font-semibold text-gray-900 mb-4">Solucoes</div>
+                  <div className="text-sm font-semibold text-gray-900 mb-4">Soluções</div>
                   <SolutionsMenu isMobile onClose={() => setMenuState(false)} />
                 </div>
                 <ul className="space-y-6 text-base border-t border-gray-100 pt-6">

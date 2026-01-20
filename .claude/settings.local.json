@@ -107,7 +107,8 @@
       "Skill(ship)",
       "Skill(ship:*)",
       "mcp__filesystem__write_file",
-      "Bash(bun run build)"
+      "Bash(bun run build)",
+      "Bash(git grep:*)"
     ],
     "deny": [],
     "ask": []

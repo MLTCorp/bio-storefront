@@ -9,12 +9,12 @@ import { cn } from '@/lib/utils';
 // Menu data structure
 const solutionsData = {
   porProfissao: {
-    title: 'POR PROFISSAO',
+    title: 'POR PROFISSÃO',
     items: [
       {
         name: 'Influenciadores Digitais',
         href: '/para/influenciadores',
-        description: 'Monetize sua audiencia',
+        description: 'Monetize sua audiência',
       },
       {
         name: 'Empreendedoras',
@@ -29,7 +29,7 @@ const solutionsData = {
       {
         name: 'Profissionais Criativos',
         href: '/para/criativos',
-        description: 'Portfolio que converte',
+        description: 'Portfólio que converte',
       },
     ],
   },
@@ -42,7 +42,7 @@ const solutionsData = {
         description: 'Centralize seus links',
       },
       {
-        name: 'Catalogo de Produtos',
+        name: 'Catálogo de Produtos',
         href: '/para/empreendedores',
         description: 'Vitrine virtual completa',
       },
@@ -52,7 +52,7 @@ const solutionsData = {
         description: 'Integre com Calendly',
       },
       {
-        name: 'Portfolio Digital',
+        name: 'Portfólio Digital',
         href: '/para/criativos',
         description: 'Mostre seu trabalho',
       },
@@ -62,19 +62,19 @@ const solutionsData = {
     title: 'RECURSOS',
     items: [
       {
-        name: 'Construtor de Paginas',
+        name: 'Construtor de Páginas',
         href: '/#recursos',
         description: 'Arrastar e soltar',
       },
       {
-        name: 'Analytics Avancado',
+        name: 'Analytics Avançado',
         href: '/#recursos',
-        description: 'Metricas detalhadas',
+        description: 'Métricas detalhadas',
       },
       {
-        name: 'Dominio Personalizado',
+        name: 'Domínio Personalizado',
         href: '/#precos',
-        description: 'Sua marca, seu dominio',
+        description: 'Sua marca, seu domínio',
       },
     ],
   },
@@ -156,7 +156,7 @@ export function SolutionsMenu({ isMobile = false, onClose }: SolutionsMenuProps)
           isOpen && 'text-[#7F4AFF]'
         )}
       >
-        <span>Solucoes</span>
+        <span>Soluções</span>
         <ChevronDown
           className={cn(
             'h-4 w-4 transition-transform duration-200',
@@ -173,9 +173,9 @@ export function SolutionsMenu({ isMobile = false, onClose }: SolutionsMenuProps)
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
             onMouseLeave={() => setIsOpen(false)}
-            className="absolute top-full left-1/2 -translate-x-1/2 pt-4"
+            className="absolute top-full left-1/2 -translate-x-1/2 pt-4 z-[1000] w-screen md:w-auto"
           >
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 min-w-[700px]">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 min-w-full md:min-w-[700px] mx-6 md:mx-0">
               <div className="grid grid-cols-3 gap-8">
                 {/* Por Profissao */}
                 <div>
