@@ -105,7 +105,9 @@
       "Bash(dir:*)",
       "Bash(bun add:*)",
       "Skill(ship)",
-      "Skill(ship:*)"
+      "Skill(ship:*)",
+      "mcp__filesystem__write_file",
+      "Bash(bun run build)"
     ],
     "deny": [],
     "ask": []

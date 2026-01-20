@@ -6,9 +6,9 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'wouter';
+import { SolutionsMenu } from './solutions-menu';
 
 const menuItems = [
-  { name: 'Recursos', href: '#recursos' },
   { name: 'Precos', href: '#precos' },
   { name: 'Como Funciona', href: '#como-funciona' },
   { name: 'FAQ', href: '#faq' },
@@ -95,7 +95,10 @@ export function Navbar() {
 
               {/* Desktop menu */}
               <div className="hidden lg:block">
-                <ul className="flex gap-8 text-sm">
+                <ul className="flex items-center gap-8 text-sm">
+                  <li>
+                    <SolutionsMenu />
+                  </li>
                   {menuItems.map((item, index) => (
                     <li key={index}>
                       <button
@@ -119,7 +122,11 @@ export function Navbar() {
             >
               {/* Mobile menu items */}
               <div className="lg:hidden">
-                <ul className="space-y-6 text-base">
+                <div className="mb-6">
+                  <div className="text-sm font-semibold text-gray-900 mb-4">Solucoes</div>
+                  <SolutionsMenu isMobile onClose={() => setMenuState(false)} />
+                </div>
+                <ul className="space-y-6 text-base border-t border-gray-100 pt-6">
                   {menuItems.map((item, index) => (
                     <li key={index}>
                       <button

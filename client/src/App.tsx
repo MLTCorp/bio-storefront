@@ -22,6 +22,12 @@ import SalesPage from "@/pages/sales";
 import StorePage from "@/pages/store";
 import SetupAccountPage from "@/pages/setup-account";
 
+// Landing pages segmentadas por ICP
+import InfluenciadoresPage from "@/pages/solucoes/influenciadores";
+import EmpreendedoresPage from "@/pages/solucoes/empreendedores";
+import ConsultoresPage from "@/pages/solucoes/consultores";
+import CriativosPage from "@/pages/solucoes/criativos";
+
 function Router() {
   return (
     <Switch>
@@ -43,6 +49,11 @@ function Router() {
       <Route path="/analytics/:pageId" component={AnalyticsPage} />
       <Route path="/sales/:pageId" component={SalesPage} />
       <Route path="/setup-account" component={SetupAccountPage} />
+      {/* Landing pages segmentadas por ICP - SEO */}
+      <Route path="/para/influenciadores" component={InfluenciadoresPage} />
+      <Route path="/para/empreendedores" component={EmpreendedoresPage} />
+      <Route path="/para/consultores" component={ConsultoresPage} />
+      <Route path="/para/criativos" component={CriativosPage} />
       <Route path="/:username" component={StorePage} />
       <Route component={NotFound} />
     </Switch>
