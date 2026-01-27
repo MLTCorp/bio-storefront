@@ -240,6 +240,7 @@ export interface Sale {
   commission_amount: number;
   source: 'manual' | 'webhook' | 'hotmart' | 'kiwify' | 'monetizze';
   external_order_id: string | null;
+  external_payload: Record<string, any> | null;
   sale_date: string;
   created_at: string | null;
 }
@@ -253,6 +254,7 @@ export interface SaleFormData {
   product_price: number;
   commission_amount: number;
   sale_date: Date;
+  customer_name?: string;
 }
 
 export interface SalesSummary {

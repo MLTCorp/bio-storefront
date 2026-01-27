@@ -756,6 +756,88 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ============ PAGE COMPONENTS API ============
     const componentsMatch = path.match(/^\/api\/pages\/(\d+)\/components$/);
+
+    // GET /api/pages/:pageId/components - Get components with stores fallback
+    if (componentsMatch && method === 'GET') {
+      const clerkId = req.headers['x-supabase-user-id'] as string;
+      const pageId = parseInt(componentsMatch[1]);
+
+      // Verify ownership if authenticated
+      if (clerkId) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('id')
+          .eq('clerk_id', clerkId)
+          .single();
+
+        if (user) {
+          const { data: page } = await supabase
+            .from('pages')
+            .select('id, user_id')
+            .eq('id', pageId)
+            .single();
+
+          if (page && page.user_id !== user.id) {
+            return res.status(403).json({ error: 'Access denied' });
+          }
+        }
+      }
+
+      // Get components from page_components table
+      const { data: components, error } = await supabase
+        .from('page_components')
+        .select('*')
+        .eq('page_id', pageId)
+        .order('order_index', { ascending: true });
+
+      if (error) return res.status(500).json({ error: 'Failed to fetch components' });
+
+      let result = components || [];
+
+      // Fallback: if no product components found, check stores table
+      const hasProductComponents = result.some((c: any) => c.type === 'product');
+      if (!hasProductComponents) {
+        // Get the page to find its user_id
+        const { data: page } = await supabase
+          .from('pages')
+          .select('user_id, username')
+          .eq('id', pageId)
+          .single();
+
+        if (page) {
+          // Try to find a store for this user
+          const { data: store } = await supabase
+            .from('stores')
+            .select('id, products, discount_percent')
+            .eq('user_id', page.user_id)
+            .single();
+
+          if (store) {
+            const storeProducts = (store.products as any[]) || [];
+            const productComponents = storeProducts.map((product: any, index: number) => ({
+              id: index + 1000,
+              page_id: pageId,
+              type: 'product',
+              order_index: index,
+              config: {
+                id: product.id,
+                title: product.title,
+                description: product.description,
+                image: product.image,
+                imageScale: product.imageScale || 100,
+                discountPercent: product.discountPercent || store.discount_percent || 0,
+                kits: product.kits || [],
+              },
+              is_visible: true,
+            }));
+            result = [...result, ...productComponents];
+          }
+        }
+      }
+
+      return res.json(result);
+    }
+
     if (componentsMatch && method === 'POST') {
       const clerkId = req.headers['x-supabase-user-id'] as string;
       if (!clerkId) return res.status(401).json({ error: 'Unauthorized' });
@@ -1440,7 +1522,8 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
         kit_label,
         product_price,
         commission_amount,
-        sale_date
+        sale_date,
+        customer_name
       } = req.body;
 
       // Validate required fields
@@ -1467,6 +1550,9 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       if (!page) return res.status(404).json({ error: 'Page not found' });
       if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
 
+      // Build external_payload with customer info
+      const externalPayload = customer_name ? { customer_name } : null;
+
       // Insert sale
       const { data: sale, error } = await supabase
         .from('sales')
@@ -1482,6 +1568,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
           commission_amount,
           source: 'manual',
           sale_date,
+          external_payload: externalPayload,
         })
         .select()
         .single();

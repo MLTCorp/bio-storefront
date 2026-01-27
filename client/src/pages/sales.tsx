@@ -142,19 +142,19 @@ function SalesPageContent() {
               </TabsList>
             </Tabs>
 
-            <Button onClick={() => setModalOpen(true)} disabled={products.length === 0}>
+            <Button onClick={() => setModalOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Venda
             </Button>
           </div>
         </div>
 
-        {/* Warning if no products */}
+        {/* Info tip when no products */}
         {products.length === 0 && !isLoading && (
-          <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <p className="text-sm text-yellow-800">
-              <strong>Atenção:</strong> Esta página não possui produtos cadastrados.
-              Adicione produtos à sua página para poder registrar vendas.
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Dica:</strong> Nenhum produto cadastrado na página.
+              Você pode registrar vendas digitando os dados do produto manualmente.
             </p>
           </div>
         )}

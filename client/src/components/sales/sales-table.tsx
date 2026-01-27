@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2, Loader2, Package } from 'lucide-react';
+import { Trash2, Loader2, Package, User } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -75,10 +75,11 @@ export function SalesTable({ sales, isLoading, onDelete }: SalesTableProps) {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+             <TableRow>
               <TableHead>Data</TableHead>
               <TableHead>Produto</TableHead>
               <TableHead>Kit</TableHead>
+              <TableHead>Cliente</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Comissão</TableHead>
               <TableHead>Origem</TableHead>
@@ -91,6 +92,7 @@ export function SalesTable({ sales, isLoading, onDelete }: SalesTableProps) {
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-20 ml-auto" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-20 ml-auto" /></TableCell>
                 <TableCell><Skeleton className="h-6 w-16" /></TableCell>
@@ -124,6 +126,7 @@ export function SalesTable({ sales, isLoading, onDelete }: SalesTableProps) {
               <TableHead>Data</TableHead>
               <TableHead>Produto</TableHead>
               <TableHead>Kit</TableHead>
+              <TableHead>Cliente</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-right">Comissão</TableHead>
               <TableHead>Origem</TableHead>
@@ -131,7 +134,9 @@ export function SalesTable({ sales, isLoading, onDelete }: SalesTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sales.map((sale) => (
+            {sales.map((sale) => {
+              const customerName = (sale.external_payload as any)?.customer_name || '';
+              return (
               <TableRow key={sale.id}>
                 <TableCell className="font-medium">
                   {formatDate(sale.sale_date)}
@@ -149,6 +154,16 @@ export function SalesTable({ sales, isLoading, onDelete }: SalesTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>{sale.kit_label}</TableCell>
+                <TableCell>
+                  {customerName ? (
+                    <span className="flex items-center gap-1 max-w-[120px] truncate text-sm">
+                      <User className="h-3 w-3 text-muted-foreground shrink-0" />
+                      {customerName}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">-</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(sale.product_price)}
                 </TableCell>
@@ -167,7 +182,8 @@ export function SalesTable({ sales, isLoading, onDelete }: SalesTableProps) {
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>

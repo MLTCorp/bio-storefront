@@ -936,7 +936,51 @@ export async function registerRoutes(
         .order("order_index", { ascending: true });
 
       if (error) throw error;
-      res.json(components || []);
+
+      let result: any[] = components || [];
+
+      // Fallback: if no product components found, check stores table
+      const hasProductComponents = result.some((c: any) => c.type === 'product');
+      if (!hasProductComponents) {
+        const { data: page } = await supabase
+          .from("pages")
+          .select("user_id, username")
+          .eq("id", pageId)
+          .single();
+
+        if (page && page.user_id) {
+          const { data: store } = await supabase
+            .from("stores")
+            .select("id, products, discount_percent")
+            .eq("user_id", page.user_id)
+            .single();
+
+          if (store) {
+            const storeProducts = (store.products as any[]) || [];
+            const productComponents = storeProducts.map((product: any, index: number) => ({
+              id: index + 1000,
+              page_id: pageId,
+              type: 'product',
+              order_index: index,
+              config: {
+                id: product.id,
+                title: product.title,
+                description: product.description,
+                image: product.image,
+                imageScale: product.imageScale || 100,
+                discountPercent: product.discountPercent || store.discount_percent || 0,
+                kits: product.kits || [],
+              },
+              is_visible: true,
+              created_at: null,
+              updated_at: null,
+            }));
+            result = [...result, ...productComponents];
+          }
+        }
+      }
+
+      res.json(result);
     } catch (error) {
       console.error("Error fetching components:", error);
       res.status(500).json({ error: "Failed to fetch components" });
@@ -1712,6 +1756,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
         product_price,
         commission_amount,
         sale_date,
+        customer_name,
       } = req.body;
 
       if (!page_id || !product_id || !kit_id || !product_price || !commission_amount || !sale_date) {
@@ -1737,6 +1782,9 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
       if (!page) return res.status(404).json({ error: 'Page not found' });
       if (page.user_id !== user.id) return res.status(403).json({ error: 'Access denied' });
 
+      // Build external_payload with customer info
+      const externalPayload = customer_name ? { customer_name } : null;
+
       // Create sale
       const { data: sale, error } = await (supabase as any)
         .from('sales')
@@ -1752,6 +1800,7 @@ Respond ONLY with the improved prompt in English, no explanations or additional 
           commission_amount,
           source: 'manual',
           sale_date: new Date(sale_date).toISOString(),
+          external_payload: externalPayload,
         })
         .select()
         .single();
