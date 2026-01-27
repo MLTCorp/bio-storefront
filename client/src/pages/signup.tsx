@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -17,14 +17,17 @@ export default function SignupPage() {
   const { signUp, session, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Get redirect param from URL (for payment flow)
-  const params = new URLSearchParams(window.location.search);
-  const redirect = params.get('redirect');
+  // Stabilize redirect param - read once on mount
+  const redirect = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('redirect');
+  }, []);
 
   // Redirect if already logged in (using useEffect to avoid setState during render)
+  // This is the SINGLE source of truth for post-signup redirect
   useEffect(() => {
     if (!authLoading && session) {
-      setLocation(redirect || '/dashboard');
+      setLocation(redirect || '/onboarding');
     }
   }, [session, authLoading, redirect, setLocation]);
 
@@ -62,18 +65,23 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    const { error } = await signUp(email, password);
+    try {
+      const { error } = await signUp(email, password);
 
-    if (error) {
-      if (error.message.includes('already registered')) {
-        setError('Este email já está cadastrado');
-      } else {
-        setError(error.message);
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setError('Este email já está cadastrado');
+        } else {
+          setError(error.message);
+        }
+        setLoading(false);
       }
+      // On success: do NOT redirect here.
+      // The useEffect above will handle redirect when session state updates.
+    } catch (err) {
+      console.error('[Signup] Erro inesperado no cadastro:', err);
+      setError('Erro de conexão. Verifique sua internet e tente novamente.');
       setLoading(false);
-    } else {
-      // Redirect to specified URL or onboarding after signup
-      setLocation(redirect || '/onboarding');
     }
   };
 

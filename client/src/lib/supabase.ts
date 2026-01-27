@@ -5,7 +5,56 @@ import type { Database, BioConfig, Product, SocialLink } from '@shared/supabase.
 const supabaseUrl = 'https://yybxbkzssbzlqossagpv.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5Ynhia3pzc2J6bHFvc3NhZ3B2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1Njg2OTEsImV4cCI6MjA4MTE0NDY5MX0.bHxWtaQBNwKd15cz7wgaJAelA-ORRZdTtv_-GSssHKM';
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// Resilient storage adapter with fallback chain:
+// localStorage -> sessionStorage -> in-memory (for in-app browsers / private mode)
+function createResilientStorage(): Storage {
+  const memoryStorage = new Map<string, string>();
+
+  // Test if a storage mechanism actually works
+  function isStorageAvailable(storage: Storage): boolean {
+    try {
+      const testKey = '__supabase_storage_test__';
+      storage.setItem(testKey, 'test');
+      const result = storage.getItem(testKey);
+      storage.removeItem(testKey);
+      return result === 'test';
+    } catch {
+      return false;
+    }
+  }
+
+  // Try localStorage first, then sessionStorage
+  if (typeof window !== 'undefined') {
+    if (isStorageAvailable(window.localStorage)) {
+      return window.localStorage;
+    }
+    console.warn('[Auth] localStorage indisponível, usando sessionStorage como fallback');
+    if (isStorageAvailable(window.sessionStorage)) {
+      return window.sessionStorage;
+    }
+    console.warn('[Auth] sessionStorage indisponível, usando memória (sessão não sobreviverá ao refresh)');
+  }
+
+  // In-memory fallback (for in-app browsers that block all storage)
+  return {
+    get length() { return memoryStorage.size; },
+    clear() { memoryStorage.clear(); },
+    getItem(key: string) { return memoryStorage.get(key) ?? null; },
+    key(index: number) { return Array.from(memoryStorage.keys())[index] ?? null; },
+    removeItem(key: string) { memoryStorage.delete(key); },
+    setItem(key: string, value: string) { memoryStorage.set(key, value); },
+  };
+}
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: createResilientStorage(),
+    persistSession: true,
+    detectSessionInUrl: true,
+    autoRefreshToken: true,
+    storageKey: 'bio-storefront-auth',
+  },
+});
 
 // Helper functions for bio_config operations
 export async function getBioConfig(): Promise<BioConfig | null> {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -16,11 +16,14 @@ export default function LoginPage() {
   const { signIn, session, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Get redirect param from URL (for payment flow)
-  const params = new URLSearchParams(window.location.search);
-  const redirect = params.get('redirect');
+  // Stabilize redirect param - read once on mount, not every render
+  const redirect = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('redirect');
+  }, []);
 
   // Redirect if already logged in (using useEffect to avoid setState during render)
+  // This is the SINGLE source of truth for post-login redirect
   useEffect(() => {
     if (!authLoading && session) {
       setLocation(redirect || '/dashboard');
@@ -50,16 +53,23 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
-      setError(error.message === 'Invalid login credentials'
-        ? 'Email ou senha incorretos'
-        : error.message);
+      if (error) {
+        setError(error.message === 'Invalid login credentials'
+          ? 'Email ou senha incorretos'
+          : error.message);
+        setLoading(false);
+      }
+      // On success: do NOT redirect here.
+      // The useEffect above will handle redirect when session state updates.
+      // This avoids the race condition where setLocation fires before
+      // React has committed the session state update from signIn().
+    } catch (err) {
+      console.error('[Login] Erro inesperado no login:', err);
+      setError('Erro de conexão. Verifique sua internet e tente novamente.');
       setLoading(false);
-    } else {
-      // Redirect to specified URL or dashboard after login
-      setLocation(redirect || '/dashboard');
     }
   };
 
