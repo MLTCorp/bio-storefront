@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, ChevronDown, Images, Calendar, MapPin, QrCode } from "lucide-react";
+import { Plus, Link as LinkIcon, Type, ShoppingBag, Video, Share2, MousePointer2, ChevronDown, Images, Calendar, MapPin, QrCode, MonitorPlay } from "lucide-react";
 import type { ComponentType } from "@/types/database";
 import type { Theme } from "@/lib/themes";
 
@@ -73,6 +73,12 @@ const componentOptions: {
     label: "PIX",
     icon: <QrCode className="h-5 w-5" />,
     iconColor: "text-teal-500",
+  },
+  {
+    type: "stories",
+    label: "Stories",
+    icon: <MonitorPlay className="h-5 w-5" />,
+    iconColor: "text-amber-500",
   },
 ];
 

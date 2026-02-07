@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export type Json =
   | string
   | number
@@ -7,7 +9,7 @@ export type Json =
   | Json[]
 
 // Component Types
-export type ComponentType = 'button' | 'text' | 'product' | 'video' | 'social' | 'link' | 'carousel' | 'calendly' | 'maps' | 'pix';
+export type ComponentType = 'button' | 'text' | 'product' | 'video' | 'social' | 'link' | 'carousel' | 'calendly' | 'maps' | 'pix' | 'stories';
 
 // Component Config Types
 export interface ButtonConfig {
@@ -59,6 +61,8 @@ export interface ProductConfig {
   // CTA button (for compact style)
   ctaText?: string;      // button text (e.g., "Comprar Agora", "Get Started")
   ctaLink?: string;      // button link (if different from kit link)
+  // Accessibility
+  alt?: string;          // custom alt text for product image (optional, auto-generated if not provided)
 }
 
 export interface VideoConfig {
@@ -97,22 +101,28 @@ export interface LinkConfig {
   thumbnailScale?: number;
   thumbnailPositionX?: number;
   thumbnailPositionY?: number;
+  // Accessibility
+  thumbnailAlt?: string; // custom alt text for thumbnail image (optional)
 }
 
 // Carousel (Gallery) Config
 export interface CarouselImage {
   id: string;
   url: string;
+  type?: 'image' | 'video';  // default: 'image'
+  thumbnail?: string;        // for videos, optional auto-generated
   scale?: number;       // 100-200
   positionX?: number;   // 0-100
   positionY?: number;   // 0-100
   badge?: string;       // "NOVO", "🔥"
   link?: string;        // optional click URL
+  alt?: string;         // custom alt text (optional)
 }
 
 export interface CarouselConfig {
   images: CarouselImage[];  // max 10
   autoPlay?: boolean;
+  slideInterval?: number;  // interval in milliseconds for auto-play (1000-10000ms)
   showDots?: boolean;
   aspectRatio?: 'square' | 'landscape' | 'portrait';
 }
@@ -146,7 +156,23 @@ export interface PixConfig {
   description?: string;
 }
 
-export type ComponentConfig = ButtonConfig | TextConfig | ProductConfig | VideoConfig | SocialConfig | LinkConfig | CarouselConfig | CalendlyConfig | MapsConfig | PixConfig;
+// Stories Config
+export interface StoriesItem {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  thumbnail?: string;
+  duration?: number; // duration in seconds for videos
+  link?: string;
+}
+
+export interface StoriesConfig {
+  items: StoriesItem[];
+  autoPlay?: boolean; // default: false
+  showOnCarousel?: boolean; // default: true
+}
+
+export type ComponentConfig = ButtonConfig | TextConfig | ProductConfig | VideoConfig | SocialConfig | LinkConfig | CarouselConfig | CalendlyConfig | MapsConfig | PixConfig | StoriesConfig;
 
 // Page Types
 export interface Page {
@@ -265,3 +291,19 @@ export interface SalesSummary {
   topProducts: Array<{ productTitle: string; count: number; revenue: number }>;
   period: string;
 }
+
+// Zod Schemas for Component Config Validation
+export const storiesItemSchema = z.object({
+  id: z.string(),
+  url: z.string().url(),
+  type: z.enum(['image', 'video']),
+  thumbnail: z.string().optional(),
+  duration: z.number().optional(),
+  link: z.string().url().optional(),
+});
+
+export const storiesConfigSchema = z.object({
+  items: z.array(storiesItemSchema),
+  autoPlay: z.boolean().optional().default(false),
+  showOnCarousel: z.boolean().optional().default(true),
+});

@@ -108,7 +108,8 @@
       "Skill(ship:*)",
       "mcp__filesystem__write_file",
       "Bash(bun run build)",
-      "Bash(git grep:*)"
+      "Bash(git grep:*)",
+      "Skill(sincron-map)"
     ],
     "deny": [],
     "ask": []

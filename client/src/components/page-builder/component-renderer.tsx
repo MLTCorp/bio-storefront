@@ -1,16 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   MessageCircle, ExternalLink, Instagram, Youtube, Facebook, Twitter,
   Calendar, MapPin, Copy, Check, ChevronLeft, ChevronRight,
   Link2, Globe, Linkedin, Github, Mail, Phone, ShoppingBag, Music,
-  Podcast, Video, Camera, Heart, Star, Zap, Gift, FileText, Download, Play
+  Podcast, Video, Camera, Heart, Star, Zap, Gift, FileText, Download, Play, ArrowDown, Volume2, VolumeX
 } from "lucide-react";
 import { ShirtParallaxCard } from "@/components/ui/shirt-parallax-card";
 import { CountdownTimer, useDiscountValid } from "@/components/ui/countdown-timer";
 import { VideoPlayer } from "@/components/video-player";
+import { StoriesRenderer } from "@/components/page-builder/stories-renderer";
+import { ReelViewer } from "@/components/media/reel-viewer";
 import { type Theme, themes } from "@/lib/themes";
-import type { PageComponent, ButtonConfig, TextConfig, ProductConfig, VideoConfig, SocialConfig, LinkConfig, CarouselConfig, CalendlyConfig, MapsConfig, PixConfig } from "@/types/database";
+import type { PageComponent, ButtonConfig, TextConfig, ProductConfig, VideoConfig, SocialConfig, LinkConfig, CarouselConfig, CalendlyConfig, MapsConfig, PixConfig, StoriesConfig } from "@/types/database";
 import useEmblaCarousel from "embla-carousel-react";
+import { getProductAltText, getLinkThumbnailAltText, getCarouselImageAltText } from "@/lib/utils";
 
 // Hook to limit image scale on mobile to prevent excessive cropping
 function useResponsiveImageScale(imageScale: number): number {
@@ -33,6 +36,7 @@ interface ComponentRendererProps {
   pageId?: number;
   ownerId?: string; // To exclude owner from analytics (supports both ownerId and supabaseId)
   isGlassmorphismMobile?: boolean; // For glassmorphism mobile styling
+  username?: string; // For alt text generation
 }
 
 // Analytics tracking function
@@ -103,7 +107,7 @@ const linkIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   play: Play,
 };
 
-export function ComponentRenderer({ component, theme, pageId, ownerId, isGlassmorphismMobile }: ComponentRendererProps) {
+export function ComponentRenderer({ component, theme, pageId, ownerId, isGlassmorphismMobile, username }: ComponentRendererProps) {
   const currentTheme = theme || themes.light;
 
   switch (component.type) {
@@ -112,7 +116,7 @@ export function ComponentRenderer({ component, theme, pageId, ownerId, isGlassmo
     case "text":
       return <TextRenderer config={component.config as TextConfig} theme={currentTheme} />;
     case "product":
-      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductRenderer config={component.config as ProductConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} username={username} />;
     case "video":
       return <VideoRenderer config={component.config as VideoConfig} />;
     case "social":
@@ -127,6 +131,8 @@ export function ComponentRenderer({ component, theme, pageId, ownerId, isGlassmo
       return <MapsRenderer config={component.config as MapsConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     case "pix":
       return <PixRenderer config={component.config as PixConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
+    case "stories":
+      return <StoriesRenderer config={component.config as StoriesConfig} theme={currentTheme} componentId={component.id} pageId={pageId} ownerId={ownerId} />;
     default:
       return null;
   }
@@ -201,22 +207,24 @@ function TextRenderer({ config, theme }: { config: TextConfig; theme: Theme }) {
 }
 
 // Product Renderer - Dispatches to different styles
-function ProductRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile, username }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean; username?: string }) {
   switch (config.displayStyle) {
     case 'compact':
-      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductCompactRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} username={username} />;
     case 'ecommerce':
-      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductEcommerceRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} username={username} />;
     default:
-      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} />;
+      return <ProductCardRenderer config={config} theme={theme} componentId={componentId} pageId={pageId} ownerId={ownerId} isGlassmorphismMobile={isGlassmorphismMobile} username={username} />;
   }
 }
 
 // Product Card Renderer - Original 3D parallax style
-function ProductCardRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductCardRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile, username }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean; username?: string }) {
   const handleProductClick = (kitLabel: string, kitUrl: string) => {
     trackClick(pageId, componentId || 0, 'product', `${config.title} - ${kitLabel}`, kitUrl, ownerId);
   };
+
+  const altText = getProductAltText(config.title, username, config.alt);
 
   return (
     <ShirtParallaxCard
@@ -233,12 +241,13 @@ function ProductCardRenderer({ config, theme, componentId, pageId, ownerId, isGl
       theme={theme}
       onKitClick={handleProductClick}
       isGlassmorphismMobile={isGlassmorphismMobile}
+      altText={altText}
     />
   );
 }
 
 // Product Compact Renderer - Rating + single CTA button style
-function ProductCompactRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductCompactRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile, username }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean; username?: string }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
   const mainKit = visibleKits[0];
 
@@ -259,6 +268,9 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, ownerId, i
   const discountedPrice = effectiveDiscountPercent > 0
     ? originalPrice - (originalPrice * effectiveDiscountPercent / 100)
     : originalPrice;
+
+  // Generate alt text
+  const altText = getProductAltText(config.title, username, config.alt);
 
   // Render stars
   const renderStars = (rating: number) => {
@@ -301,7 +313,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, ownerId, i
           {config.image && (
             <img
               src={config.image}
-              alt={config.title}
+              alt={altText}
               className="w-full h-full object-cover"
               style={{
                 transform: `scale(${effectiveImageScale / 100})`,
@@ -381,7 +393,7 @@ function ProductCompactRenderer({ config, theme, componentId, pageId, ownerId, i
 }
 
 // Product E-commerce Renderer - Horizontal with kit selection
-function ProductEcommerceRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean }) {
+function ProductEcommerceRenderer({ config, theme, componentId, pageId, ownerId, isGlassmorphismMobile, username }: { config: ProductConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string; isGlassmorphismMobile?: boolean; username?: string }) {
   const visibleKits = config.kits.filter(k => k.isVisible !== false);
 
   // Responsive image scale - limit on mobile
@@ -390,6 +402,9 @@ function ProductEcommerceRenderer({ config, theme, componentId, pageId, ownerId,
   // Check if discount is still valid
   const isDiscountValid = useDiscountValid(config.discountEndDate);
   const effectiveDiscountPercent = isDiscountValid ? config.discountPercent : 0;
+
+  // Generate alt text
+  const altText = getProductAltText(config.title, username, config.alt);
 
   const handleKitClick = (kit: typeof config.kits[0]) => {
     // Get the appropriate link based on discount
@@ -432,7 +447,7 @@ function ProductEcommerceRenderer({ config, theme, componentId, pageId, ownerId,
           {config.image && (
             <img
               src={config.image}
-              alt={config.title}
+              alt={altText}
               className="w-full h-full object-cover"
               style={{
                 transform: `scale(${effectiveImageScale / 100})`,
@@ -534,6 +549,9 @@ function LinkRenderer({ config, theme, componentId, pageId, ownerId }: { config:
     trackClick(pageId, componentId || 0, 'link', config.text, config.url || '', ownerId);
   };
 
+  // Generate alt text for thumbnail
+  const thumbnailAltText = getLinkThumbnailAltText(config.text, config.thumbnailAlt);
+
   // Advanced styling
   const getBackgroundStyle = () => {
     if (config.backgroundColor) return config.backgroundColor;
@@ -582,7 +600,7 @@ function LinkRenderer({ config, theme, componentId, pageId, ownerId }: { config:
         {config.thumbnail && (
           <img
             src={config.thumbnail}
-            alt=""
+            alt={thumbnailAltText}
             className="w-8 h-8 rounded-lg object-cover"
             style={{
               transform: `scale(${(config.thumbnailScale || 100) / 100})`,
@@ -602,10 +620,134 @@ function LinkRenderer({ config, theme, componentId, pageId, ownerId }: { config:
   );
 }
 
+// Carousel Video Player Component - Handles video playback in carousel
+function CarouselVideoPlayer({ videoUrl, thumbnail, className }: { videoUrl: string; thumbnail?: string; className?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Intersection Observer to detect when video is visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          // Auto-play when visible
+          playVideo();
+        } else {
+          // Pause when not visible
+          pauseVideo();
+        }
+      },
+      { threshold: 0.5 } // Trigger when 50% visible
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const playVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        // Auto-play might be blocked by browser policy
+        console.log('Auto-play blocked:', err);
+      });
+    }
+  };
+
+  const pauseVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+    }
+  };
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        playVideo();
+      } else {
+        pauseVideo();
+      }
+    }
+  };
+
+  return (
+    <div ref={containerRef} className={`relative ${className}`}>
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        poster={thumbnail}
+        muted={isMuted}
+        playsInline
+        className="w-full h-full object-cover"
+        onClick={togglePlay}
+      />
+
+      {/* Mute/Unmute Button - Always visible */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleMute();
+        }}
+        className="absolute bottom-2 right-2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+      >
+        {isMuted ? (
+          <VolumeX className="h-4 w-4" />
+        ) : (
+          <Volume2 className="h-4 w-4" />
+        )}
+      </button>
+
+      {/* Play/Pause Button - Auto-hide after 3s when playing */}
+      {(!isPlaying || !isVisible) && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePlay();
+          }}
+          className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors"
+        >
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+            {isPlaying ? (
+              <div className="flex gap-1">
+                <div className="w-1 h-4 bg-white rounded" />
+                <div className="w-1 h-4 bg-white rounded" />
+              </div>
+            ) : (
+              <Play className="h-6 w-6 text-white ml-1" />
+            )}
+          </div>
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Carousel Renderer
 function CarouselRenderer({ config, theme, componentId, pageId, ownerId }: { config: CarouselConfig; theme: Theme; componentId?: number; pageId?: number; ownerId?: string }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    duration: 50, // Smooth transition duration (50 = 500ms)
+  });
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [showReelViewer, setShowReelViewer] = useState(false);
+  const [currentReelIndex, setCurrentReelIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   const images = config.images || [];
   if (images.length === 0) {
@@ -615,6 +757,43 @@ function CarouselRenderer({ config, theme, componentId, pageId, ownerId }: { con
       </div>
     );
   }
+
+  // Auto-play logic
+  useEffect(() => {
+    if (!emblaApi || !config.autoPlay || images.length <= 1) return;
+
+    const interval = config.slideInterval || 3000; // Default to 3000ms if not specified
+    let timer: NodeJS.Timeout;
+
+    const nextSlide = () => {
+      if (!isHovered) {
+        emblaApi.scrollNext();
+      }
+    };
+
+    // Initial timer
+    timer = setInterval(nextSlide, interval);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [emblaApi, config.autoPlay, config.slideInterval, isHovered, images.length]);
+
+  // Update selected index when carousel scrolls
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setSelectedIndex(emblaApi.selectedScrollSnap());
+    };
+
+    emblaApi.on('select', onSelect);
+    onSelect(); // Initial call
+
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
 
   const aspectRatioClass = {
     square: 'aspect-square',
@@ -632,32 +811,67 @@ function CarouselRenderer({ config, theme, componentId, pageId, ownerId }: { con
   const scrollPrev = () => emblaApi?.scrollPrev();
   const scrollNext = () => emblaApi?.scrollNext();
 
+  // Convert CarouselConfig.images to ReelItem format
+  const reelItems = images.map(img => ({
+    id: img.id,
+    url: img.url,
+    type: img.type || 'image' as 'image' | 'video',
+    thumbnail: img.thumbnail,
+    link: img.link,
+  }));
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="overflow-hidden rounded-xl" ref={emblaRef}>
         <div className="flex">
-          {images.map((image, index) => (
-            <div
-              key={image.id}
-              className={`flex-[0_0_100%] min-w-0 ${aspectRatioClass} relative cursor-pointer`}
-              onClick={() => handleImageClick(image)}
-            >
-              <img
-                src={image.url}
-                alt={`Slide ${index + 1}`}
-                className="w-full h-full object-cover"
-                style={{
-                  transform: `scale(${(image.scale || 100) / 100})`,
-                  objectPosition: `${image.positionX || 50}% ${image.positionY || 50}%`,
-                }}
-              />
-              {image.badge && (
-                <span className="absolute top-2 right-2 px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shadow-lg">
-                  {image.badge}
-                </span>
-              )}
-            </div>
-          ))}
+          {images.map((image, index) => {
+            const altText = getCarouselImageAltText(image.alt, index);
+            const isVideo = image.type === 'video';
+
+            return (
+              <div
+                key={image.id}
+                className={`flex-[0_0_100%] min-w-0 ${aspectRatioClass} relative cursor-pointer`}
+                onClick={() => handleImageClick(image)}
+              >
+                {isVideo ? (
+                  <CarouselVideoPlayer
+                    videoUrl={image.url}
+                    thumbnail={image.thumbnail}
+                    className="w-full h-full"
+                  />
+                ) : (
+                  <img
+                    src={image.url}
+                    alt={altText}
+                    className="w-full h-full object-cover"
+                    style={{
+                      transform: `scale(${(image.scale || 100) / 100})`,
+                      objectPosition: `${image.positionX || 50}% ${image.positionY || 50}%`,
+                    }}
+                  />
+                )}
+
+                {/* Type Badge for videos */}
+                {isVideo && (
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs font-bold rounded-lg flex items-center gap-1">
+                    <PlayCircle className="h-3 w-3" />
+                    Vídeo
+                  </div>
+                )}
+
+                {image.badge && (
+                  <span className="absolute top-2 right-2 px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shadow-lg">
+                    {image.badge}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -692,6 +906,40 @@ function CarouselRenderer({ config, theme, componentId, pageId, ownerId }: { con
             />
           ))}
         </div>
+      )}
+
+      {/* Ver em Reels Button - Bottom right of the component */}
+      {images.length > 0 && (
+        <button
+          onClick={() => {
+            setCurrentReelIndex(selectedIndex);
+            setShowReelViewer(true);
+          }}
+          className="absolute right-2 bottom-2 flex flex-col items-center gap-1 animate-pulse hover:scale-110 active:scale-95 transition-all z-10"
+          title="Ver em tela cheia"
+        >
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg"
+            style={{
+              background: 'linear-gradient(to bottom, #8B5CF6, #3B82F6)',
+            }}
+          >
+            <ArrowDown className="h-5 w-5" />
+          </div>
+          <span className="text-[12px] font-medium text-gray-600">
+            Ver em Reels
+          </span>
+        </button>
+      )}
+
+      {/* Reel Viewer */}
+      {showReelViewer && (
+        <ReelViewer
+          items={reelItems}
+          startIndex={currentReelIndex}
+          onClose={() => setShowReelViewer(false)}
+          theme={theme}
+        />
       )}
     </div>
   );

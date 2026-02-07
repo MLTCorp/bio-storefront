@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, CalendarIcon, Clock, X } from "lucide-react";
+import { Upload, Loader2, Plus, Trash2, Percent, Crop, Link as LinkIcon, ChevronDown, ChevronUp, Link2, ImageIcon, Pencil, Download, Eye, EyeOff, Sparkles, Star, CalendarIcon, Clock, X, FileText, Scissors } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,7 +13,9 @@ import { uploadImage } from "@/lib/supabase";
 import { AnimatedGenerateButton } from "@/components/ui/animated-generate-button";
 import { AIImageModal } from "@/components/ai-image-modal";
 import { ImagePositioner } from "@/components/ui/image-positioner";
+import { ImageCrop } from "@/components/media/image-crop";
 import { useDebouncedConfig } from "@/hooks/use-debounced-update";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ProductConfig, ProductKit } from "@/types/database";
 import type { Theme } from "@/lib/themes";
+import { getProductAltText } from "@/lib/utils";
 
 interface ProductEditorProps {
   config: ProductConfig;
@@ -30,10 +33,15 @@ interface ProductEditorProps {
 }
 
 export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
+  const { toast } = useToast();
   const [expanded, setExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [positionModalOpen, setPositionModalOpen] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [isUploadingCropped, setIsUploadingCropped] = useState(false);
+  const [croppedPreview, setCroppedPreview] = useState<string | null>(null);
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<"1:1" | "4:5">("1:1");
   const [expandedKitId, setExpandedKitId] = useState<string | null>(null);
   const [imageEditMode, setImageEditMode] = useState(false);
   const [discountLinksExpandedKitId, setDiscountLinksExpandedKitId] = useState<string | null>(null);
@@ -46,6 +54,14 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
   useEffect(() => {
     if (!expanded) setImageEditMode(false);
   }, [expanded]);
+
+  // Clear preview when opening crop modal
+  useEffect(() => {
+    if (cropModalOpen) {
+      setCroppedPreview(null);
+      setSelectedAspectRatio("1:1");
+    }
+  }, [cropModalOpen]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,6 +95,59 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
       window.open(config.image, "_blank");
     }
   };
+
+  const handleCropComplete = useCallback(async (data: { croppedImageUrl: string }) => {
+    // Update preview immediately
+    setCroppedPreview(data.croppedImageUrl);
+
+    setIsUploadingCropped(true);
+    try {
+      // Convert base64 to File
+      const response = await fetch(data.croppedImageUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch cropped image: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+
+      // Verify we got an image, not HTML
+      if (!blob.type.startsWith('image/')) {
+        throw new Error(`Expected image blob, got ${blob.type}`);
+      }
+
+      const file = new File([blob], `product-cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      // Upload to Supabase Storage
+      const url = await uploadImage(file, "products");
+      if (url) {
+        onUpdate({
+          ...config,
+          image: url,
+          imagePositionX: 50,
+          imagePositionY: 50,
+          imageScale: 100,
+        });
+        setCropModalOpen(false);
+        setCroppedPreview(null);
+        toast({
+          title: "Imagem recortada e salva!",
+          className: "bg-green-600 text-white",
+        });
+      } else {
+        throw new Error("Falha ao fazer upload da imagem");
+      }
+    } catch (error) {
+      console.error("Error uploading cropped image:", error);
+      toast({
+        title: "Erro ao salvar imagem recortada",
+        description: error instanceof Error ? error.message : "Tente novamente ou contate o suporte.",
+        className: "bg-red-600 text-white",
+      });
+    } finally {
+      setIsUploadingCropped(false);
+    }
+  }, [config, onUpdate, toast]);
 
   const addKit = () => {
     onUpdate({
@@ -131,7 +200,7 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
           {config.image ? (
             <img
               src={config.image}
-              alt={config.title}
+              alt={getProductAltText(config.title, undefined, config.alt)}
               className="absolute object-cover"
               style={{
                 width: `${config.imageScale || 100}%`,
@@ -147,6 +216,20 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
             >
               <ImageIcon className="h-6 w-6" />
             </div>
+          )}
+
+          {/* Crop button overlay - Only show when card is expanded and image exists */}
+          {expanded && config.image && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCropModalOpen(true);
+              }}
+              className="absolute bottom-0 right-0 bg-white/90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              title="Recortar imagem"
+            >
+              <Scissors className="h-4 w-4 text-gray-700" />
+            </button>
           )}
 
           {/* Edit Overlay - Only show when card is expanded */}
@@ -282,6 +365,22 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
               placeholder="Descricao do produto"
               rows={2}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs flex items-center gap-1">
+              <FileText className="h-3 w-3" />
+              Texto alternativo (alt)
+            </Label>
+            <Input
+              value={localConfig.alt || ""}
+              onChange={(e) => updateField("alt", e.target.value)}
+              placeholder="Auto gerado: nome do produto"
+              className="text-xs"
+            />
+            <p className="text-[10px] text-gray-400">
+              Deixe vazio para usar automaticamente: nome do produto
+            </p>
           </div>
 
           {/* Discount */}
@@ -775,6 +874,90 @@ export function ProductEditor({ config, onUpdate, theme }: ProductEditorProps) {
               Pronto
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Crop Modal */}
+      <Dialog open={cropModalOpen} onOpenChange={setCropModalOpen}>
+        <DialogContent className="sm:max-w-[600px] w-[90vw]">
+          <DialogHeader>
+            <DialogTitle>Recortar imagem do produto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Aspect Ratio Selector */}
+            <div className="flex items-center gap-4">
+              <Label className="text-sm">Formato do corte:</Label>
+              <Select
+                value={selectedAspectRatio}
+                onValueChange={(value: "1:1" | "4:5") => setSelectedAspectRatio(value)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1:1">Quadrado (1:1)</SelectItem>
+                  <SelectItem value="4:5">Retrato (4:5)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              {/* Crop Area */}
+              <div className="flex-1">
+                {config.image && (
+                  <ImageCrop
+                    imageUrl={config.image}
+                    onCropComplete={handleCropComplete}
+                    aspectRatio={selectedAspectRatio === "1:1" ? 1 : 0.8}
+                    initialZoom={(config.imageScale || 100) / 100}
+                    onCancel={() => {
+                      setCropModalOpen(false);
+                      setCroppedPreview(null);
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Preview - Show on the right side */}
+              <div className="flex flex-col items-center justify-start gap-2 sm:gap-4 pt-2">
+                <p className="text-xs font-medium text-muted-foreground">Preview</p>
+                <div
+                  className={`overflow-hidden border-2 border-gray-200 shadow-sm bg-gray-50 ${
+                    selectedAspectRatio === "1:1" ? "w-24 h-24 rounded-lg" : "w-24 h-30 rounded-lg"
+                  }`}
+                  style={selectedAspectRatio === "4:5" ? { aspectRatio: "4/5" } : {}}
+                >
+                  {croppedPreview ? (
+                    <img
+                      src={croppedPreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : config.image ? (
+                    <img
+                      src={config.image}
+                      alt="Original"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading overlay */}
+          {isUploadingCropped && (
+            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm font-medium text-gray-700">Salvando imagem...</p>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
